@@ -7,6 +7,7 @@ import { BackgroundAudio } from "@/components/background-audio";
 import { NavigationEffects } from "@/components/navigation-effects";
 import "@fontsource-variable/fredoka";
 import "@fontsource-variable/nunito";
+import "aos/dist/aos.css";
 import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(

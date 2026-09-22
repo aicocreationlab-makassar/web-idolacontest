@@ -10,6 +10,39 @@ import {
 } from "@/components/admin-controls";
 import { RegistrationForm } from "@/components/registration-form";
 import { PageHeading } from "@/components/shared";
+import { categories, competitions } from "@/lib/business-rules";
+
+const dashboardMetrics: Array<[string, string]> = [
+  ["total_registrasi", "Total peserta"],
+  ["review_pending", "Perlu diperiksa"],
+  ["review_approved", "Pendaftaran diterima"],
+  ["pembayaran_paid", "Pembayaran diterima"],
+  ["karya_pending", "Karya perlu diperiksa"],
+  ["pengiriman", "Pesanan dikirim"],
+];
+const dashboardSections: Record<string, string> = {
+  per_kategori: "Peserta per kategori",
+  per_provinsi: "Peserta per provinsi",
+  sumber_registrasi: "Asal pendaftaran",
+};
+const friendlyLabels: Record<string, string> = {
+  ...categories,
+  ...competitions,
+  website: "Website",
+  instagram_dm: "Instagram",
+  admin_manual: "Dicatat admin",
+  pending: "Menunggu",
+  pending_review: "Menunggu pemeriksaan",
+  approved: "Disetujui",
+  rejected: "Ditolak",
+  paid: "Sudah dibayar",
+  unpaid: "Belum dibayar",
+  verified: "Aktif",
+  published: "Sudah tampil",
+  draft: "Belum ditampilkan",
+};
+const friendly = (value: string) =>
+  friendlyLabels[value] || value.replaceAll("_", " ");
 const titles: Record<string, string> = {
   dashboard: "Dashboard",
   peserta: "Peserta",
@@ -167,7 +200,7 @@ export default async function Page({
               </h3>
               <p className="text-xs break-all muted">ID karya: {s.id}</p>
               <p>
-                {s.status} · {s.publication_status}
+                {friendly(s.status)} · {friendly(s.publication_status)}
               </p>
               <PrivateMedia id={s.id} kind="submission" />
               {section === "penilaian" ? (
@@ -234,28 +267,27 @@ export default async function Page({
           </label>
           <button className="btn self-end">Terapkan</button>
         </form>
-        <div className="grid3">
-          {Object.entries(totals)
-            .filter(([, v]) => typeof v === "number")
-            .map(([k, v]) => (
-              <div className="card" key={k}>
-                <span className="muted capitalize">
-                  {k.replaceAll("_", " ")}
-                </span>
-                <h2 className="mt-3 text-purple">{String(v)}</h2>
-              </div>
-            ))}
+        <div className="grid3 admin-summary-grid">
+          {dashboardMetrics.map(([key, label]) => (
+            <div className="card" key={key}>
+              <span className="muted">{label}</span>
+              <h2 className="mt-3 text-purple">{String(totals[key] ?? 0)}</h2>
+            </div>
+          ))}
         </div>
         <div className="grid2 mt-6">
           {Object.entries(totals)
-            .filter(([, v]) => typeof v === "object")
+            .filter(
+              ([key, value]) =>
+                dashboardSections[key] && typeof value === "object",
+            )
             .map(([k, v]) => (
               <div className="card" key={k}>
-                <h3 className="capitalize mb-4">{k.replaceAll("_", " ")}</h3>
+                <h3 className="mb-4">{dashboardSections[k]}</h3>
                 {Object.entries((v ?? {}) as Record<string, number>).map(
                   ([label, n]) => (
                     <p className="flex justify-between" key={label}>
-                      <span>{label}</span>
+                      <span>{friendly(label)}</span>
                       <b>{n}</b>
                     </p>
                   ),
@@ -320,29 +352,29 @@ export default async function Page({
                   <p>{r.participants.regency_name}</p>
                 </td>
                 <td data-label="Lomba / kategori">
-                  {r.competition_type}
+                  {friendly(r.competition_type)}
                   <br />
-                  {r.category}
+                  {friendly(r.category)}
                   <br />
-                  {r.registration_source}
+                  {friendly(r.registration_source)}
                 </td>
                 <td data-label="Status">
                   <span
                     className={`admin-status status-${r.review_status || "pending"}`}
                   >
                     {r.review_status === "approved"
-                      ? "Approved"
+                      ? "Disetujui"
                       : r.review_status === "rejected"
-                        ? "Rejected"
-                        : "Menunggu review"}
+                        ? "Ditolak"
+                        : "Menunggu pemeriksaan"}
                   </span>
                   <span className={`admin-status status-${r.payment_status}`}>
-                    Bayar: {r.payment_status}
+                    Bayar: {friendly(r.payment_status)}
                   </span>
                   <span
                     className={`admin-status status-${r.registration_status}`}
                   >
-                    Akses: {r.registration_status}
+                    Akses: {friendly(r.registration_status)}
                   </span>
                   {(r.results ?? []).map(
                     (x: {
@@ -353,7 +385,7 @@ export default async function Page({
                     }) => (
                       <p key={x.id}>
                         {x.award_code} · {x.final_score} ·{" "}
-                        {x.is_published ? "published" : "draft"}
+                        {x.is_published ? "Sudah diumumkan" : "Belum diumumkan"}
                       </p>
                     ),
                   )}
@@ -364,7 +396,7 @@ export default async function Page({
                       invoice_number: string;
                     }) => (
                       <p key={x.id}>
-                        {x.invoice_number} · {x.status}
+                        {x.invoice_number} · {friendly(x.status)}
                       </p>
                     ),
                   )}
@@ -375,7 +407,7 @@ export default async function Page({
                       tracking_number: string;
                     }) => (
                       <p key={x.id}>
-                        {x.shipping_status} · {x.tracking_number}
+                        {friendly(x.shipping_status)} · {x.tracking_number}
                       </p>
                     ),
                   )}

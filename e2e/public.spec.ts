@@ -99,7 +99,7 @@ test("Admin can login, open mobile navigation, and view incoming registrations",
   await expect(page).toHaveURL(/\/admin\/dashboard/);
   await expect(page.getByText("Selamat datang kembali!")).toBeVisible();
   await page.getByRole("button", { name: "Tutup pemberitahuan" }).click();
-  await expect(page.getByText("Realtime aktif")).toBeVisible();
+  await expect(page.getByText("Pembaruan otomatis aktif")).toBeVisible();
 
   if ((page.viewportSize()?.width ?? 0) <= 980) {
     await page.getByRole("button", { name: "Buka menu admin" }).click();
@@ -141,6 +141,15 @@ test("Page navigation returns mobile and desktop views to the top", async ({
 
 test("Gallery opens with quiet collapsed filters", async ({ page }) => {
   await page.goto("/galeri");
+  const competitionTabs = page.getByRole("navigation", {
+    name: "Pilih jenis lomba",
+  });
+  await expect(
+    competitionTabs.getByRole("link", { name: "Lomba Fotogenik" }),
+  ).toBeVisible();
+  await expect(
+    competitionTabs.getByRole("link", { name: "Lomba Mewarnai" }),
+  ).toBeVisible();
   const filters = page.locator(".gallery-filter");
   await expect(filters).not.toHaveAttribute("open", "");
   await expect(
@@ -191,6 +200,72 @@ test("Large photo compresses and becomes the active upload preview", async ({
   await expect(page.getByText(/Siap dikirim/)).toBeVisible();
   await expect(page.getByText("Foto berhasil dibaca")).toBeVisible();
   await expect(page.getByText("Foto siap dikirim")).toBeVisible();
+  const selectedFile = await page
+    .locator('input[type="file"]')
+    .evaluate((input) => {
+      const file = (input as HTMLInputElement).files?.[0];
+      return file
+        ? { name: file.name, size: file.size, type: file.type }
+        : null;
+    });
+  expect(selectedFile?.size).toBeLessThanOrEqual(2 * 1024 * 1024);
+  expect(selectedFile?.name).toMatch(/^foto-terkompres\.(webp|png|jpg)$/);
+  expect(["image/webp", "image/png", "image/jpeg"]).toContain(
+    selectedFile?.type,
+  );
+});
+
+test("Paid coloring participant sees worksheet immediately with A4 instructions", async ({
+  page,
+}) => {
+  await page.route("**/api/status", async (route) => {
+    await route.fulfill({
+      json: {
+        public_name: "Bintang Uji",
+        competition_type: "coloring",
+        category: "tk",
+        payment_status: "paid",
+        registration_status: "verified",
+        deadline: new Date(Date.now() + 86400000).toISOString(),
+        worksheet_ready: true,
+        submission: null,
+        claim: null,
+        shipment: null,
+      },
+    });
+  });
+  await page.route("**/api/worksheet", async (route) => {
+    await route.fulfill({
+      json: {
+        url: "/icon-512.png",
+        download_url: "/icon-512.png?download=worksheet",
+        version: 1,
+      },
+    });
+  });
+  await page.goto("/cek-status");
+  await page.evaluate(async () => {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(
+      registrations.map((registration) => registration.unregister()),
+    );
+  });
+  await page.reload();
+  await page.getByLabel("Kode registrasi").fill("IDC-BINTANG-1234");
+  await page.getByRole("button", { name: /Cek status/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Worksheet Cita-Cita Si Kecil" }),
+  ).toBeVisible();
+  await expect(
+    page.getByAltText("Worksheet cita-cita Bintang Uji"),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Cetak pada kertas A4 dengan ukuran penuh."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Download worksheet A4" }),
+  ).toBeVisible();
+  await expect(page.getByText(/60 detik/)).toHaveCount(0);
 });
 test("All public routes render without application errors", async ({
   page,

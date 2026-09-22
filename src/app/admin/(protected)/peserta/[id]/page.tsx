@@ -7,6 +7,25 @@ import {
   DeleteRegistration,
 } from "@/components/admin-controls";
 import { PageHeading } from "@/components/shared";
+import { categories, competitions } from "@/lib/business-rules";
+
+const labels: Record<string, string> = {
+  ...categories,
+  ...competitions,
+  website: "Website",
+  instagram_dm: "Instagram",
+  admin_manual: "Dicatat admin",
+  pending: "Menunggu",
+  pending_review: "Menunggu pemeriksaan",
+  approved: "Disetujui",
+  rejected: "Ditolak",
+  paid: "Sudah dibayar",
+  unpaid: "Belum dibayar",
+  verified: "Aktif",
+  blocked: "Tidak aktif",
+  draft: "Belum ditampilkan",
+};
+const friendly = (value: string) => labels[value] || value.replaceAll("_", " ");
 
 function Detail({ label, value }: { label: string; value?: unknown }) {
   return (
@@ -53,7 +72,7 @@ export default async function Page({
     <>
       <PageHeading
         title={participant.full_name}
-        description={`${registration.registration_code} · ${registration.competition_type} · ${registration.category}`}
+        description={`${registration.registration_code} · ${friendly(registration.competition_type)} · ${friendly(registration.category)}`}
       />
 
       <section className="admin-review-panel">
@@ -99,11 +118,14 @@ export default async function Page({
             <Detail label="Sekolah" value={participant.school_name} />
             <Detail label="Kelas" value={registration.class_label} />
             <Detail label="Cita-cita" value={registration.dream_job} />
-            <Detail label="Jenis lomba" value={registration.competition_type} />
-            <Detail label="Kategori" value={registration.category} />
+            <Detail
+              label="Jenis lomba"
+              value={friendly(registration.competition_type)}
+            />
+            <Detail label="Kategori" value={friendly(registration.category)} />
             <Detail
               label="Sumber pendaftaran"
-              value={registration.registration_source}
+              value={friendly(registration.registration_source)}
             />
             <Detail
               label="Waktu daftar"
@@ -156,12 +178,12 @@ export default async function Page({
               <span
                 className={`admin-status status-${registration.payment_status}`}
               >
-                Pembayaran: {registration.payment_status}
+                Pembayaran: {friendly(registration.payment_status)}
               </span>
               <span
                 className={`admin-status status-${registration.registration_status}`}
               >
-                Akses: {registration.registration_status}
+                Akses: {friendly(registration.registration_status)}
               </span>
             </div>
             <h2>Verifikasi pembayaran</h2>
@@ -199,8 +221,8 @@ export default async function Page({
                 }) => (
                   <div className="admin-media-item stack" key={submission.id}>
                     <p>
-                      <b>Status karya:</b> {submission.status} ·{" "}
-                      {submission.publication_status}
+                      <b>Status karya:</b> {friendly(submission.status)} ·{" "}
+                      {friendly(submission.publication_status)}
                     </p>
                     <PrivateMedia id={submission.id} kind="submission" />
                     {submission.publication_status === "approved" ? (

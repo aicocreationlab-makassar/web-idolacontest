@@ -31,26 +31,33 @@ export function NavigationEffects() {
     });
 
     if (pathname.startsWith("/admin")) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const elements = Array.from(
       document.querySelectorAll<HTMLElement>(revealSelector),
     );
     elements.forEach((element, index) => {
-      element.classList.add("scroll-reveal");
-      element.style.setProperty("--reveal-delay", `${(index % 5) * 55}ms`);
+      if (!element.dataset.aos) {
+        element.dataset.aos = ["fade-up", "zoom-in-up", "flip-left"][index % 3];
+        element.dataset.aosDelay = String((index % 4) * 70);
+      }
     });
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add("is-revealed");
-          observer.unobserve(entry.target);
-        });
-      },
-      { threshold: 0.08, rootMargin: "0px 0px -7%" },
-    );
-    elements.forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
+
+    let active = true;
+    void import("aos").then(({ default: AOS }) => {
+      if (!active) return;
+      AOS.init({
+        once: true,
+        duration: 850,
+        easing: "ease-out-cubic",
+        offset: 55,
+        anchorPlacement: "top-bottom",
+        disable: () =>
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      });
+      AOS.refreshHard();
+    });
+    return () => {
+      active = false;
+    };
   }, [pathname]);
 
   return null;

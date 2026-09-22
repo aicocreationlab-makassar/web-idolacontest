@@ -4,7 +4,7 @@ import { session } from "@/lib/supabase/server";
 import { failure, json, rateLimit } from "@/lib/http";
 export async function POST(req: Request) {
   try {
-    await rateLimit(req, "login", 8);
+    await rateLimit(req, "login", 20);
     const form = await readForm(req);
     const credentials = z
       .object({

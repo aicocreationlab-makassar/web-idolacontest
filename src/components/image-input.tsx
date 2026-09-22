@@ -16,6 +16,7 @@ export function ImageInput({
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState("");
   const previewRef = useRef("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   function previewFile(file: File | null) {
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
@@ -42,6 +43,7 @@ export function ImageInput({
         </strong>
         <span>Ketuk untuk memilih JPG, PNG, atau WebP</span>
         <input
+          ref={inputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
           onChange={(e) => {
@@ -93,15 +95,40 @@ export function ImageInput({
               setBusy(true);
               try {
                 const compressed = await imageCompression(source, {
-                  maxSizeMB: 1.8,
+                  maxSizeMB: 1.45,
                   maxWidthOrHeight: 2000,
                   useWebWorker: true,
                   fileType: "image/webp",
                 });
-                const file = new File([compressed], "foto.webp", {
-                  type: "image/webp",
-                });
+                const mime = ["image/jpeg", "image/png", "image/webp"].includes(
+                  compressed.type,
+                )
+                  ? compressed.type
+                  : source.type;
+                const extension =
+                  mime === "image/png"
+                    ? "png"
+                    : mime === "image/webp"
+                      ? "webp"
+                      : "jpg";
+                const file = new File(
+                  [compressed],
+                  `foto-terkompres.${extension}`,
+                  {
+                    type: mime,
+                    lastModified: Date.now(),
+                  },
+                );
                 if (file.size > 2097152) throw new Error();
+                if (inputRef.current) {
+                  try {
+                    const transfer = new DataTransfer();
+                    transfer.items.add(file);
+                    inputRef.current.files = transfer.files;
+                  } catch {
+                    // The React state below remains the upload source on older browsers.
+                  }
+                }
                 onChange(file);
                 previewFile(file);
                 setMessage(

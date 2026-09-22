@@ -1,8 +1,8 @@
 import { galleryPage, publicImage, type GalleryFilters } from "@/lib/data";
-import Image from "next/image";
 import Link from "next/link";
 import { categories, competitions } from "@/lib/business-rules";
 import { PageHeading } from "@/components/shared";
+import { GalleryGrid } from "@/components/gallery-grid";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Galeri finalis" };
 export default async function Page({
@@ -25,6 +25,20 @@ export default async function Page({
         title="Mimpi mereka, inspirasi kita."
         description="Jelajahi karya finalis yang sudah disetujui dan dipublikasikan."
       />
+      <nav className="gallery-competition-tabs" aria-label="Pilih jenis lomba">
+        <Link
+          className={filters.competition === "photogenic" ? "active" : ""}
+          href="/galeri?competition=photogenic"
+        >
+          Lomba Fotogenik
+        </Link>
+        <Link
+          className={filters.competition === "coloring" ? "active" : ""}
+          href="/galeri?competition=coloring"
+        >
+          Lomba Mewarnai
+        </Link>
+      </nav>
       <details className="gallery-filter" open={activeFilterCount > 0}>
         <summary>
           <span>Filter galeri</span>
@@ -84,33 +98,13 @@ export default async function Page({
         </form>
       </details>
       {items.length ? (
-        <div className="gallery-grid">
-          {items.map((i) => (
-            <Link
-              id={`finalis-${i.slug}`}
-              className={`gallery-card${filters.highlight === i.slug ? " gallery-highlight" : ""}`}
-              href={`/finalis/${i.slug}`}
-              key={i.slug}
-            >
-              <Image
-                src={publicImage(i.public_file_path)}
-                width={360}
-                height={360}
-                sizes="(max-width:760px) 90vw, 30vw"
-                alt={`Karya ${i.public_name}`}
-                className="rounded-xl aspect-square object-cover w-full"
-              />
-              <span className="eyebrow block mt-5">
-                {competitions[i.competition_type as keyof typeof competitions]}{" "}
-                · {categories[i.category as keyof typeof categories]}
-              </span>
-              <h3 className="mt-2">{i.public_name}</h3>
-              <p className="muted text-sm">
-                {i.regency_name}, {i.province_name}
-              </p>
-            </Link>
-          ))}
-        </div>
+        <GalleryGrid
+          highlighted={filters.highlight}
+          items={items.map((item) => ({
+            ...item,
+            imageUrl: publicImage(item.public_file_path),
+          }))}
+        />
       ) : (
         <p className="notice">
           Belum ada karya yang sesuai. Karya hanya muncul setelah disetujui dan

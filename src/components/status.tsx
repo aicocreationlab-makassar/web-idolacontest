@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { categories, competitions } from "@/lib/business-rules";
 import { ImageInput } from "./image-input";
 import { Fees } from "./shared";
-import { PartyPopper } from "lucide-react";
+import { Download, Paintbrush, PartyPopper, Printer } from "lucide-react";
 import { showSuccess } from "@/lib/success-event";
 type Status = {
   public_name: string;
@@ -26,6 +27,18 @@ type Status = {
     shipping_status: string;
   } | null;
 };
+const statusLabel: Record<string, string> = {
+  pending: "Menunggu verifikasi",
+  paid: "Sudah dibayar",
+  verified: "Aktif",
+  rejected: "Ditolak",
+  cancelled: "Dibatalkan",
+  pending_review: "Menunggu pemeriksaan",
+  approved: "Disetujui",
+  revision_requested: "Perlu diperbaiki",
+};
+const friendlyStatus = (value: string) =>
+  statusLabel[value] || value.replaceAll("_", " ");
 export function Status() {
   const [code, setCode] = useState("");
   const [verifiedCode, setVerifiedCode] = useState("");
@@ -34,12 +47,16 @@ export function Status() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
-  const [worksheet, setWorksheet] = useState("");
+  const [worksheet, setWorksheet] = useState<{
+    url: string;
+    downloadUrl: string;
+    version: number;
+  } | null>(null);
   async function lookup() {
     setBusy(true);
     setError("");
     setData(null);
-    setWorksheet("");
+    setWorksheet(null);
     try {
       const r = await fetch("/api/status", {
         method: "POST",
@@ -50,6 +67,21 @@ export function Status() {
       if (!r.ok) throw new Error(d.error);
       setData(d);
       setVerifiedCode(code);
+      if (d.worksheet_ready && d.payment_status === "paid") {
+        const worksheetResponse = await fetch("/api/worksheet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        const worksheetData = await worksheetResponse.json();
+        if (worksheetResponse.ok) {
+          setWorksheet({
+            url: worksheetData.url,
+            downloadUrl: worksheetData.download_url,
+            version: worksheetData.version,
+          });
+        }
+      }
       showSuccess(
         "Status peserta berhasil ditemukan.",
         "star",
@@ -112,15 +144,16 @@ export function Status() {
             ) : (
               <>
                 <p className="notice">
-                  Status pembayaran: {data.payment_status}. Data sudah
-                  tersimpan. Jika belum transfer, ikuti petunjuk berikut. Jika
-                  sudah, konfirmasikan ke admin dan tunggu verifikasi.
+                  Status pembayaran: {friendlyStatus(data.payment_status)}. Data
+                  sudah tersimpan. Jika belum transfer, ikuti petunjuk berikut.
+                  Jika sudah, konfirmasikan ke admin dan tunggu verifikasi.
                 </p>
                 <Fees />
               </>
             )}
             <p>
-              Status pendaftaran: <b>{data.registration_status}</b>
+              Status pendaftaran:{" "}
+              <b>{friendlyStatus(data.registration_status)}</b>
             </p>
             <p>
               Batas pengumpulan:{" "}
@@ -132,7 +165,12 @@ export function Status() {
               </b>
             </p>
             <p>
-              Status karya: <b>{data.submission?.status || "Belum dikirim"}</b>
+              Status karya:{" "}
+              <b>
+                {data.submission?.status
+                  ? friendlyStatus(data.submission.status)
+                  : "Belum dikirim"}
+              </b>
             </p>
             {data.submission?.publication_status === "approved" &&
               data.submission.slug && (
@@ -160,45 +198,54 @@ export function Status() {
               Baca instruksi lomba
             </Link>
             {data.worksheet_ready && data.payment_status === "paid" && (
-              <div className="stack">
-                <button
-                  className="btn secondary"
-                  disabled={busy}
-                  onClick={async () => {
-                    setBusy(true);
-                    try {
-                      const r = await fetch("/api/worksheet", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ code: verifiedCode }),
-                      });
-                      const d = await r.json();
-                      if (!r.ok) throw new Error(d.error);
-                      setWorksheet(d.url);
-                      showSuccess(
-                        "Worksheet siap dibuka dan dicetak.",
-                        "upload",
-                      );
-                    } catch (e) {
-                      setError((e as Error).message);
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  Siapkan unduhan worksheet
-                </button>
+              <section className="worksheet-ready-card">
+                <div className="worksheet-ready-heading">
+                  <Paintbrush aria-hidden="true" />
+                  <div>
+                    <span>KHUSUS UNTUK {data.public_name.toUpperCase()}</span>
+                    <h3>Worksheet Cita-Cita Si Kecil</h3>
+                    <p>
+                      Admin Idola sudah menyiapkan lembar mewarnai eksklusif
+                      dari foto dan cita-cita {data.public_name}.
+                    </p>
+                  </div>
+                </div>
                 {worksheet && (
-                  <a
-                    className="text-purple underline block"
-                    href={worksheet}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Buka worksheet · tautan berlaku 60 detik · cetak A4
-                  </a>
+                  <>
+                    <Image
+                      className="worksheet-direct-preview"
+                      src={worksheet.url}
+                      width={1200}
+                      height={1600}
+                      unoptimized
+                      alt={`Worksheet cita-cita ${data.public_name}`}
+                    />
+                    <ol className="worksheet-instructions">
+                      <li>
+                        <Download /> Unduh worksheet dalam kualitas penuh.
+                      </li>
+                      <li>
+                        <Printer /> Cetak pada kertas A4 dengan ukuran penuh.
+                      </li>
+                      <li>
+                        <Paintbrush /> Warnai sekreatif mungkin bersama si
+                        kecil.
+                      </li>
+                    </ol>
+                    <p className="worksheet-finish-note">
+                      Setelah karya selesai diwarnai, foto hasilnya dengan jelas
+                      lalu unggah melalui bagian <b>Kirim karya</b> di bawah
+                      ini.
+                    </p>
+                    <a
+                      className="btn worksheet-download"
+                      href={worksheet.downloadUrl}
+                    >
+                      <Download /> Download worksheet A4
+                    </a>
+                  </>
                 )}
-              </div>
+              </section>
             )}
           </div>
           {data.payment_status === "paid" &&

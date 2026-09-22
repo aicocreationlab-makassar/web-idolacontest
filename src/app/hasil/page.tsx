@@ -2,6 +2,7 @@ import { configured, service } from "@/lib/supabase/server";
 import { PageHeading, Fees } from "@/components/shared";
 import Link from "next/link";
 import { Trophy } from "lucide-react";
+import { categories, competitions } from "@/lib/business-rules";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Hasil & penghargaan" };
 export default async function Page() {
@@ -27,7 +28,8 @@ export default async function Page() {
               <span className="eyebrow">{r.award_code}</span>
               <h3>{r.public_name}</h3>
               <p>
-                {r.competition_type} · {r.category}
+                {competitions[r.competition_type as keyof typeof competitions]}{" "}
+                · {categories[r.category as keyof typeof categories]}
               </p>
               <p className="muted">
                 {r.regency_name}, {r.province_name}

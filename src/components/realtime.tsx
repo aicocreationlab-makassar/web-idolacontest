@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { browser } from "@/lib/supabase/client";
 
 export function Realtime() {
   const router = useRouter();
-  const [status, setStatus] = useState("Menghubungkan…");
 
   useEffect(() => {
     const db = browser();
     let timer: ReturnType<typeof setTimeout>;
+    const fallback = window.setInterval(() => router.refresh(), 30000);
+    const refreshOnFocus = () => router.refresh();
+    window.addEventListener("focus", refreshOnFocus);
     let channel = db.channel("admin-operations");
 
     for (const table of [
@@ -30,25 +32,19 @@ export function Realtime() {
       );
     }
 
-    channel.subscribe((nextStatus) =>
-      setStatus(
-        nextStatus === "SUBSCRIBED"
-          ? "Realtime aktif"
-          : nextStatus === "CHANNEL_ERROR"
-            ? "Koneksi realtime terputus; muat ulang halaman."
-            : nextStatus,
-      ),
-    );
+    channel.subscribe();
 
     return () => {
       clearTimeout(timer);
+      clearInterval(fallback);
+      window.removeEventListener("focus", refreshOnFocus);
       void db.removeChannel(channel);
     };
   }, [router]);
 
   return (
     <p className="admin-realtime" role="status">
-      <span aria-hidden="true">●</span> {status}
+      <span aria-hidden="true">●</span> Pembaruan otomatis aktif
     </p>
   );
 }

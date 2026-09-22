@@ -24,7 +24,6 @@ export function Login() {
             "login",
           );
           router.replace("/admin/dashboard");
-          router.refresh();
         } catch (e) {
           setError((e as Error).message);
         } finally {

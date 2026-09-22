@@ -31,6 +31,12 @@ export async function POST(req: Request) {
     if (!w) throw new Error("File worksheet belum tersedia.");
     return json({
       url: await signed("worksheets-private", w.private_file_path),
+      download_url: await signed(
+        "worksheets-private",
+        w.private_file_path,
+        86400,
+        true,
+      ),
       version: w.version,
     });
   } catch (e) {
