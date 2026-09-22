@@ -47,6 +47,15 @@ export function AdminFilters({
         </select>
       </label>
       <label className="field">
+        Review pendaftaran
+        <select name="review" defaultValue={filters.review}>
+          <option value="">Semua</option>
+          <option value="pending">Menunggu review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </label>
+      <label className="field">
         Pembayaran
         <select name="payment" defaultValue={filters.payment}>
           <option value="">Semua</option>

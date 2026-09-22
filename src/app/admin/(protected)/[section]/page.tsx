@@ -14,7 +14,8 @@ import { PageHeading } from "@/components/shared";
 const titles: Record<string, string> = {
   dashboard: "Dashboard",
   peserta: "Peserta",
-  pendaftaran: "Tambah peserta",
+  pendaftaran: "Pendaftaran masuk",
+  "tambah-peserta": "Tambah peserta",
   karya: "Review karya",
   penilaian: "Penilaian juri",
   hasil: "Hasil & penghargaan",
@@ -42,7 +43,7 @@ export default async function Page({
   const filters = await searchParams;
   const page = Math.max(1, Math.min(10000, Number(filters.page) || 1));
   const offset = (page - 1) * 25;
-  if (section === "pendaftaran")
+  if (section === "tambah-peserta")
     return (
       <>
         <PageHeading title={titles[section]} />
@@ -266,7 +267,10 @@ export default async function Page({
   );
   return (
     <>
-      <PageHeading title={titles[section]} />
+      <PageHeading
+        title={titles[section]}
+        description={section === "pendaftaran" ? "Periksa identitas, foto, kategori, dan data lengkap peserta sebelum memilih approve atau reject." : undefined}
+      />
       <AdminFilters filters={filters} seasons={seasons.data} />
       <div className="actions">
         <a
@@ -275,7 +279,7 @@ export default async function Page({
         >
           Ekspor CSV sesuai filter
         </a>
-        <Link className="btn" href="/admin/pendaftaran">
+        <Link className="btn" href="/admin/tambah-peserta">
           Tambah peserta
         </Link>
       </div>
@@ -310,9 +314,9 @@ export default async function Page({
                   {r.registration_source}
                 </td>
                 <td>
-                  {r.payment_status}
-                  <br />
-                  {r.registration_status}
+                  <span className={`admin-status status-${r.review_status || "pending"}`}>{r.review_status === "approved" ? "Approved" : r.review_status === "rejected" ? "Rejected" : "Menunggu review"}</span>
+                  <span className={`admin-status status-${r.payment_status}`}>Bayar: {r.payment_status}</span>
+                  <span className={`admin-status status-${r.registration_status}`}>Akses: {r.registration_status}</span>
                   {r.results.map(
                     (x: {
                       id: string;
@@ -350,8 +354,17 @@ export default async function Page({
                   )}
                 </td>
                 <td className="min-w-64">
+                  {section === "pendaftaran" && (
+                    <div className="stack">
+                      <Link className="btn secondary" href={`/admin/peserta/${r.id}`}>Periksa detail peserta</Link>
+                      <AdminControl action="registration_review" id={r.id} />
+                    </div>
+                  )}
                   {section === "peserta" && (
-                    <AdminControl action="payment" id={r.id} />
+                    <div className="stack">
+                      <Link className="text-purple font-bold underline" href={`/admin/peserta/${r.id}`}>Buka detail lengkap</Link>
+                      <AdminControl action="payment" id={r.id} />
+                    </div>
                   )}{" "}
                   {section === "hasil" && (
                     <div className="stack">
@@ -386,7 +399,7 @@ export default async function Page({
           </tbody>
         </table>
         {!data.length && (
-          <p className="py-6">Belum ada peserta yang cocok dengan filter.</p>
+          <p className="admin-empty">Kosong — belum ada data {section === "pendaftaran" ? "pendaftaran" : "peserta"} yang sesuai.</p>
         )}
       </div>
       <Pagination page={page} count={count || 0} filters={filters} />

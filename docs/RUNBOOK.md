@@ -17,7 +17,7 @@ Without Supabase credentials, informational pages render, gallery/results have e
 1. Create a Supabase project. Apply every SQL file in `supabase/migrations` in ascending filename order, either via the SQL editor or `supabase db push` after linking the project. Do not apply the same seed twice.
 2. Migrations create tables, constraints, RLS, narrow public views, transactional RPCs, audit triggers, four buckets, Realtime publication, and Season 1.
 3. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and server-only `SUPABASE_SERVICE_ROLE_KEY` in local/hosting secrets. Never prefix the service key with `NEXT_PUBLIC_`.
-4. Disable public signup in Supabase Auth. To create the initial `admin@idolacontest.my.id`, set `ADMIN_PASSWORD` only in your shell/secret store and run `npm run setup:admin`. The script uses the service role on the server, confirms the email, and grants `super_admin`. Alternatively create the Auth user in the dashboard and run `supabase/admin-role.sql`. Never place the password in a migration: migration files are source-controlled and Supabase Auth owns password hashing.
+4. Disable public signup in Supabase Auth. To create the initial `admin@idolacontest.my.ud`, set `ADMIN_PASSWORD` only in your shell/secret store and run `npm run setup:admin`. The script uses the service role on the server, confirms the email, and grants `super_admin`. Alternatively use the one-time `supabase/create-superadmin.sql`, then remove it because it contains a credential. `supabase/admin-role.sql` only grants the profile role to an existing Auth user.
 
 ```sql
 insert into public.admin_profiles(user_id,display_name,role)

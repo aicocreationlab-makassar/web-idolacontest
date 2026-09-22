@@ -17,6 +17,7 @@ const schema = z.object({
     "claim_paid",
     "shipment",
     "settings",
+    "registration_review",
   ]),
   id: z.uuid(),
   data: z.record(z.string(), z.unknown()).default({}),
@@ -78,14 +79,22 @@ export async function POST(req: Request) {
           );
       }
     }
-    const { error } = await db.rpc("admin_mutate", {
-      p_action: input.action,
-      p_id: input.id,
-      p_data: input.data,
-    });
+    const { error } = input.action === "registration_review"
+      ? await db.rpc("admin_review_registration", {
+          p_id: input.id,
+          p_status: input.data.status,
+          p_note: input.data.note ?? null,
+        })
+      : await db.rpc("admin_mutate", {
+          p_action: input.action,
+          p_id: input.id,
+          p_data: input.data,
+        });
     if (error)
       throw new Error(
-        "Data belum dapat diubah. Periksa prasyarat, periode, dan status terkait.",
+        input.action === "registration_review"
+          ? "Review pendaftaran belum dapat disimpan. Pastikan migration terbaru sudah diterapkan."
+          : "Data belum dapat diubah. Periksa prasyarat, periode, dan status terkait.",
       );
     return json({ ok: true });
   } catch (e) {

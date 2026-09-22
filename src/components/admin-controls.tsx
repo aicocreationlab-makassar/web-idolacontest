@@ -14,7 +14,8 @@ type Control =
   | "invoice"
   | "claim_paid"
   | "shipment"
-  | "settings";
+  | "settings"
+  | "registration_review";
 export function AdminControl({
   action,
   id,
@@ -60,16 +61,18 @@ export function AdminControl({
         }
       }}
     >
-      {(action === "payment" || action === "review") && (
+      {(action === "payment" || action === "review" || action === "registration_review") && (
         <>
           <label className="field">
             Status
             <select name="status">
               {(action === "payment"
-                ? ["pending", "paid", "rejected", "refunded"]
-                : ["approved", "revision_required", "rejected"]
-              ).map((v) => (
-                <option key={v}>{v}</option>
+                ? [["pending","Menunggu"],["paid","Sudah dibayar"],["rejected","Ditolak"],["refunded","Dikembalikan"]]
+                : action === "registration_review"
+                  ? [["pending","Menunggu review"],["approved","Approve pendaftaran"],["rejected","Reject pendaftaran"]]
+                  : [["approved","Disetujui"],["revision_required","Perlu revisi"],["rejected","Ditolak"]]
+              ).map(([value,label]) => (
+                <option key={value} value={value}>{label}</option>
               ))}
             </select>
           </label>
@@ -195,6 +198,7 @@ export function AdminControl({
               award: "Tetapkan penghargaan",
               shipment: "Simpan pengiriman",
               settings: "Simpan pengaturan",
+              registration_review: "Simpan keputusan pendaftaran",
             }[action]}
       </button>
       {message && (

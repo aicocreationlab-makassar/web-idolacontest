@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { admin } from "@/lib/supabase/server";
+import { AdminSidebar } from "@/components/admin-sidebar";
 export const dynamic = "force-dynamic";
 export default async function Layout({
   children,
@@ -13,35 +13,13 @@ export default async function Layout({
   } catch {
     redirect("/admin/login");
   }
-  const pages =
-    role === "judge"
-      ? ["penilaian"]
-      : [
-          "dashboard",
-          "peserta",
-          "pendaftaran",
-          "karya",
-          "penilaian",
-          "hasil",
-          "klaim-hadiah",
-          "pengiriman",
-          "settings",
-          "audit",
-        ];
   return (
-    <div className="wrap section">
-      <span className="eyebrow">Ruang pengelola · {role}</span>
-      <nav className="admin-nav">
-        {pages.map((p) => (
-          <Link href={`/admin/${p}`} key={p}>
-            {p.replaceAll("-", " ")}
-          </Link>
-        ))}
-        <form action="/api/admin/logout" method="post">
-          <button className="btn secondary">Keluar</button>
-        </form>
-      </nav>
-      {children}
+    <div className="admin-shell">
+      <AdminSidebar role={role} />
+      <div className="admin-workspace">
+        <header className="admin-topbar"><div><span>Idola Contest</span><b>Ruang Pengelola</b></div><span className="admin-live-dot">Sistem aktif</span></header>
+        <div className="admin-page">{children}</div>
+      </div>
     </div>
   );
 }

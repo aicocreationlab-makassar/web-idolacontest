@@ -6,6 +6,7 @@ export type Filters = {
   competition?: string;
   category?: string;
   payment?: string;
+  review?: string;
   province?: string;
   source?: string;
   page?: string;
@@ -22,6 +23,7 @@ export function registrationQuery(db: SupabaseClient, filters: Filters) {
   if (filters.competition) q = q.eq("competition_type", filters.competition);
   if (filters.category) q = q.eq("category", filters.category);
   if (filters.payment) q = q.eq("payment_status", filters.payment);
+  if (filters.review) q = q.eq("review_status", filters.review);
   if (filters.province)
     q = q.ilike(
       "participants.province_name",

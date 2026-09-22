@@ -26,7 +26,7 @@ Admin-only Supabase Auth, role guards, dashboard/realtime refresh, participant f
 
 ## 5. Required environment variables
 
-Required for live operation: `NEXT_PUBLIC_SITE_URL=https://idolacontest.my.id`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and server-only `SUPABASE_SERVICE_ROLE_KEY`. Configure `NEXT_PUBLIC_WHATSAPP_NUMBER` for the WhatsApp confirmation button. Region API has a documented safe default; postcode API is optional. `ADMIN_EMAIL` defaults to `admin@idolacontest.my.id`; `ADMIN_PASSWORD` is required only when running the one-time admin bootstrap and must remain in a secret store.
+Required for live operation: `NEXT_PUBLIC_SITE_URL=https://idolacontest.my.id`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and server-only `SUPABASE_SERVICE_ROLE_KEY`. Configure `NEXT_PUBLIC_WHATSAPP_NUMBER` for the WhatsApp confirmation button. Region API has a documented safe default; postcode API is optional. `ADMIN_EMAIL` defaults to `admin@idolacontest.my.ud`; `ADMIN_PASSWORD` is required only when running the one-time admin bootstrap and must remain in a secret store.
 
 ## 6. Remaining manual Supabase steps
 

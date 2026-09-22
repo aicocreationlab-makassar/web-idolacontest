@@ -1,7 +1,5 @@
-import { MobileCta } from "@/components/mobile-cta";
 import type { Metadata, Viewport } from "next";
-import { BrandNavbar } from "@/components/brand-navbar";
-import { BrandFooter } from "@/components/brand-footer";
+import { SiteChrome } from "@/components/site-chrome";
 
 import { Pwa } from "@/components/pwa";
 import "@fontsource-variable/fredoka";
@@ -58,10 +56,7 @@ export default function RootLayout({
         <a className="skip" href="#main">
           Lewati ke konten
         </a>
-        <BrandNavbar />
-        <main id="main">{children}</main>
-        <BrandFooter />
-        <MobileCta />
+        <SiteChrome>{children}</SiteChrome>
         <Pwa />
       </body>
     </html>
