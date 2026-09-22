@@ -4,6 +4,7 @@ import Link from "next/link";
 import { categories, competitions } from "@/lib/business-rules";
 import { ImageInput } from "./image-input";
 import { Fees } from "./shared";
+import { PartyPopper } from "lucide-react";
 type Status = {
   public_name: string;
   competition_type: keyof typeof competitions;
@@ -94,8 +95,9 @@ export function Status() {
               {categories[data.category]}
             </p>
             {data.payment_status === "paid" ? (
-              <div className="notice bg-mint!">
-                🎉 Yeay! Pembayaranmu Sudah Terverifikasi!
+              <div className="notice bg-mint! flex items-center gap-3">
+                <PartyPopper aria-hidden="true" /> Yeay! Pembayaranmu Sudah
+                Terverifikasi!
               </div>
             ) : (
               <>

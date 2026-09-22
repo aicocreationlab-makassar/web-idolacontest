@@ -89,6 +89,10 @@ test("Migrations, RLS and full database lifecycle", async () => {
   }
   await asUser(admin);
   await mutate("payment", rid, { status: "paid", note: "verified" });
+  assert.equal(
+    (await db.query("select * from public_recent_registrations")).rows.length,
+    1,
+  );
   await mutate("worksheet", rid, { path: "worksheet.webp" });
   assert.equal((await db.query("select * from worksheets")).rows.length, 1);
   await db.exec("reset role");
@@ -186,6 +190,17 @@ test("Migrations, RLS and full database lifecycle", async () => {
     (await db.query<{ ok: boolean }>(`select consume_rate_limit('test',1) ok`))
       .rows[0].ok,
     false,
+  );
+  await asUser(admin);
+  await db.query("select admin_delete_registration($1)", [rid]);
+  assert.equal((await db.query("select * from registrations")).rows.length, 0);
+  assert.equal((await db.query("select * from participants")).rows.length, 0);
+  assert.ok(
+    (
+      await db.query(
+        "select * from admin_audit_logs where action='HARD_DELETE'",
+      )
+    ).rows.length >= 1,
   );
   await db.close();
 });

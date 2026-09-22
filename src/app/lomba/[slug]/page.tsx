@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { categories, criteria, weights } from "@/lib/business-rules";
 import { Fees, PageHeading } from "@/components/shared";
+import { ToyArt } from "@/components/decorations";
 export async function generateMetadata({
   params,
 }: {
@@ -34,9 +35,10 @@ export default async function Page({
       />
       <div className="grid2">
         <div className="card stack">
-          <span className="text-6xl" aria-hidden>
-            {coloring ? "🎨" : "📸"}
-          </span>
+          <ToyArt
+            kind={coloring ? "palette" : "camera"}
+            className="art-icon-modern"
+          />
           <h2 className="text-2xl">
             Lomba {coloring ? "Mewarnai" : "Fotogenik"}
           </h2>

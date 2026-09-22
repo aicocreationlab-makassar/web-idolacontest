@@ -6,6 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin/", "/api/", "/cek-status", "/daftar/sukses"],
     },
-    sitemap: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/sitemap.xml`,
+    sitemap: `${process.env.NEXT_PUBLIC_SITE_URL || "https://idolacontest.my.id"}/sitemap.xml`,
+    host: process.env.NEXT_PUBLIC_SITE_URL || "https://idolacontest.my.id",
   };
 }

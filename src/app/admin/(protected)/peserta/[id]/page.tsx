@@ -4,6 +4,7 @@ import {
   AdminControl,
   PrivateMedia,
   WorksheetUpload,
+  DeleteRegistration,
 } from "@/components/admin-controls";
 import { PageHeading } from "@/components/shared";
 export default async function Page({
@@ -89,6 +90,7 @@ export default async function Page({
           )}
         </section>
       </div>
+      <DeleteRegistration id={r.id} />
     </>
   );
 }

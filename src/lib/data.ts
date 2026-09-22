@@ -20,6 +20,16 @@ export async function gallery() {
   if (error) throw new Error("Galeri belum dapat dimuat.");
   return data ?? [];
 }
+export async function recentRegistrations() {
+  if (!configured()) return [];
+  const { data, error } = await service()
+    .from("public_recent_registrations")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(10);
+  if (error) throw new Error("Aktivitas registrasi belum dapat dimuat.");
+  return data ?? [];
+}
 export function publicImage(path: string) {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/gallery-public/${path}`;
 }

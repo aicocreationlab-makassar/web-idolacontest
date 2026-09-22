@@ -17,14 +17,14 @@ Without Supabase credentials, informational pages render, gallery/results have e
 1. Create a Supabase project. Apply every SQL file in `supabase/migrations` in ascending filename order, either via the SQL editor or `supabase db push` after linking the project. Do not apply the same seed twice.
 2. Migrations create tables, constraints, RLS, narrow public views, transactional RPCs, audit triggers, four buckets, Realtime publication, and Season 1.
 3. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and server-only `SUPABASE_SERVICE_ROLE_KEY` in local/hosting secrets. Never prefix the service key with `NEXT_PUBLIC_`.
-4. Disable public signup in Supabase Auth. Create an admin using the Supabase dashboard, then run the following with its actual UUID:
+4. Disable public signup in Supabase Auth. To create the initial `admin@idolacontest.my.id`, set `ADMIN_PASSWORD` only in your shell/secret store and run `npm run setup:admin`. The script uses the service role on the server, confirms the email, and grants `super_admin`. Alternatively create the Auth user in the dashboard and run `supabase/admin-role.sql`. Never place the password in a migration: migration files are source-controlled and Supabase Auth owns password hashing.
 
 ```sql
 insert into public.admin_profiles(user_id,display_name,role)
 values ('REPLACE-WITH-AUTH-USER-UUID','Nama Pengelola','super_admin');
 ```
 
-5. Configure Supabase Auth Site URL to the production HTTPS domain. Do not put passwords in SQL, source control, or seed files. Create judge accounts separately with `role='judge'`.
+5. Configure Supabase Auth Site URL to `https://idolacontest.my.id` and add the same production redirect origin. Do not put passwords in SQL, source control, or seed files. Create judge accounts separately with `role='judge'`.
 6. Confirm buckets `participant-private`, `submission-private`, `worksheets-private` are private. `gallery-public` alone is public. There are deliberately no browser upload/write policies: uploads pass through authorized server routes. Signed private URLs expire after 60 seconds.
 7. Confirm Realtime is enabled for registrations, payments, submissions, claim_invoices, shipments. RLS limits subscribers to authorized admins; judges do not subscribe to the operational dashboard.
 8. Set `NEXT_PUBLIC_SITE_URL` to the canonical HTTPS origin, and `NEXT_PUBLIC_WHATSAPP_NUMBER` to an international number containing digits only (e.g. 62...). No phone number is invented when absent.
@@ -56,6 +56,7 @@ Every operational write goes through a permission-checked RPC with audit trigger
 6. Judges enter scores. Set an award; the final score is the average of human judges' weighted totals. Best Social Media is a separate award selection, not a modification to any judge criterion.
 7. Publish results only on/after the configured announcement time. Issue a Rp120.000 invoice. Verify claim payment, then enter courier/status/tracking. Shipped/delivered requires the shipping start date, paid claim and tracking number.
 8. Export CSV from the relevant operational screen. Search, season, competition, category, province, payment and source filters carry through to the entire export. CSV cells are escaped against spreadsheet formula injection.
+9. A participant detail page has a hard-delete control that removes all related Storage objects and database rows. Settings has a separate season media purge: it preserves registration/payment/result records while permanently removing participant photos, worksheets, submissions, gallery copies, and submission scores. Both actions require typed confirmation, admin authorization, and create audit records. Take a verified backup before a season purge.
 
 ## Seasons and time
 

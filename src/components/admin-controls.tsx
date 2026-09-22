@@ -293,3 +293,111 @@ export function WorksheetUpload({ id }: { id: string }) {
     </form>
   );
 }
+export function DeleteRegistration({ id }: { id: string }) {
+  const router = useRouter();
+  const [confirmation, setConfirmation] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <section className="danger-zone stack">
+      <h3>Hapus permanen peserta</h3>
+      <p>
+        Menghapus data peserta, registrasi, pembayaran, worksheet, karya privat,
+        foto publik, nilai, klaim, dan pengiriman. Tindakan ini dicatat di audit
+        log.
+      </p>
+      <label className="field">
+        Ketik <b>HAPUS</b> untuk melanjutkan
+        <input
+          value={confirmation}
+          onChange={(e) => setConfirmation(e.target.value)}
+          autoComplete="off"
+        />
+      </label>
+      <button
+        type="button"
+        className="btn danger-button"
+        disabled={busy || confirmation !== "HAPUS"}
+        onClick={async () => {
+          setBusy(true);
+          setMessage("");
+          try {
+            const response = await fetch("/api/admin/delete-registration", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id, confirmation }),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            router.push("/admin/peserta");
+            router.refresh();
+          } catch (error) {
+            setMessage((error as Error).message);
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? "Menghapus file dan data…" : "Hapus peserta & seluruh foto"}
+      </button>
+      {message && (
+        <p className="notice error" role="alert">
+          {message}
+        </p>
+      )}
+    </section>
+  );
+}
+export function PurgeSeasonMedia({ id }: { id: string }) {
+  const [confirmation, setConfirmation] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const router = useRouter();
+  return (
+    <div className="danger-zone stack">
+      <h3>Hapus seluruh foto season</h3>
+      <p>
+        Data registrasi tetap ada. Foto peserta, worksheet, karya privat,
+        salinan galeri, dan nilai yang terkait karya akan dihapus permanen.
+      </p>
+      <label className="field">
+        Ketik <b>HAPUS FOTO SEASON</b>
+        <input
+          value={confirmation}
+          onChange={(e) => setConfirmation(e.target.value)}
+        />
+      </label>
+      <button
+        type="button"
+        className="btn danger-button"
+        disabled={busy || confirmation !== "HAPUS FOTO SEASON"}
+        onClick={async () => {
+          setBusy(true);
+          setMessage("");
+          try {
+            const response = await fetch("/api/admin/purge-season-media", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id, confirmation }),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            setMessage("Seluruh media season telah dihapus.");
+            setConfirmation("");
+            router.refresh();
+          } catch (error) {
+            setMessage((error as Error).message);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? "Menghapus semua media…" : "Hapus semua foto season"}
+      </button>
+      {message && (
+        <p className="notice" role="status">
+          {message}
+        </p>
+      )}
+    </div>
+  );
+}

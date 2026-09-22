@@ -4,16 +4,16 @@ const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
   : "";
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${supabaseOrigin}`,
-  `connect-src 'self' ${supabaseOrigin} ${supabaseOrigin.replace('https:', 'wss:')}`,
+  `connect-src 'self' ${supabaseOrigin} ${supabaseOrigin.replace("https:", "wss:")}`,
   "font-src 'self' data:",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-].join('; ');
+].join("; ");
 const config: NextConfig = {
   poweredByHeader: false,
   experimental: { cpus: 1, webpackMemoryOptimizations: true },

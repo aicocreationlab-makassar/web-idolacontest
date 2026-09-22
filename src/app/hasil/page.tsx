@@ -1,6 +1,7 @@
 import { configured, service } from "@/lib/supabase/server";
 import { PageHeading, Fees } from "@/components/shared";
 import Link from "next/link";
+import { Trophy } from "lucide-react";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Hasil & penghargaan" };
 export default async function Page() {
@@ -22,9 +23,7 @@ export default async function Page() {
         <div className="grid3">
           {result.data.map((r, i) => (
             <div className="card stack" key={i}>
-              <span className="text-4xl" aria-hidden>
-                🏆
-              </span>
+              <Trophy className="art-icon-modern" aria-hidden="true" />
               <span className="eyebrow">{r.award_code}</span>
               <h3>{r.public_name}</h3>
               <p>

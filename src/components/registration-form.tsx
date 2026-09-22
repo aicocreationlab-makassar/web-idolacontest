@@ -1,10 +1,17 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { categories, competitions, feeConsent } from "@/lib/business-rules";
 import { ImageInput } from "./image-input";
-import { Fees } from "./shared";
+import {
+  Check,
+  Copy,
+  CreditCard,
+  LoaderCircle,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 type Fields = Record<string, string | boolean>;
 type Region = { id: string; name: string };
 const groups = [
@@ -15,13 +22,9 @@ const groups = [
     "school_name",
     "class_label",
     "dream_job",
-    "competition_type",
-    "category",
   ],
+  ["parent_name", "whatsapp", "instagram_username"],
   [
-    "parent_name",
-    "whatsapp",
-    "instagram_username",
     "address_line",
     "province_code",
     "regency_code",
@@ -29,6 +32,7 @@ const groups = [
     "village_code",
     "postal_code",
   ],
+  ["competition_type", "category"],
   [
     "consent_parent_guardian",
     "consent_publication",
@@ -53,6 +57,9 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
     },
   });
   const [step, setStep] = useState(0);
+  const [confirming, setConfirming] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const topRef = useRef<HTMLDivElement>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -78,15 +85,19 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
   }
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/regions/provinces', {signal: controller.signal})
-      .then(async response => {
+    fetch("/api/regions/provinces", { signal: controller.signal })
+      .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
         return data as Region[];
       })
-      .then(data => setLocations([data, [], [], []]))
-      .catch(error => {if (!controller.signal.aborted) setError((error as Error).message);})
-      .finally(() => {if (!controller.signal.aborted) setLoading(false);});
+      .then((data) => setLocations([data, [], [], []]))
+      .catch((error) => {
+        if (!controller.signal.aborted) setError((error as Error).message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
     return () => controller.abort();
   }, []);
   function field(name: string, label: string, type = "text", required = true) {
@@ -115,6 +126,9 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
     if (await trigger(groups[step])) {
       setStep(step + 1);
       setError("");
+      requestAnimationFrame(() =>
+        topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
     }
   }
   async function submit() {
@@ -143,17 +157,42 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
       setBusy(false);
     }
   }
+  async function confirmSubmission() {
+    if (!(await trigger(groups[4]))) return;
+    if (!photo) {
+      setError("Pilih foto valid maksimum 2 MB.");
+      return;
+    }
+    setConfirming(true);
+  }
+  function back() {
+    setStep((current) => Math.max(0, current - 1));
+    requestAnimationFrame(() =>
+      topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  }
   return (
-    <div className="card stack">
-      <ol className="flex gap-3 mb-8" aria-label="Langkah pendaftaran">
-        {["Si kecil", "Orang tua & alamat", "Foto & persetujuan"].map(
+    <div className="registration-panel card stack" ref={topRef}>
+      {busy && (
+        <div className="submit-loading" role="status" aria-live="polite">
+          <div className="loading-mascot">
+            <Sparkles />
+            <LoaderCircle />
+          </div>
+          <h2>Sedang menyiapkan panggung si kecil…</h2>
+          <p>Foto dan data sedang diamankan. Sebentar lagi selesai!</p>
+        </div>
+      )}
+      <ol className="registration-progress" aria-label="Langkah pendaftaran">
+        {["Data Anak", "Orang Tua", "Alamat", "Foto", "Konfirmasi"].map(
           (s, i) => (
             <li
               key={s}
-              className={`flex-1 text-sm ${step === i ? "text-purple font-bold" : "muted"}`}
+              className={step === i ? "active" : step > i ? "done" : ""}
               aria-current={step === i ? "step" : undefined}
             >
-              {i + 1}. {s}
+              <span>{step > i ? <Check size={17} /> : i + 1}</span>
+              <b>{s}</b>
             </li>
           ),
         )}
@@ -162,8 +201,8 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
         className="stack"
         onSubmit={(e) => {
           e.preventDefault();
-          if (step < 2) void next();
-          else void submit();
+          if (step < 4) void next();
+          else void confirmSubmission();
         }}
       >
         <div className="hidden" aria-hidden="true">
@@ -181,47 +220,26 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
             {field("school_name", "Nama sekolah / belum sekolah")}
             {field("class_label", "Kelas (opsional)", "text", false)}
             {field("dream_job", "Cita-cita anak")}
-            <label className="field">
-              Jenis lomba
-              <select
-                {...register("competition_type", {
-                  required: true,
-                  onChange: () => setValue("category", "paud"),
-                })}
-              >
-                {Object.entries(competitions).map(([v, n]) => (
-                  <option value={v} key={v}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Kategori
-              <select {...register("category", { required: true })}>
-                {Object.entries(categories)
-                  .filter(
-                    ([v]) => competition !== "coloring" || v !== "preschool",
-                  )
-                  .map(([v, n]) => (
-                    <option value={v} key={v}>
-                      {n}
-                    </option>
-                  ))}
-              </select>
-            </label>
           </div>
         </div>
         <div hidden={step !== 1} className="stack">
-          <h2 className="text-2xl">Data orang tua & alamat</h2>
+          <h2 className="text-2xl">Data orang tua / wali</h2>
           <p className="muted">
-            Data ini bersifat privat dan digunakan untuk administrasi serta
-            pengiriman.
+            Data ini privat dan hanya digunakan untuk administrasi lomba.
           </p>
           <div className="grid2">
             {field("parent_name", "Nama orang tua / wali")}
             {field("whatsapp", "WhatsApp aktif", "tel")}
             {field("instagram_username", "Username Instagram")}
+          </div>
+        </div>
+        <div hidden={step !== 2} className="stack">
+          <h2 className="text-2xl">Alamat pengiriman</h2>
+          <p className="muted">
+            Alamat disimpan privat untuk kebutuhan administrasi dan pengiriman
+            hadiah.
+          </p>
+          <div className="grid2">
             {field("address_line", "Jalan / nomor rumah")}
             {["province", "regency", "district", "village"].map((key, i) => (
               <label className="field" key={key}>
@@ -275,7 +293,7 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
                   ))}
                 </select>
                 {errors[`${key}_code`] && (
-                  <span className="text-red-700 text-xs">Pilih wilayah</span>
+                  <span className="field-error">Pilih wilayah</span>
                 )}
               </label>
             ))}
@@ -286,16 +304,88 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
           </div>
           <button
             type="button"
-            className="text-purple underline"
+            className="text-purple underline self-start"
             onClick={() => void loadRegions(0)}
           >
             Muat ulang daftar provinsi
           </button>
         </div>
-        <div hidden={step !== 2} className="stack">
-          <h2 className="text-2xl">Sedikit lagi, siap bersinar!</h2>
+        <div hidden={step !== 3} className="stack">
+          <h2 className="text-2xl">Pilih lomba & foto</h2>
+          <div className="grid2">
+            <label className="field">
+              Jenis lomba
+              <select
+                {...register("competition_type", {
+                  required: true,
+                  onChange: () => setValue("category", "paud"),
+                })}
+              >
+                {Object.entries(competitions).map(([v, n]) => (
+                  <option value={v} key={v}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              Kategori
+              <select {...register("category", { required: true })}>
+                {Object.entries(categories)
+                  .filter(
+                    ([v]) => competition !== "coloring" || v !== "preschool",
+                  )
+                  .map(([v, n]) => (
+                    <option value={v} key={v}>
+                      {n}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          </div>
           <ImageInput onChange={setPhoto} />
-          <Fees />
+        </div>
+        <div hidden={step !== 4} className="stack">
+          <h2 className="text-2xl">Konfirmasi pendaftaran</h2>
+          <div className="payment-highlight">
+            <div className="payment-highlight-icon">
+              <CreditCard />
+            </div>
+            <div>
+              <span>INFO PENTING</span>
+              <h3>Biaya registrasi Rp20.000</h3>
+              <p>
+                Transfer ke BSI a.n. <b>Riswan Ramadhan</b>
+              </p>
+              <button
+                type="button"
+                className="account-copy"
+                onClick={async () => {
+                  await navigator.clipboard.writeText("7341301558");
+                  setCopied(true);
+                }}
+              >
+                <code>7341301558</code>
+                <Copy size={17} />
+                {copied ? "Tersalin" : "Salin rekening"}
+              </button>
+            </div>
+          </div>
+          <div className="notice important-note">
+            <ShieldCheck />
+            <p>
+              Simpan bukti pendaftaran dan kirim bukti pembayaran melalui DM
+              Instagram{" "}
+              <a
+                href="https://instagram.com/idola.contest"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <b>@idola.contest</b>
+              </a>
+              .
+            </p>
+          </div>
           <p>
             <a
               className="text-purple underline"
@@ -361,23 +451,60 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
         )}
         <div className="actions">
           {step > 0 && (
-            <button
-              type="button"
-              className="btn secondary"
-              onClick={() => setStep(step - 1)}
-            >
+            <button type="button" className="btn secondary" onClick={back}>
               Kembali
             </button>
           )}
           <button className="btn" disabled={busy}>
             {busy
               ? "Menyimpan…"
-              : step < 2
+              : step < 4
                 ? "Lanjutkan →"
-                : "Kirim pendaftaran ↗"}
+                : "Kirim pendaftaran →"}
           </button>
         </div>
       </form>
+      {confirming && (
+        <div
+          className="confirm-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="payment-confirm-title"
+        >
+          <div className="confirm-dialog">
+            <div className="confirm-icon">
+              <CreditCard />
+            </div>
+            <h2 id="payment-confirm-title">Sudah transfer Rp20.000?</h2>
+            <p>
+              Pastikan pembayaran registrasi telah ditransfer ke BSI 7341301558
+              a.n. Riswan Ramadhan.
+            </p>
+            <div className="actions">
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => setConfirming(false)}
+              >
+                Belum, kembali bayar
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  setConfirming(false);
+                  void submit();
+                }}
+              >
+                Sudah, kirim data
+              </button>
+            </div>
+            <small>
+              Jika memilih “Belum”, data tidak dikirim dan tidak disimpan.
+            </small>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

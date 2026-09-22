@@ -1,8 +1,299 @@
-import {useId} from 'react';
-export function WaveDivider({flip=false,className=''}:{flip?:boolean;className?:string}){return <svg aria-hidden="true" className={`wave-divider ${flip?'wave-flip':''} ${className}`} viewBox="0 0 1440 100" preserveAspectRatio="none"><path fill="currentColor" d="M0 42C110 105 180-12 335 40S540 101 690 47 862 10 1040 49s236 23 400-22v73H0Z"/></svg>;}
-export function StarDecoration({className=''}:{className?:string}){return <svg className={`star-decoration ${className}`} aria-hidden="true" viewBox="0 0 80 80"><path d="m40 5 11 22 25 4-18 18 4 25-22-12-22 12 4-25L4 31l25-4Z" fill="currentColor" stroke="#fff1a8" strokeWidth="3" strokeLinejoin="round"/><path d="m40 15-7 18-18 2" fill="none" stroke="white" strokeOpacity=".65" strokeWidth="5" strokeLinecap="round"/></svg>;}
-export function CloudDecoration({className=''}:{className?:string}){return <svg className={`cloud-decoration ${className}`} viewBox="0 0 160 75" aria-hidden="true"><path d="M25 68C-9 68-3 27 26 31 22 1 74-11 90 21 112 6 142 25 138 42 171 43 165 69 138 69Z" fill="white"/><path d="M22 62h115" stroke="#daf4ff" strokeWidth="9" strokeLinecap="round"/></svg>;}
-export function SparkleDecoration({className=''}:{className?:string}){return <span className={`sparkle-decoration ${className}`} aria-hidden="true">✦</span>;}
-export function ColorBlob({className=''}:{className?:string}){return <div className={`color-blob ${className}`} aria-hidden="true"/>;}
-export function FloatingSticker({children,className=''}:{children:React.ReactNode;className?:string}){return <div className={`floating-sticker ${className}`}>{children}</div>;}
-export function ToyArt({kind,className=''}:{kind:'camera'|'palette'|'trophy'|'pencil';className?:string}){const id=useId().replaceAll(':','');return <svg aria-hidden="true" className={`toy-art ${className}`} viewBox="0 0 220 190"><defs><linearGradient id={`${id}blue`} x2="0.8" y2="1"><stop stopColor="#75e5ff"/><stop offset=".45" stopColor="#23b4ff"/><stop offset="1" stopColor="#1472d8"/></linearGradient><linearGradient id={`${id}pink`} x2="0.4" y2="1"><stop stopColor="#ffbcdf"/><stop offset=".5" stopColor="#ff5dae"/><stop offset="1" stopColor="#c63097"/></linearGradient><linearGradient id={`${id}gold`} x2=".5" y2="1"><stop stopColor="#fffaa0"/><stop offset=".5" stopColor="#ffd341"/><stop offset="1" stopColor="#ee950d"/></linearGradient><radialGradient id={`${id}lens`} cx=".35" cy=".25"><stop stopColor="#a8a3ff"/><stop offset=".45" stopColor="#7950dd"/><stop offset="1" stopColor="#242064"/></radialGradient><filter id={`${id}shadow`} x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="8" stdDeviation="5" floodColor="#4c5ca7" floodOpacity=".2"/></filter></defs><g filter={`url(#${id}shadow)`} transform="rotate(-8 110 100)">{kind==='camera'?<><path d="M61 44 72 24h53l12 20" fill={`url(#${id}pink)`} stroke="#fff" strokeWidth="3"/><rect x="22" y="42" width="178" height="124" rx="27" fill={`url(#${id}blue)`} stroke="#e3faff" strokeWidth="4"/><path d="M33 58h151" stroke="white" strokeWidth="5" strokeOpacity=".6" strokeLinecap="round"/><rect x="40" y="67" width="30" height="20" rx="8" fill={`url(#${id}gold)`}/><circle cx="124" cy="108" r="47" fill={`url(#${id}pink)`} stroke="#fff" strokeWidth="5"/><circle cx="124" cy="108" r="34" fill={`url(#${id}lens)`} stroke="#e99bff" strokeWidth="5"/><ellipse cx="114" cy="96" rx="14" ry="11" fill="white" opacity=".65"/><circle cx="172" cy="66" r="7" fill="#ffef65"/></>:kind==='palette'?<><path d="M109 28C47 18 15 57 19 108c4 57 60 72 96 56 13-6 5-20 17-24 12-4 19 8 36 3 51-16 36-104-22-112-13-2-22 0-37-3Z" fill={`url(#${id}gold)`} stroke="#fff3bc" strokeWidth="5"/><ellipse cx="131" cy="122" rx="19" ry="14" fill="#fff8e4"/>{[[61,68,'#ff609e'],[104,53,'#3da9ff'],[147,65,'#73d454'],[57,113,'#9663df'],[88,141,'#fb8351']].map(([x,y,c])=><g key={String(c)}><ellipse cx={x} cy={y} rx="19" ry="16" fill={String(c)}/><ellipse cx={Number(x)-5} cy={Number(y)-5} rx="8" ry="4" fill="white" opacity=".55"/></g>)}<path d="m165 162 20-104" stroke="#ed508b" strokeWidth="13" strokeLinecap="round"/><path d="m185 58 8-31 2 34" fill="#8150c4"/></>:kind==='trophy'?<><path d="M65 47H33c-4 42 18 59 45 56M155 47h32c4 42-18 59-45 56" fill="none" stroke="#f8c732" strokeWidth="15"/><path d="M58 24h105l-8 55c-5 35-30 45-43 45S68 114 64 79Z" fill={`url(#${id}gold)`} stroke="#fff4b9" strokeWidth="4"/><path d="M108 119v28" stroke="#f3b62d" strokeWidth="16"/><rect x="70" y="146" width="84" height="24" rx="9" fill={`url(#${id}blue)`} stroke="#b1edff" strokeWidth="3"/><path d="m110 46 9 16 18 3-13 13 3 19-17-9-17 9 3-19-13-13 18-3Z" fill="#fff8ba"/><path d="M73 36v38" stroke="white" strokeOpacity=".6" strokeWidth="6" strokeLinecap="round"/></>:<><g transform="rotate(12 110 100)"><path d="m72 137 8-96 27 3-8 96-17 28Z" fill={`url(#${id}pink)`} stroke="#fff" strokeWidth="3"/><path d="m72 137 10 31 17-28Z" fill="#ffdf9a"/><path d="m79 157 3 11 6-10" fill="#633785"/><path d="M79 42 81 24q1-14 15-12t13 15l-2 18" fill="#bf88e9"/><path d="m112 146 8-115 28 2-8 116-17 29Z" fill={`url(#${id}blue)`} stroke="#fff" strokeWidth="3"/><path d="m112 146 11 32 17-29Z" fill="#ffdf9a"/><path d="m120 169 3 9 6-10" fill="#245093"/><path d="m154 137 5-90 25 2-5 89-15 25Z" fill={`url(#${id}gold)`} stroke="#fff" strokeWidth="3"/><path d="m154 137 10 26 15-25Z" fill="#ffdf9a"/><path d="m161 155 3 8 5-8" fill="#ce8131"/></g></>}</g></svg>;}
+import { useId } from "react";
+export function WaveDivider({
+  flip = false,
+  className = "",
+}: {
+  flip?: boolean;
+  className?: string;
+}) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={`wave-divider ${flip ? "wave-flip" : ""} ${className}`}
+      viewBox="0 0 1440 100"
+      preserveAspectRatio="none"
+    >
+      <path
+        fill="currentColor"
+        d="M0 42C110 105 180-12 335 40S540 101 690 47 862 10 1040 49s236 23 400-22v73H0Z"
+      />
+    </svg>
+  );
+}
+export function StarDecoration({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={`star-decoration ${className}`}
+      aria-hidden="true"
+      viewBox="0 0 80 80"
+    >
+      <path
+        d="m40 5 11 22 25 4-18 18 4 25-22-12-22 12 4-25L4 31l25-4Z"
+        fill="currentColor"
+        stroke="#fff1a8"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m40 15-7 18-18 2"
+        fill="none"
+        stroke="white"
+        strokeOpacity=".65"
+        strokeWidth="5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+export function CloudDecoration({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={`cloud-decoration ${className}`}
+      viewBox="0 0 160 75"
+      aria-hidden="true"
+    >
+      <path
+        d="M25 68C-9 68-3 27 26 31 22 1 74-11 90 21 112 6 142 25 138 42 171 43 165 69 138 69Z"
+        fill="white"
+      />
+      <path
+        d="M22 62h115"
+        stroke="#daf4ff"
+        strokeWidth="9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+export function SparkleDecoration({ className = "" }: { className?: string }) {
+  return (
+    <span className={`sparkle-decoration ${className}`} aria-hidden="true">
+      ✦
+    </span>
+  );
+}
+export function ColorBlob({ className = "" }: { className?: string }) {
+  return <div className={`color-blob ${className}`} aria-hidden="true" />;
+}
+export function FloatingSticker({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={`floating-sticker ${className}`}>{children}</div>;
+}
+export function ToyArt({
+  kind,
+  className = "",
+}: {
+  kind: "camera" | "palette" | "trophy" | "pencil";
+  className?: string;
+}) {
+  const id = useId().replaceAll(":", "");
+  return (
+    <svg
+      aria-hidden="true"
+      className={`toy-art ${className}`}
+      viewBox="0 0 220 190"
+    >
+      <defs>
+        <linearGradient id={`${id}blue`} x2="0.8" y2="1">
+          <stop stopColor="#75e5ff" />
+          <stop offset=".45" stopColor="#23b4ff" />
+          <stop offset="1" stopColor="#1472d8" />
+        </linearGradient>
+        <linearGradient id={`${id}pink`} x2="0.4" y2="1">
+          <stop stopColor="#ffbcdf" />
+          <stop offset=".5" stopColor="#ff5dae" />
+          <stop offset="1" stopColor="#c63097" />
+        </linearGradient>
+        <linearGradient id={`${id}gold`} x2=".5" y2="1">
+          <stop stopColor="#fffaa0" />
+          <stop offset=".5" stopColor="#ffd341" />
+          <stop offset="1" stopColor="#ee950d" />
+        </linearGradient>
+        <radialGradient id={`${id}lens`} cx=".35" cy=".25">
+          <stop stopColor="#a8a3ff" />
+          <stop offset=".45" stopColor="#7950dd" />
+          <stop offset="1" stopColor="#242064" />
+        </radialGradient>
+        <filter id={`${id}shadow`} x="-30%" y="-30%" width="160%" height="170%">
+          <feDropShadow
+            dx="0"
+            dy="8"
+            stdDeviation="5"
+            floodColor="#4c5ca7"
+            floodOpacity=".2"
+          />
+        </filter>
+      </defs>
+      <g filter={`url(#${id}shadow)`} transform="rotate(-8 110 100)">
+        {kind === "camera" ? (
+          <>
+            <path
+              d="M61 44 72 24h53l12 20"
+              fill={`url(#${id}pink)`}
+              stroke="#fff"
+              strokeWidth="3"
+            />
+            <rect
+              x="22"
+              y="42"
+              width="178"
+              height="124"
+              rx="27"
+              fill={`url(#${id}blue)`}
+              stroke="#e3faff"
+              strokeWidth="4"
+            />
+            <path
+              d="M33 58h151"
+              stroke="white"
+              strokeWidth="5"
+              strokeOpacity=".6"
+              strokeLinecap="round"
+            />
+            <rect
+              x="40"
+              y="67"
+              width="30"
+              height="20"
+              rx="8"
+              fill={`url(#${id}gold)`}
+            />
+            <circle
+              cx="124"
+              cy="108"
+              r="47"
+              fill={`url(#${id}pink)`}
+              stroke="#fff"
+              strokeWidth="5"
+            />
+            <circle
+              cx="124"
+              cy="108"
+              r="34"
+              fill={`url(#${id}lens)`}
+              stroke="#e99bff"
+              strokeWidth="5"
+            />
+            <ellipse
+              cx="114"
+              cy="96"
+              rx="14"
+              ry="11"
+              fill="white"
+              opacity=".65"
+            />
+            <circle cx="172" cy="66" r="7" fill="#ffef65" />
+          </>
+        ) : kind === "palette" ? (
+          <>
+            <path
+              d="M109 28C47 18 15 57 19 108c4 57 60 72 96 56 13-6 5-20 17-24 12-4 19 8 36 3 51-16 36-104-22-112-13-2-22 0-37-3Z"
+              fill={`url(#${id}gold)`}
+              stroke="#fff3bc"
+              strokeWidth="5"
+            />
+            <ellipse cx="131" cy="122" rx="19" ry="14" fill="#fff8e4" />
+            {[
+              [61, 68, "#ff609e"],
+              [104, 53, "#3da9ff"],
+              [147, 65, "#73d454"],
+              [57, 113, "#9663df"],
+              [88, 141, "#fb8351"],
+            ].map(([x, y, c]) => (
+              <g key={String(c)}>
+                <ellipse cx={x} cy={y} rx="19" ry="16" fill={String(c)} />
+                <ellipse
+                  cx={Number(x) - 5}
+                  cy={Number(y) - 5}
+                  rx="8"
+                  ry="4"
+                  fill="white"
+                  opacity=".55"
+                />
+              </g>
+            ))}
+            <path
+              d="m165 162 20-104"
+              stroke="#ed508b"
+              strokeWidth="13"
+              strokeLinecap="round"
+            />
+            <path d="m185 58 8-31 2 34" fill="#8150c4" />
+          </>
+        ) : kind === "trophy" ? (
+          <>
+            <path
+              d="M65 47H33c-4 42 18 59 45 56M155 47h32c4 42-18 59-45 56"
+              fill="none"
+              stroke="#f8c732"
+              strokeWidth="15"
+            />
+            <path
+              d="M58 24h105l-8 55c-5 35-30 45-43 45S68 114 64 79Z"
+              fill={`url(#${id}gold)`}
+              stroke="#fff4b9"
+              strokeWidth="4"
+            />
+            <path d="M108 119v28" stroke="#f3b62d" strokeWidth="16" />
+            <rect
+              x="70"
+              y="146"
+              width="84"
+              height="24"
+              rx="9"
+              fill={`url(#${id}blue)`}
+              stroke="#b1edff"
+              strokeWidth="3"
+            />
+            <path
+              d="m110 46 9 16 18 3-13 13 3 19-17-9-17 9 3-19-13-13 18-3Z"
+              fill="#fff8ba"
+            />
+            <path
+              d="M73 36v38"
+              stroke="white"
+              strokeOpacity=".6"
+              strokeWidth="6"
+              strokeLinecap="round"
+            />
+          </>
+        ) : (
+          <>
+            <g transform="rotate(12 110 100)">
+              <path
+                d="m72 137 8-96 27 3-8 96-17 28Z"
+                fill={`url(#${id}pink)`}
+                stroke="#fff"
+                strokeWidth="3"
+              />
+              <path d="m72 137 10 31 17-28Z" fill="#ffdf9a" />
+              <path d="m79 157 3 11 6-10" fill="#633785" />
+              <path d="M79 42 81 24q1-14 15-12t13 15l-2 18" fill="#bf88e9" />
+              <path
+                d="m112 146 8-115 28 2-8 116-17 29Z"
+                fill={`url(#${id}blue)`}
+                stroke="#fff"
+                strokeWidth="3"
+              />
+              <path d="m112 146 11 32 17-29Z" fill="#ffdf9a" />
+              <path d="m120 169 3 9 6-10" fill="#245093" />
+              <path
+                d="m154 137 5-90 25 2-5 89-15 25Z"
+                fill={`url(#${id}gold)`}
+                stroke="#fff"
+                strokeWidth="3"
+              />
+              <path d="m154 137 10 26 15-25Z" fill="#ffdf9a" />
+              <path d="m161 155 3 8 5-8" fill="#ce8131" />
+            </g>
+          </>
+        )}
+      </g>
+    </svg>
+  );
+}

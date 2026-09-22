@@ -23,7 +23,9 @@ export async function regions(level: string, parent = ""): Promise<Region[]> {
   );
   if (!response.ok) throw new Error("Wilayah belum dapat dimuat. Coba lagi.");
   const list = z.array(z.object({ id: z.string(), name: z.string() }));
-  const result = z.union([list, z.object({ data: list })]).parse(await response.json());
+  const result = z
+    .union([list, z.object({ data: list })])
+    .parse(await response.json());
   return Array.isArray(result) ? result : result.data;
 }
 export async function validateRegions(data: Record<string, unknown>) {

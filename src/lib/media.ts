@@ -1,6 +1,6 @@
 import "server-only";
 import { service } from "./supabase/server";
-export {imageBytes} from './image-processing';
+export { imageBytes } from "./image-processing";
 export async function upload(bucket: string, bytes: Buffer) {
   const path = `${crypto.randomUUID()}.webp`;
   const { error } = await service()

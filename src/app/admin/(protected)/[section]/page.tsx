@@ -3,7 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import { admin } from "@/lib/supabase/server";
 import { registrationQuery, type Filters } from "@/lib/admin-data";
 import { AdminFilters } from "@/components/admin-filters";
-import { AdminControl, PrivateMedia } from "@/components/admin-controls";
+import {
+  AdminControl,
+  PrivateMedia,
+  PurgeSeasonMedia,
+} from "@/components/admin-controls";
 import { RegistrationForm } from "@/components/registration-form";
 import { Realtime } from "@/components/realtime";
 import { PageHeading } from "@/components/shared";
@@ -65,6 +69,7 @@ export default async function Page({
                 {s.name} {s.is_active ? "· aktif" : ""}
               </h3>
               <AdminControl action="settings" id={s.id} initial={s} />
+              <PurgeSeasonMedia id={s.id} />
             </div>
           ))}
         </div>
