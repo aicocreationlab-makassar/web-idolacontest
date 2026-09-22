@@ -71,7 +71,19 @@ export async function POST(req: Request) {
       throw new Error(
         "Pendaftaran gagal. Periksa periode, kuota, dan data Anda.",
       );
-    return json({ code, public_name: p.public_name }, 201);
+    const saved = await service()
+      .from("registrations")
+      .select("created_at")
+      .eq("registration_code", code)
+      .single();
+    return json(
+      {
+        code,
+        public_name: p.public_name,
+        registered_at: saved.data?.created_at || new Date().toISOString(),
+      },
+      201,
+    );
   } catch (e) {
     if (path) await remove("participant-private", path);
     return failure(e);

@@ -30,7 +30,7 @@ export async function POST(req: Request) {
         .single(),
       db
         .from("submissions")
-        .select("status,publication_status")
+        .select("status,publication_status,slug")
         .eq("registration_id", r.id)
         .order("created_at", { ascending: false })
         .limit(1)

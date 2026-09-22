@@ -3,7 +3,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Idola Contest",
     short_name: "Idola",
-    description: "Saatnya Si Kecil Bersinar!",
+    description: "Saatnya Si Kecil Menjadi Idola!",
     start_url: "/",
     display: "standalone",
     id: "/",

@@ -106,7 +106,12 @@ export default async function Page({
             <tbody>
               {data.map((d) => (
                 <tr key={d.id}>
-                  <td>{new Date(d.created_at).toLocaleString("id-ID")}</td>
+                  <td>
+                    {new Date(d.created_at).toLocaleString("id-ID", {
+                      timeZone: "Asia/Jakarta",
+                    })}{" "}
+                    WIB
+                  </td>
                   <td>{d.admin_user_id}</td>
                   <td>{d.action}</td>
                   <td>

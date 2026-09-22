@@ -346,7 +346,7 @@ export function CompetitionTimeline() {
         <SectionHeading
           eyebrow="Setiap langkah punya cerita"
           title="Perjalanan menuju panggung."
-          description="Catat tanggalnya, siapkan karya terbaiknya. Semua waktu dalam WITA."
+          description="Catat tanggalnya, siapkan karya terbaiknya. Semua waktu dalam WIB."
         />
         <div className="journey">
           {[

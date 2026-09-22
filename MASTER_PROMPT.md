@@ -5,6 +5,7 @@ You are a senior full-stack engineer, product engineer, database architect, secu
 Build a production-ready platform named **Idola Contest**. This is NOT a mockup, NOT a static landing page, and NOT a design-only task.
 
 Read and follow every file in this repository, especially:
+
 - `docs/PRD.md`
 - `docs/ARCHITECTURE.md`
 - `docs/DATABASE.md`
@@ -15,6 +16,7 @@ Read and follow every file in this repository, especially:
 - `docs/IMPLEMENTATION-PLAN.md`
 
 Tech requirements:
+
 - Next.js App Router
 - TypeScript strict
 - Tailwind CSS
@@ -29,9 +31,10 @@ Tech requirements:
 - mobile-first design
 
 Brand:
+
 - Idola Contest
 - @idola.contest
-- tagline: Saatnya Si Kecil Bersinar!
+- tagline: Saatnya Si Kecil Menjadi Idola!
 - Season 1
 - colorful, glossy 3D, playful, kid-friendly, professional
 
@@ -42,6 +45,7 @@ Participants do not log in. Only admins authenticate. Participants use registrat
 Build all public and admin routes described in the PRD.
 
 Fees:
+
 - registration Rp20.000
 - BSI 7341301558 a.n. Riswan Ramadhan
 - claim package after announcement Rp120.000 including free shipping across Indonesia
@@ -49,6 +53,7 @@ Fees:
 Fees must be disclosed transparently before registration.
 
 Season 1:
+
 - registration: 21 Sep 2026 – 06 Oct 2026
 - judging: 07 Oct 2026
 - announcement: 08 Oct 2026

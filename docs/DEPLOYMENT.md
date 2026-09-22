@@ -1,6 +1,7 @@
 # Deployment — Idola Contest
 
 ## Prasyarat
+
 - Node.js LTS kompatibel
 - npm/pnpm
 - Supabase
@@ -9,6 +10,7 @@
 - env vars
 
 ## Setup
+
 1. Buat Supabase project.
 2. Jalankan migrations.
 3. Buat indexes.
@@ -19,6 +21,7 @@
 8. Buat akun admin.
 
 ## Admin
+
 Buat user via Supabase Auth, lalu insert `admin_profiles` dengan role `super_admin`. Untuk bootstrap dari environment server, isi `ADMIN_EMAIL` dan `ADMIN_PASSWORD`, lalu jalankan `npm run setup:admin`. Segera ganti password bootstrap setelah login pertama.
 
 Pastikan migration terbaru sudah terpasang dan verifikasi integrasi:
@@ -28,6 +31,7 @@ npm run check:supabase
 ```
 
 ## Build checks
+
 ```bash
 npm run lint
 npm run typecheck
@@ -37,13 +41,17 @@ npm run build
 Semua harus lolos.
 
 ## PWA
+
 Pastikan manifest, service worker, icon 192, icon 512, apple-touch-icon, theme color, standalone, offline fallback.
 
 ## Smoke test
+
 Homepage, registration, image compression, regions, code, payment pending/paid, status, admin login, submission, approve, gallery, finalist share, results publish, claim, shipping.
 
 ## Performance
+
 Target Lighthouse >=90 untuk Performance, Accessibility, Best Practices, SEO.
 
 ## Backup
+
 Backup sebelum penutupan registrasi, penilaian, pengumuman, dan pengiriman.

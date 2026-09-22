@@ -107,7 +107,7 @@ export default async function Page({
             />
             <Detail
               label="Waktu daftar"
-              value={new Date(registration.created_at).toLocaleString("id-ID")}
+              value={`${new Date(registration.created_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB`}
             />
           </dl>
 
@@ -134,7 +134,10 @@ export default async function Page({
           <h3>Persetujuan</h3>
           <p className="notice success">
             Persetujuan orang tua, publikasi, syarat, dan biaya tercatat pada{" "}
-            {new Date(registration.consented_at).toLocaleString("id-ID")}.
+            {new Date(registration.consented_at).toLocaleString("id-ID", {
+              timeZone: "Asia/Jakarta",
+            })}{" "}
+            WIB.
           </p>
 
           <h3>Foto peserta</h3>
@@ -178,14 +181,12 @@ export default async function Page({
               <WorksheetUpload id={registration.id} />
             )}
             {worksheets.length ? (
-              worksheets.map(
-                (worksheet: { id: string; version: number }) => (
-                  <div className="admin-media-item" key={worksheet.id}>
-                    <b>Worksheet versi {worksheet.version}</b>
-                    <PrivateMedia id={worksheet.id} kind="worksheet" />
-                  </div>
-                ),
-              )
+              worksheets.map((worksheet: { id: string; version: number }) => (
+                <div className="admin-media-item" key={worksheet.id}>
+                  <b>Worksheet versi {worksheet.version}</b>
+                  <PrivateMedia id={worksheet.id} kind="worksheet" />
+                </div>
+              ))
             ) : (
               <p className="admin-empty">Kosong — belum ada worksheet.</p>
             )}

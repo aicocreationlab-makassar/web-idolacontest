@@ -61,9 +61,7 @@ export default async function Page({
               <p className="muted">{p}</p>
             </article>
           ))}
-          <p className="muted">
-            Seluruh waktu menggunakan WITA (Asia/Makassar).
-          </p>
+          <p className="muted">Seluruh waktu menggunakan WIB (Asia/Jakarta).</p>
         </div>
       ) : page === "syarat-ketentuan" ? (
         <div className="card stack">

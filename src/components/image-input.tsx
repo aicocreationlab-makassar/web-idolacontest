@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import imageCompression from "browser-image-compression";
 import { Camera, CheckCircle2, ImageUp, Sparkles } from "lucide-react";
+import { showSuccess } from "@/lib/success-event";
 export function ImageInput({
   onChange,
   label = "Foto peserta",
@@ -12,6 +14,23 @@ export function ImageInput({
   const [source, setSource] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState("");
+  const previewRef = useRef("");
+
+  function previewFile(file: File | null) {
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    const next = file ? URL.createObjectURL(file) : "";
+    previewRef.current = next;
+    setPreview(next);
+  }
+
+  useEffect(
+    () => () => {
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    },
+    [],
+  );
+
   return (
     <div className="stack image-uploader">
       <label className="upload-zone">
@@ -28,6 +47,7 @@ export function ImageInput({
           onChange={(e) => {
             const file = e.target.files?.[0] ?? null;
             setSource(file);
+            previewFile(file);
             onChange(file && file.size <= 2097152 ? file : null);
             setMessage(
               file
@@ -39,6 +59,20 @@ export function ImageInput({
           }}
         />
       </label>
+      {preview && (
+        <div className="upload-preview">
+          <Image
+            src={preview}
+            width={1000}
+            height={750}
+            unoptimized
+            alt={`Preview ${label.toLowerCase()}`}
+          />
+          <span>
+            <CheckCircle2 /> Foto berhasil dibaca
+          </span>
+        </div>
+      )}
       <p className="upload-helper">
         <ImageUp size={18} /> Maksimum hasil akhir 2 MB.
       </p>
@@ -61,7 +95,7 @@ export function ImageInput({
                 const compressed = await imageCompression(source, {
                   maxSizeMB: 1.8,
                   maxWidthOrHeight: 2000,
-                  useWebWorker: false,
+                  useWebWorker: true,
                   fileType: "image/webp",
                 });
                 const file = new File([compressed], "foto.webp", {
@@ -69,10 +103,16 @@ export function ImageInput({
                 });
                 if (file.size > 2097152) throw new Error();
                 onChange(file);
+                previewFile(file);
                 setMessage(
                   `Siap dikirim · ${(file.size / 1024).toFixed(0)} KB`,
                 );
                 setSource(file);
+                showSuccess(
+                  "Foto berhasil dikompres dan otomatis dipakai untuk upload.",
+                  "camera",
+                  "Foto siap dikirim",
+                );
               } catch {
                 setMessage("Kompresi gagal. Pilih gambar lebih kecil.");
               } finally {

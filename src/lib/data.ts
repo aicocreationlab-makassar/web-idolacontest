@@ -39,6 +39,7 @@ export type GalleryFilters = {
   category?: string;
   province?: string;
   season?: string;
+  highlight?: string;
   page?: string;
 };
 export async function galleryPage(filters: GalleryFilters) {
@@ -64,6 +65,8 @@ export async function galleryPage(filters: GalleryFilters) {
       `%${filters.province.replace(/[%_]/g, "").slice(0, 120)}%`,
     );
   if (filters.season) query = query.eq("season_id", filters.season);
+  if (filters.highlight && /^[a-f0-9]{24}$/.test(filters.highlight))
+    query = query.eq("slug", filters.highlight);
   const [rows, seasons] = await Promise.all([
     query.range((page - 1) * 12, page * 12 - 1),
     db

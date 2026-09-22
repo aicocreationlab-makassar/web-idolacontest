@@ -60,7 +60,7 @@ Every operational write goes through a permission-checked RPC with audit trigger
 
 ## Seasons and time
 
-Season 1 uses `Asia/Makassar` (UTC+08 / WITA), based on the workspace timezone; all public deadline labels state WITA. End of registration/submission is 6 October 2026 23:59:59 WITA. Confirm this timezone with the organizer before launch if WIB was intended.
+Season 1 uses `Asia/Jakarta` (UTC+07 / WIB). All public deadline labels state WIB. End of registration/submission is 6 October 2026 23:59:59 WIB.
 
 Quota is null unless configured; no fake remaining-quota counter is shown. The active season is selected from the database. To create a future season, insert its complete dates with a unique uppercase slug (e.g. `S2`), add event settings, then deactivate the old season and activate the new one in a single transaction. Only one active season is allowed. Existing registrations retain their original season references.
 

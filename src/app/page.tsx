@@ -49,11 +49,11 @@ export default async function Home() {
               {season?.name.toUpperCase() || "SEASON 1"}
             </span>
             <h1>
-              Saatnya
+              Saatnya Si Kecil
               <br />
-              <span className="hero-pink">Si Kecil</span>
+              <span className="hero-pink">Menjadi</span>
               <br />
-              <span className="hero-yellow">Bersinar!</span>
+              <span className="hero-yellow">Idola!</span>
               <SparkleDecoration className="headline-sparkle" />
             </h1>
             <p>

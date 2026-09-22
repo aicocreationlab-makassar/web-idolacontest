@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { awards, criteria, weights, weightedScore } from "@/lib/business-rules";
 import { ImageInput } from "./image-input";
@@ -56,6 +57,7 @@ export function AdminControl({
           setMessage("Tersimpan.");
           showSuccess(
             "Perubahan admin berhasil disimpan dan sudah diperbarui.",
+            action === "publish" ? "camera" : "admin",
           );
           router.refresh();
         } catch (e) {
@@ -246,38 +248,57 @@ export function PrivateMedia({
 }) {
   const [url, setUrl] = useState("");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/admin/media", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, kind }),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        return data.url as string;
+      })
+      .then(setUrl)
+      .catch((error) => {
+        if (!controller.signal.aborted) setMessage((error as Error).message);
+      });
+    return () => controller.abort();
+  }, [id, kind]);
+
   return (
-    <div className="stack">
-      <button
-        type="button"
-        className="text-purple underline"
-        onClick={async () => {
-          try {
-            const r = await fetch("/api/admin/media", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id, kind }),
-            });
-            const d = await r.json();
-            if (!r.ok) throw new Error(d.error);
-            setUrl(d.url);
-            showSuccess("Tautan file privat siap dibuka selama 60 detik.");
-          } catch (e) {
-            setMessage((e as Error).message);
-          }
-        }}
-      >
-        Siapkan file privat
-      </button>
+    <div className="admin-media-preview stack">
+      {!url && !message && <p className="muted">Memuat foto…</p>}
       {url && (
-        <a
-          className="block underline text-purple"
-          href={url}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Buka file (berlaku 60 detik)
-        </a>
+        <>
+          <Image
+            src={url}
+            width={1000}
+            height={1000}
+            unoptimized
+            alt={kind === "submission" ? "Karya peserta" : "Foto peserta"}
+          />
+          <div className="actions">
+            <a
+              className="btn secondary"
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Buka ukuran penuh
+            </a>
+            <a
+              className="btn"
+              href={`/api/admin/media?id=${encodeURIComponent(id)}&kind=${kind}`}
+              download
+            >
+              Download foto
+            </a>
+          </div>
+        </>
       )}
       {message && <p role="alert">{message}</p>}
     </div>
@@ -306,7 +327,7 @@ export function WorksheetUpload({ id }: { id: string }) {
           const d = await r.json();
           if (!r.ok) throw new Error(d.error);
           setMessage("Versi worksheet baru tersimpan.");
-          showSuccess("Worksheet baru berhasil diunggah.");
+          showSuccess("Worksheet baru berhasil diunggah.", "upload");
           router.refresh();
         } catch (e) {
           setMessage((e as Error).message);
@@ -363,7 +384,10 @@ export function DeleteRegistration({ id }: { id: string }) {
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error);
-            showSuccess("Peserta dan seluruh file terkait berhasil dihapus.");
+            showSuccess(
+              "Peserta dan seluruh file terkait berhasil dihapus.",
+              "delete",
+            );
             router.push("/admin/peserta");
             router.refresh();
           } catch (error) {
@@ -417,7 +441,7 @@ export function PurgeSeasonMedia({ id }: { id: string }) {
             const result = await response.json();
             if (!response.ok) throw new Error(result.error);
             setMessage("Seluruh media season telah dihapus.");
-            showSuccess("Seluruh media season berhasil dihapus.");
+            showSuccess("Seluruh media season berhasil dihapus.", "delete");
             setConfirmation("");
             router.refresh();
           } catch (error) {

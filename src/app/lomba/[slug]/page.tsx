@@ -59,7 +59,7 @@ export default async function Page({
           )}
           <p>
             Karya dikirim maksimal 7 hari setelah registrasi atau 6 Oktober 2026
-            pukul 23.59 WITA, mana yang lebih awal. Gambar JPG, PNG, atau WebP
+            pukul 23.59 WIB, mana yang lebih awal. Gambar JPG, PNG, atau WebP
             maksimum 2 MB.
           </p>
           <p>

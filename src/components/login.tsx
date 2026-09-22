@@ -19,7 +19,10 @@ export function Login() {
           });
           const d = await r.json();
           if (!r.ok) throw new Error(d.error);
-          showSuccess("Login berhasil. Selamat datang di ruang pengelola.");
+          showSuccess(
+            "Login berhasil. Selamat datang di ruang pengelola.",
+            "login",
+          );
           router.replace("/admin/dashboard");
           router.refresh();
         } catch (e) {

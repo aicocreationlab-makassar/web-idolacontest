@@ -26,7 +26,13 @@ export const registrationSchema = z
     district_name: text,
     village_code: text,
     village_name: text,
-    postal_code: z.string().regex(/^\d{5}$/, "Kode pos harus 5 digit"),
+    postal_code: z
+      .union([
+        z.string().regex(/^\d{5}$/, "Kode pos harus 5 digit"),
+        z.literal(""),
+      ])
+      .optional()
+      .default(""),
     competition_type: z.enum(["photogenic", "coloring"]),
     category: z.enum(["preschool", "paud", "tk", "sd_1_2", "sd_3_4", "sd_5_6"]),
     dream_job: text,

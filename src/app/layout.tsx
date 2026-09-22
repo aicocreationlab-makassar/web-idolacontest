@@ -3,6 +3,8 @@ import { SiteChrome } from "@/components/site-chrome";
 
 import { Pwa } from "@/components/pwa";
 import { SuccessPopup } from "@/components/success-popup";
+import { BackgroundAudio } from "@/components/background-audio";
+import { NavigationEffects } from "@/components/navigation-effects";
 import "@fontsource-variable/fredoka";
 import "@fontsource-variable/nunito";
 import "./globals.css";
@@ -11,7 +13,7 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL || "https://idolacontest.my.id",
   ),
   title: {
-    default: "Idola Contest — Saatnya Si Kecil Bersinar!",
+    default: "Idola Contest — Saatnya Si Kecil Menjadi Idola!",
     template: "%s | Idola Contest",
   },
   description:
@@ -59,6 +61,8 @@ export default function RootLayout({
         </a>
         <SiteChrome>{children}</SiteChrome>
         <SuccessPopup />
+        <BackgroundAudio />
+        <NavigationEffects />
         <Pwa />
       </body>
     </html>

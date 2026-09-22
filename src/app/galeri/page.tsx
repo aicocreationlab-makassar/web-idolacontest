@@ -16,7 +16,7 @@ export default async function Page({
     Object.entries(filters).filter(([k, v]) => k !== "page" && !!v),
   );
   const activeFilterCount = Object.entries(filters).filter(
-    ([key, value]) => key !== "page" && Boolean(value),
+    ([key, value]) => key !== "page" && key !== "highlight" && Boolean(value),
   ).length;
   return (
     <div className="wrap section">
@@ -87,7 +87,8 @@ export default async function Page({
         <div className="gallery-grid">
           {items.map((i) => (
             <Link
-              className="gallery-card"
+              id={`finalis-${i.slug}`}
+              className={`gallery-card${filters.highlight === i.slug ? " gallery-highlight" : ""}`}
               href={`/finalis/${i.slug}`}
               key={i.slug}
             >

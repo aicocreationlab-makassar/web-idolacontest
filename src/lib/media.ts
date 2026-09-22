@@ -12,10 +12,10 @@ export async function upload(bucket: string, bytes: Buffer) {
 export async function remove(bucket: string, path: string) {
   await service().storage.from(bucket).remove([path]);
 }
-export async function signed(bucket: string, path: string) {
+export async function signed(bucket: string, path: string, expiresIn = 86400) {
   const { data, error } = await service()
     .storage.from(bucket)
-    .createSignedUrl(path, 60);
+    .createSignedUrl(path, expiresIn);
   if (error) throw new Error("File belum dapat diakses.");
   return data.signedUrl;
 }

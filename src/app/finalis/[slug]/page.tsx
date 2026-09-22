@@ -39,7 +39,7 @@ export default async function Page({
   const { slug } = await params;
   const d = await get(slug);
   if (!d) notFound();
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/finalis/${slug}`;
+  const url = `https://idolacontest.my.id/finalis/${slug}`;
   return (
     <div className="wrap section grid2 items-center">
       <Image

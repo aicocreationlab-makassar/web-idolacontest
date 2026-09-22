@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -31,7 +32,6 @@ const groups = [
     "regency_code",
     "district_code",
     "village_code",
-    "postal_code",
   ],
   ["competition_type", "category"],
   [
@@ -153,6 +153,8 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
       sessionStorage.setItem("idola-registration", JSON.stringify(data));
       showSuccess(
         "Pendaftaran berhasil disimpan. Jangan lupa simpan kode registrasi.",
+        "star",
+        "Si kecil resmi terdaftar!",
       );
       router.push("/daftar/sukses");
     } catch (e) {
@@ -303,7 +305,9 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
             ))}
             {field(
               "postal_code",
-              "Kode pos (5 digit; isi manual jika belum terisi)",
+              "Kode pos (opsional, 5 digit)",
+              "text",
+              false,
             )}
           </div>
           <button
@@ -353,7 +357,12 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
           <h2 className="text-2xl">Konfirmasi pendaftaran</h2>
           <div className="payment-highlight">
             <div className="payment-highlight-icon">
-              <CreditCard />
+              <Image
+                src="/logo-bsi.png"
+                width={180}
+                height={90}
+                alt="Bank Syariah Indonesia"
+              />
             </div>
             <div>
               <span>INFO PENTING</span>
@@ -367,7 +376,7 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
                 onClick={async () => {
                   await navigator.clipboard.writeText("7341301558");
                   setCopied(true);
-                  showSuccess("Nomor rekening berhasil disalin.");
+                  showSuccess("Nomor rekening berhasil disalin.", "copy");
                 }}
               >
                 <code>7341301558</code>

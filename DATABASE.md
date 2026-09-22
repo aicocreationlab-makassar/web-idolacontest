@@ -3,6 +3,7 @@
 Gunakan UUID primary keys dan `created_at`/`updated_at`.
 
 ## `seasons`
+
 - id
 - name
 - slug unique
@@ -18,6 +19,7 @@ Gunakan UUID primary keys dan `created_at`/`updated_at`.
 - updated_at
 
 ## `participants`
+
 - id
 - full_name
 - public_name
@@ -36,6 +38,7 @@ Gunakan UUID primary keys dan `created_at`/`updated_at`.
 - updated_at
 
 ## `registrations`
+
 - id
 - season_id
 - participant_id
@@ -55,6 +58,7 @@ Gunakan UUID primary keys dan `created_at`/`updated_at`.
 - updated_at
 
 Enums:
+
 - competition_type: `photogenic`, `coloring`
 - source: `website`, `instagram_dm`, `admin_manual`
 - status: `registered`, `verified`, `cancelled`, `disqualified`
@@ -62,6 +66,7 @@ Enums:
 - category: `preschool`, `paud`, `tk`, `sd_1_2`, `sd_3_4`, `sd_5_6`
 
 ## `participant_media`
+
 - id
 - registration_id
 - storage_path
@@ -71,6 +76,7 @@ Enums:
 - created_at
 
 ## `submissions`
+
 - id
 - registration_id
 - submission_type
@@ -90,6 +96,7 @@ Statuses: `not_submitted`, `pending_review`, `approved`, `revision_required`, `r
 Publication: `hidden`, `approved`.
 
 ## `worksheets`
+
 - id
 - registration_id
 - private_file_path
@@ -98,6 +105,7 @@ Publication: `hidden`, `approved`.
 - created_at
 
 ## `judging_scores`
+
 - id
 - submission_id
 - judge_id
@@ -108,6 +116,7 @@ Publication: `hidden`, `approved`.
 - updated_at
 
 ## `results`
+
 - id
 - registration_id
 - final_score
@@ -118,6 +127,7 @@ Publication: `hidden`, `approved`.
 - updated_at
 
 ## `payments`
+
 - id
 - registration_id
 - payment_type (`registration`, `award_claim`)
@@ -130,6 +140,7 @@ Publication: `hidden`, `approved`.
 - updated_at
 
 ## `claim_invoices`
+
 - id
 - registration_id
 - invoice_number unique
@@ -139,6 +150,7 @@ Publication: `hidden`, `approved`.
 - paid_at nullable
 
 ## `shipments`
+
 - id
 - registration_id
 - courier
@@ -150,12 +162,14 @@ Publication: `hidden`, `approved`.
 - updated_at
 
 ## `admin_profiles`
+
 - user_id fk auth.users
 - display_name
 - role (`super_admin`, `admin`, `judge`)
 - created_at
 
 ## `admin_audit_logs`
+
 - id
 - admin_user_id
 - action
@@ -166,6 +180,7 @@ Publication: `hidden`, `approved`.
 - created_at
 
 ## `event_settings`
+
 - id
 - season_id
 - key
@@ -174,9 +189,11 @@ Publication: `hidden`, `approved`.
 - updated_at
 
 ## Indexes
+
 Index: registration_code, season_id, competition_type, category, payment_status, publication_status, province_code, created_at, submission.status, shipment.shipping_status.
 
 ## Constraints
+
 - coloring tidak boleh preschool;
 - consent wajib true untuk public registration;
 - code unique;
@@ -184,6 +201,7 @@ Index: registration_code, season_id, competition_type, category, payment_status,
 - award result satu per registration per season.
 
 ## Deadline
+
 `effectiveSubmissionDeadline = min(registrationCreatedAt + 7 days, season.submissionGlobalCloseAt)`
 
 Wajib divalidasi server-side.

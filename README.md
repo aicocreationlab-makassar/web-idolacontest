@@ -28,10 +28,11 @@ Dokumentasi produk dan implementasi untuk membangun **Idola Contest**, platform 
 
 **Brand:** Idola Contest  
 **Instagram:** `@idola.contest`  
-**Tagline:** **Saatnya Si Kecil Bersinar!**  
+**Tagline:** **Saatnya Si Kecil Menjadi Idola!**
 **Season aktif:** Season 1
 
 ## Stack wajib
+
 - Next.js App Router
 - TypeScript strict mode
 - Tailwind CSS
@@ -46,6 +47,7 @@ Dokumentasi produk dan implementasi untuk membangun **Idola Contest**, platform 
 - Mobile-first responsive UI
 
 ## Dokumen
+
 - `docs/PRD.md`
 - `docs/ARCHITECTURE.md`
 - `docs/DATABASE.md`
@@ -59,6 +61,7 @@ Dokumentasi produk dan implementasi untuk membangun **Idola Contest**, platform 
 - `.env.example`
 
 ## Timeline Season 1
+
 - Pendaftaran: **21 September 2026 – 06 Oktober 2026**
 - Penilaian: **07 Oktober 2026**
 - Pengumuman: **08 Oktober 2026**
@@ -66,10 +69,12 @@ Dokumentasi produk dan implementasi untuk membangun **Idola Contest**, platform 
 - Pengiriman serentak: mulai **13 Oktober 2026**
 
 ## Biaya
+
 Registrasi: **Rp20.000**  
 BSI **7341301558** a.n. **Riswan Ramadhan**
 
 Klaim paket penghargaan setelah pengumuman: **Rp120.000** termasuk **gratis ongkir seluruh Indonesia**.
 
 ## Cara memakai
+
 Letakkan folder ini di root project, lalu berikan `AI_EXECUTION_PROMPT.md` kepada AI coding agent. AI wajib membaca seluruh dokumen sebelum coding dan harus menyelesaikan backend, database, RLS, admin, submission, gallery, PWA, lint, typecheck, dan build — bukan hanya membuat UI.

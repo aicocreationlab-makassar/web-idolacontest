@@ -13,6 +13,8 @@ import {
   Menu,
   Medal,
   PackageCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
   Paintbrush,
   ScrollText,
   Settings,
@@ -39,6 +41,7 @@ const allPages = [
 export function AdminSidebar({ role }: { role: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const pages =
     role === "judge"
       ? allPages.filter(([key]) => key === "penilaian")
@@ -66,8 +69,17 @@ export function AdminSidebar({ role }: { role: string }) {
       )}
       <aside
         id="admin-sidebar"
-        className={`admin-sidebar${open ? " open" : ""}`}
+        className={`admin-sidebar${open ? " open" : ""}${collapsed ? " collapsed" : ""}`}
       >
+        <button
+          type="button"
+          className="admin-collapse-toggle"
+          aria-label={collapsed ? "Perbesar sidebar" : "Kecilkan sidebar"}
+          title={collapsed ? "Perbesar sidebar" : "Kecilkan sidebar"}
+          onClick={() => setCollapsed((value) => !value)}
+        >
+          {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+        </button>
         <Link href="/admin/dashboard" className="admin-brand">
           <Image
             src="/logo.webp"
@@ -93,6 +105,7 @@ export function AdminSidebar({ role }: { role: string }) {
               <Link
                 key={key}
                 href={href}
+                prefetch
                 className={active ? "active" : ""}
                 aria-current={active ? "page" : undefined}
                 onClick={() => setOpen(false)}

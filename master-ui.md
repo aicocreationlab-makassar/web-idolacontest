@@ -5,6 +5,7 @@ Your task is to redesign and implement the UI of the existing IDOLA CONTEST webs
 IMPORTANT:
 
 The project already contains:
+
 - business requirements
 - PRD
 - architecture documentation
@@ -220,7 +221,7 @@ Instagram:
 
 Tagline:
 
-"Saatnya Si Kecil Bersinar!"
+"Saatnya Si Kecil Menjadi Idola!"
 
 Use the EXISTING logo from the project.
 
@@ -355,7 +356,7 @@ BODY:
 Use:
 
 - Nunito
-or
+  or
 - Poppins
 
 Body content must remain highly readable for parents.
@@ -485,6 +486,7 @@ The homepage HERO must strongly resemble the visual composition of Reference 2.
 Desktop:
 
 LEFT:
+
 - Season badge
 - main headline
 - supportive copy
@@ -492,6 +494,7 @@ LEFT:
 - countdown
 
 RIGHT:
+
 - large playful 3D illustration composition
 
 Use the Idola Contest theme:
@@ -518,15 +521,15 @@ Badge:
 
 Headline:
 
-"Tempat Si Kecil
-Berkarya & Bersinar!"
+"Saatnya Si Kecil
+Menjadi Idola!"
 
 Make:
 
 "Si Kecil"
 Candy Pink
 
-"Bersinar!"
+"Idola!"
 Sunshine Yellow
 
 Supporting text:
@@ -606,6 +609,7 @@ Card 1:
 LOMBA FOTOGENIK
 
 Visual:
+
 - camera
 - polaroid
 - sparkle
@@ -619,6 +623,7 @@ Card 2:
 LOMBA MEWARNAI
 
 Visual:
+
 - colored pencils
 - crayons
 - palette
@@ -1184,11 +1189,13 @@ Desktop experience should visually feel closer to Reference Image 2.
 This distinction is intentional.
 
 Desktop:
+
 - wide illustrated landing page
 - large hero
 - horizontal layouts
 
 Mobile:
+
 - gamified cards
 - stacked sections
 - large touch targets
@@ -1431,6 +1438,7 @@ PHASE 1:
 Analyze both reference images.
 
 Document briefly:
+
 - palette
 - typography
 - shapes
@@ -1496,12 +1504,12 @@ The result should combine:
 REFERENCE 2:
 professional kids landing-page structure
 
-+
+-
 
 REFERENCE 1:
 colorful gamified component styling
 
-+
+-
 
 IDOLA CONTEST:
 camera, photography, coloring, stars, awards, competition,

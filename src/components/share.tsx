@@ -20,7 +20,7 @@ export function Share({ url, name }: { url: string; name: string }) {
           try {
             await navigator.clipboard.writeText(url);
             setMessage("Tautan disalin");
-            showSuccess("Tautan finalis berhasil disalin.");
+            showSuccess("Tautan finalis berhasil disalin.", "share");
           } catch {
             setMessage("Salin tautan dari bilah alamat browser.");
           }

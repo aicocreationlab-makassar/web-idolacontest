@@ -14,7 +14,11 @@ type Status = {
   registration_status: string;
   deadline: string;
   worksheet_ready: boolean;
-  submission: { status: string; publication_status: string } | null;
+  submission: {
+    status: string;
+    publication_status: string;
+    slug: string;
+  } | null;
   claim: { invoice_number: string; amount: number; status: string } | null;
   shipment: {
     courier: string;
@@ -46,7 +50,11 @@ export function Status() {
       if (!r.ok) throw new Error(d.error);
       setData(d);
       setVerifiedCode(code);
-      showSuccess("Status peserta berhasil ditemukan.");
+      showSuccess(
+        "Status peserta berhasil ditemukan.",
+        "star",
+        "Halo, data ditemukan!",
+      );
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -118,14 +126,33 @@ export function Status() {
               Batas pengumpulan:{" "}
               <b>
                 {new Date(data.deadline).toLocaleString("id-ID", {
-                  timeZone: "Asia/Makassar",
+                  timeZone: "Asia/Jakarta",
                 })}{" "}
-                WITA
+                WIB
               </b>
             </p>
             <p>
               Status karya: <b>{data.submission?.status || "Belum dikirim"}</b>
             </p>
+            {data.submission?.publication_status === "approved" &&
+              data.submission.slug && (
+                <div className="publication-success">
+                  <PartyPopper aria-hidden="true" />
+                  <div>
+                    <h3>Karyamu sudah dipublikasikan!</h3>
+                    <p>
+                      Foto atau karya peserta sekarang sudah tampil di Galeri
+                      Idola Contest.
+                    </p>
+                    <Link
+                      className="btn"
+                      href={`/galeri?highlight=${data.submission.slug}#finalis-${data.submission.slug}`}
+                    >
+                      Lihat kartu peserta di galeri →
+                    </Link>
+                  </div>
+                </div>
+              )}
             <Link
               className="text-purple underline"
               href={`/lomba/${data.competition_type === "coloring" ? "mewarnai" : "fotogenik"}`}
@@ -148,7 +175,10 @@ export function Status() {
                       const d = await r.json();
                       if (!r.ok) throw new Error(d.error);
                       setWorksheet(d.url);
-                      showSuccess("Worksheet siap dibuka dan dicetak.");
+                      showSuccess(
+                        "Worksheet siap dibuka dan dicetak.",
+                        "upload",
+                      );
                     } catch (e) {
                       setError((e as Error).message);
                     } finally {
@@ -197,7 +227,11 @@ export function Status() {
                     const d = await r.json();
                     if (!r.ok) throw new Error(d.error);
                     setMessage(d.message);
-                    showSuccess("Karya berhasil dikirim untuk direview admin.");
+                    showSuccess(
+                      "Karya berhasil dikirim untuk direview admin.",
+                      "upload",
+                      "Karya hebat sudah terkirim!",
+                    );
                     await lookup();
                   } catch (e) {
                     setError((e as Error).message);

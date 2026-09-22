@@ -1,6 +1,7 @@
 # Implementation Plan
 
 ## Milestone 1 — Foundation
+
 - Next.js + TS strict
 - Tailwind + brand tokens
 - Supabase clients
@@ -15,6 +16,7 @@
 Gate: lint, typecheck, build.
 
 ## Milestone 2 — Acquisition
+
 - homepage
 - competition pages
 - timeline/prizes/fees
@@ -32,6 +34,7 @@ Gate: lint, typecheck, build.
 Gate: end-to-end registration works, private data protected, build passes.
 
 ## Milestone 3 — Competition Engine
+
 - worksheet upload/access
 - submission upload
 - private storage
@@ -45,6 +48,7 @@ Gate: end-to-end registration works, private data protected, build passes.
 Gate: pending never public, approved appears, scoring correct.
 
 ## Milestone 4 — Operations
+
 - results
 - awards
 - result publish switch
@@ -58,6 +62,7 @@ Gate: pending never public, approved appears, scoring correct.
 Gate: admin operations end-to-end.
 
 ## Milestone 5 — Hardening
+
 - rate limiting
 - error/loading/empty states
 - accessibility

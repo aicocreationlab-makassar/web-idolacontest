@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 export const faqs = [
   [
     "Apakah peserta perlu membuat akun?",
@@ -14,7 +15,7 @@ export const faqs = [
   ],
   [
     "Kapan batas pengumpulan karya?",
-    "Maksimal 7 hari setelah mendaftar atau 6 Oktober 2026 pukul 23.59 WITA, mana yang lebih awal.",
+    "Maksimal 7 hari setelah mendaftar atau 6 Oktober 2026 pukul 23.59 WIB, mana yang lebih awal.",
   ],
   [
     "Apakah foto anak langsung tampil di galeri?",
@@ -40,6 +41,13 @@ export function Faq() {
 export function Fees() {
   return (
     <div className="notice">
+      <Image
+        className="bsi-logo"
+        src="/logo-bsi.png"
+        width={190}
+        height={90}
+        alt="Bank Syariah Indonesia"
+      />
       <strong>Biaya jelas sejak awal.</strong>
       <p>
         Registrasi <b>Rp20.000</b>. Klaim paket penghargaan setelah pengumuman{" "}

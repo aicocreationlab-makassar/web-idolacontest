@@ -9,6 +9,8 @@ const csp = [
   `img-src 'self' data: blob: ${supabaseOrigin}`,
   `connect-src 'self' ${supabaseOrigin} ${supabaseOrigin.replace("https:", "wss:")}`,
   "font-src 'self' data:",
+  "media-src 'self'",
+  "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

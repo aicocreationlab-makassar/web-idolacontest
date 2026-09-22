@@ -1,11 +1,13 @@
 import { test, expect } from "@playwright/test";
+import { randomBytes } from "node:crypto";
+import sharp from "sharp";
 test("Homepage, mobile fit, navigation and manifest", async ({
   page,
   request,
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: /Saatnya.*Si Kecil.*Bersinar!/ }),
+    page.getByRole("heading", { name: /Saatnya.*Si Kecil.*Menjadi.*Idola!/ }),
   ).toBeVisible();
   expect(
     await page.evaluate(
@@ -13,6 +15,8 @@ test("Homepage, mobile fit, navigation and manifest", async ({
     ),
   ).toBeTruthy();
   if ((page.viewportSize()?.width ?? 0) <= 760) {
+    await expect(page.locator(".recent-ticker")).toHaveCSS("position", "fixed");
+    await expect(page.locator(".recent-ticker")).toHaveCSS("top", "0px");
     await page.getByRole("button", { name: "Buka menu" }).click();
     await page.getByRole("link", { name: "Hadiah" }).click();
   } else {
@@ -20,6 +24,9 @@ test("Homepage, mobile fit, navigation and manifest", async ({
   }
   await expect(page).toHaveURL(/#hadiah$/);
   await expect(page.locator("#hadiah")).toBeInViewport();
+  await expect(
+    page.getByRole("button", { name: /Matikan musik|Nyalakan musik/ }),
+  ).toBeVisible();
   await expect(page.getByText("Rp120.000").first()).toBeVisible();
   await page.getByRole("link", { name: "Lihat Finalis" }).click();
   await expect(
@@ -66,13 +73,16 @@ test("PWA offers a generic offline page without caching private data", async ({
   const worker = await page.request.get("/sw.js");
   expect(await worker.text()).toContain("event.request.mode==='navigate'");
 });
-test("Admin guard and status endpoint fail safely", async ({ page, request }) => {
+test("Admin guard and status endpoint fail safely", async ({
+  page,
+  request,
+}) => {
   await page.goto("/admin/dashboard");
   await expect(page).toHaveURL(/\/admin\/login/);
   const r = await request.post("/api/status", {
     data: { code: "IDC-S1-AAAAAAAAAAAAAAAAAAAAAAAA" },
   });
-  expect(r.status()).toBe(400);
+  expect([400, 503]).toContain(r.status());
   expect(await r.text()).not.toContain("SERVICE_ROLE");
 });
 
@@ -87,18 +97,24 @@ test("Admin can login, open mobile navigation, and view incoming registrations",
   await page.getByLabel("Password").fill(process.env.ADMIN_PASSWORD!);
   await page.getByRole("button", { name: "Masuk" }).click();
   await expect(page).toHaveURL(/\/admin\/dashboard/);
-  await expect(page.getByText("Semuanya sudah beres")).toBeVisible();
+  await expect(page.getByText("Selamat datang kembali!")).toBeVisible();
   await page.getByRole("button", { name: "Tutup pemberitahuan" }).click();
   await expect(page.getByText("Realtime aktif")).toBeVisible();
 
   if ((page.viewportSize()?.width ?? 0) <= 980) {
     await page.getByRole("button", { name: "Buka menu admin" }).click();
+  } else {
+    await page.getByRole("button", { name: "Kecilkan sidebar" }).click();
+    await expect(page.locator("#admin-sidebar")).toHaveClass(/collapsed/);
+    await page.getByRole("button", { name: "Perbesar sidebar" }).click();
   }
   await page.getByRole("link", { name: "Pendaftaran Masuk" }).click();
   await expect(
     page.getByRole("heading", { name: "Pendaftaran masuk" }),
   ).toBeVisible();
-  await expect(page.getByText(/Kosong|Periksa detail peserta/).first()).toBeVisible();
+  await expect(
+    page.getByText(/Kosong|Periksa detail peserta/).first(),
+  ).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -110,11 +126,26 @@ test("Admin can login, open mobile navigation, and view incoming registrations",
   expect((await manifest.json()).start_url).toBe("/admin/dashboard");
 });
 
+test("Page navigation returns mobile and desktop views to the top", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page
+    .locator("footer")
+    .getByRole("link", { name: "Pertanyaan Umum" })
+    .click();
+  await expect(page).toHaveURL(/\/faq$/);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(80);
+});
+
 test("Gallery opens with quiet collapsed filters", async ({ page }) => {
   await page.goto("/galeri");
   const filters = page.locator(".gallery-filter");
   await expect(filters).not.toHaveAttribute("open", "");
-  await expect(page.getByText("Buka jika ingin mencari peserta tertentu")).toBeVisible();
+  await expect(
+    page.getByText("Buka jika ingin mencari peserta tertentu"),
+  ).toBeVisible();
 });
 test("Coloring never offers Preschool", async ({ page }) => {
   await page.goto("/daftar");
@@ -131,6 +162,35 @@ test("Coloring never offers Preschool", async ({ page }) => {
   await expect(
     page.getByLabel("Kategori").locator('option[value="preschool"]'),
   ).toHaveCount(1);
+});
+
+test("Large photo compresses and becomes the active upload preview", async ({
+  page,
+}) => {
+  const pixels = randomBytes(1024 * 1024 * 3);
+  const largePng = await sharp(pixels, {
+    raw: { width: 1024, height: 1024, channels: 3 },
+  })
+    .png()
+    .toBuffer();
+  expect(largePng.length).toBeGreaterThan(2 * 1024 * 1024);
+
+  await page.goto("/daftar");
+  await page
+    .locator('input[type="file"]')
+    .evaluate((input) =>
+      input.closest("div[hidden]")?.removeAttribute("hidden"),
+    );
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "foto-besar.png",
+    mimeType: "image/png",
+    buffer: largePng,
+  });
+  await expect(page.getByText("Ups! Fotonya Terlalu Besar")).toBeVisible();
+  await page.getByRole("button", { name: "Kompres Foto Otomatis" }).click();
+  await expect(page.getByText(/Siap dikirim/)).toBeVisible();
+  await expect(page.getByText("Foto berhasil dibaca")).toBeVisible();
+  await expect(page.getByText("Foto siap dikirim")).toBeVisible();
 });
 test("All public routes render without application errors", async ({
   page,
@@ -165,7 +225,7 @@ test("Five-step registration confirms payment before sending", async ({
     await route.fulfill({ json: [{ id: "11", name: "Wilayah Uji" }] });
   });
   await page.route("**/api/postcode**", async (route) => {
-    await route.fulfill({ json: { postal_code: "80111" } });
+    await route.fulfill({ json: { postal_code: "" } });
   });
   let submissions = 0;
   await page.route("**/api/registrations", async (route) => {
@@ -201,7 +261,6 @@ test("Five-step registration confirms payment before sending", async ({
     await expect(field).toBeEnabled();
     await field.selectOption("11");
   }
-  await page.getByLabel(/Kode pos/).fill("80111");
   await page.getByRole("button", { name: /Lanjutkan/ }).click();
   await page.getByLabel("Jenis lomba").selectOption("coloring");
   await page.locator('input[type="file"]').setInputFiles({

@@ -42,7 +42,7 @@ export function BrandNavbar() {
             priority
           />
           <span>
-            Idola Contest<small>SAATNYA SI KECIL BERSINAR!</small>
+            Idola Contest<small>SAATNYA SI KECIL MENJADI IDOLA!</small>
           </span>
         </Link>
         <div className="desktop-nav">

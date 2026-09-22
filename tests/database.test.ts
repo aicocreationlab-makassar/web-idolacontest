@@ -61,6 +61,13 @@ test("Migrations, RLS and full database lifecycle", async () => {
   await assert.rejects(() => register({ ...data, consent_fee: false }));
   const rid = await register(data, code);
   assert.ok(rid);
+  const optionalPostcodeRid = await register({
+    ...data,
+    full_name: "Child Without Postcode",
+    public_name: "No Postcode",
+    postal_code: "",
+  });
+  assert.ok(optionalPostcodeRid);
   await assert.rejects(() =>
     db.query(`select create_submission($1,'work.webp')`, [code]),
   );
@@ -228,6 +235,7 @@ test("Migrations, RLS and full database lifecycle", async () => {
   );
   await asUser(admin);
   await db.query("select admin_delete_registration($1)", [rid]);
+  await db.query("select admin_delete_registration($1)", [optionalPostcodeRid]);
   assert.equal((await db.query("select * from registrations")).rows.length, 0);
   assert.equal((await db.query("select * from participants")).rows.length, 0);
   assert.ok(
