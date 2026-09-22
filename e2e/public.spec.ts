@@ -58,17 +58,50 @@ test("PWA offers a generic offline page without caching private data", async ({
   const worker = await page.request.get("/sw.js");
   expect(await worker.text()).toContain("event.request.mode==='navigate'");
 });
-test("Admin guard and safe unconfigured backend", async ({ page, request }) => {
+test("Admin guard and status endpoint fail safely", async ({ page, request }) => {
   await page.goto("/admin/dashboard");
   await expect(page).toHaveURL(/\/admin\/login/);
   const r = await request.post("/api/status", {
     data: { code: "IDC-S1-AAAAAAAAAAAAAAAAAAAAAAAA" },
   });
-  expect(r.status()).toBe(503);
+  expect(r.status()).toBe(400);
   expect(await r.text()).not.toContain("SERVICE_ROLE");
+});
+
+test("Admin can login, open mobile navigation, and view incoming registrations", async ({
+  page,
+  request,
+}) => {
+  test.skip(!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD);
+
+  await page.goto("/admin/login");
+  await page.getByLabel("Email").fill(process.env.ADMIN_EMAIL!);
+  await page.getByLabel("Password").fill(process.env.ADMIN_PASSWORD!);
+  await page.getByRole("button", { name: "Masuk" }).click();
+  await expect(page).toHaveURL(/\/admin\/dashboard/);
+  await expect(page.getByText("Realtime aktif")).toBeVisible();
+
+  if ((page.viewportSize()?.width ?? 0) <= 980) {
+    await page.getByRole("button", { name: "Buka menu admin" }).click();
+  }
+  await page.getByRole("link", { name: "Pendaftaran Masuk" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Pendaftaran masuk" }),
+  ).toBeVisible();
+  await expect(page.getByText(/Kosong|Periksa detail peserta/).first()).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBeTruthy();
+
+  const manifest = await request.get("/admin/manifest.webmanifest");
+  expect(manifest.ok()).toBeTruthy();
+  expect((await manifest.json()).start_url).toBe("/admin/dashboard");
 });
 test("Coloring never offers Preschool", async ({ page }) => {
   await page.goto("/daftar");
+  await expect(page.locator('select[name="province_code"]')).toBeEnabled();
   await page
     .getByLabel("Jenis lomba")
     .selectOption("coloring", { force: true });

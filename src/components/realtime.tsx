@@ -1,21 +1,25 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { browser } from "@/lib/supabase/client";
+
 export function Realtime() {
   const router = useRouter();
   const [status, setStatus] = useState("Menghubungkan…");
+
   useEffect(() => {
     const db = browser();
     let timer: ReturnType<typeof setTimeout>;
     let channel = db.channel("admin-operations");
+
     for (const table of [
       "registrations",
       "payments",
       "submissions",
       "claim_invoices",
       "shipments",
-    ])
+    ]) {
       channel = channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table },
@@ -24,23 +28,27 @@ export function Realtime() {
           timer = setTimeout(() => router.refresh(), 500);
         },
       );
-    channel.subscribe((s) =>
+    }
+
+    channel.subscribe((nextStatus) =>
       setStatus(
-        s === "SUBSCRIBED"
+        nextStatus === "SUBSCRIBED"
           ? "Realtime aktif"
-          : s === "CHANNEL_ERROR"
+          : nextStatus === "CHANNEL_ERROR"
             ? "Koneksi realtime terputus; muat ulang halaman."
-            : s,
+            : nextStatus,
       ),
     );
+
     return () => {
       clearTimeout(timer);
       void db.removeChannel(channel);
     };
   }, [router]);
+
   return (
-    <p className="text-sm muted mb-5" role="status">
-      ● {status}
+    <p className="admin-realtime" role="status">
+      <span aria-hidden="true">●</span> {status}
     </p>
   );
 }

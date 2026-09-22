@@ -73,6 +73,11 @@ test("Migrations, RLS and full database lifecycle", async () => {
   await assert.rejects(() =>
     db.query(`select admin_mutate('payment',$1,'{"status":"paid"}')`, [rid]),
   );
+  await assert.rejects(() =>
+    db.query(`select admin_review_registration($1,'approved','invalid')`, [
+      rid,
+    ]),
+  );
   assert.equal((await db.query("select * from public_gallery")).rows.length, 0);
   await db.exec("reset role");
   async function asUser(id: string) {
@@ -88,7 +93,20 @@ test("Migrations, RLS and full database lifecycle", async () => {
     ]);
   }
   await asUser(admin);
+  await db.query(
+    `select admin_review_registration($1,'approved','Data peserta valid')`,
+    [rid],
+  );
   await mutate("payment", rid, { status: "paid", note: "verified" });
+  assert.deepEqual(
+    (
+      await db.query<{ review_status: string; registration_status: string }>(
+        "select review_status,registration_status from registrations where id=$1",
+        [rid],
+      )
+    ).rows[0],
+    { review_status: "approved", registration_status: "verified" },
+  );
   assert.equal(
     (await db.query("select * from public_recent_registrations")).rows.length,
     1,
@@ -180,6 +198,23 @@ test("Migrations, RLS and full database lifecycle", async () => {
   );
   await mutate("unpublish", sid);
   assert.equal((await db.query("select * from public_gallery")).rows.length, 0);
+  await db.query(
+    `select admin_review_registration($1,'rejected','Data perlu ditolak')`,
+    [rid],
+  );
+  assert.equal(
+    (
+      await db.query<{ registration_status: string }>(
+        "select registration_status from registrations where id=$1",
+        [rid],
+      )
+    ).rows[0].registration_status,
+    "cancelled",
+  );
+  await db.query(
+    `select admin_review_registration($1,'approved','Diperiksa ulang')`,
+    [rid],
+  );
   await db.exec("reset role");
   assert.equal(
     (await db.query<{ ok: boolean }>(`select consume_rate_limit('test',1) ok`))

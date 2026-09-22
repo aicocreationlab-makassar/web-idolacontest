@@ -31,6 +31,12 @@ Public form memanggil server route, Zod validation, insert server-side, return m
 ## Realtime
 Aktifkan hanya tabel yang diperlukan: registrations, payments, submissions, claim invoices, shipments.
 
+Migration `202609220002_registration_review.sql` menambahkan keputusan review pendaftaran, sinkronisasi akses peserta, metrik dashboard, serta RPC `admin_review_registration`. Jalankan seluruh migration secara berurutan. Periksa koneksi, schema review, login, dan role admin tanpa mencetak rahasia dengan:
+
+```bash
+npm run check:supabase
+```
+
 ## Service role
 `SUPABASE_SERVICE_ROLE_KEY` hanya server, tidak boleh `NEXT_PUBLIC_`.
 

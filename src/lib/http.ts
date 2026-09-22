@@ -25,12 +25,16 @@ export function failure(error: unknown) {
 }
 export function sameOrigin(request: Request) {
   const origin = request.headers.get("origin");
-  if (
-    origin &&
-    origin !== new URL(request.url).origin &&
-    origin !== process.env.NEXT_PUBLIC_SITE_URL
-  )
-    throw new Error("Akses lintas situs ditolak.");
+  if (!origin) return;
+  const originUrl = new URL(origin);
+  const requestUrl = new URL(request.url);
+  const host = request.headers.get("host");
+  const allowedSite = process.env.NEXT_PUBLIC_SITE_URL;
+  const allowed =
+    originUrl.host === requestUrl.host ||
+    (host !== null && originUrl.host === host) ||
+    (Boolean(allowedSite) && origin === new URL(allowedSite!).origin);
+  if (!allowed) throw new Error("Akses lintas situs ditolak.");
 }
 export async function rateLimit(request: Request, scope: string, limit = 15) {
   sameOrigin(request);

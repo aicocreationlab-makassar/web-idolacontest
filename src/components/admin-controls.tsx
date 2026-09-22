@@ -61,24 +61,48 @@ export function AdminControl({
         }
       }}
     >
-      {(action === "payment" || action === "review" || action === "registration_review") && (
+      {(action === "payment" ||
+        action === "review" ||
+        action === "registration_review") && (
         <>
           <label className="field">
             Status
-            <select name="status">
+            <select
+              name="status"
+              defaultValue={String(initial.status ?? "pending")}
+            >
               {(action === "payment"
-                ? [["pending","Menunggu"],["paid","Sudah dibayar"],["rejected","Ditolak"],["refunded","Dikembalikan"]]
+                ? [
+                    ["pending", "Menunggu"],
+                    ["paid", "Sudah dibayar"],
+                    ["rejected", "Ditolak"],
+                    ["refunded", "Dikembalikan"],
+                  ]
                 : action === "registration_review"
-                  ? [["pending","Menunggu review"],["approved","Approve pendaftaran"],["rejected","Reject pendaftaran"]]
-                  : [["approved","Disetujui"],["revision_required","Perlu revisi"],["rejected","Ditolak"]]
-              ).map(([value,label]) => (
-                <option key={value} value={value}>{label}</option>
+                  ? [
+                      ["pending", "Menunggu review"],
+                      ["approved", "Approve pendaftaran"],
+                      ["rejected", "Reject pendaftaran"],
+                    ]
+                  : [
+                      ["approved", "Disetujui"],
+                      ["revision_required", "Perlu revisi"],
+                      ["rejected", "Ditolak"],
+                    ]
+              ).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
               ))}
             </select>
           </label>
           <label className="field">
             Catatan internal
-            <textarea name="note" maxLength={500} />
+            <textarea
+              name="note"
+              maxLength={500}
+              defaultValue={String(initial.note ?? "")}
+            />
           </label>
         </>
       )}

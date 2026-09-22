@@ -9,6 +9,18 @@ Tampilkan total registrasi, pending, paid, lomba per jenis, submission pending/a
 ## Registrasi website
 Data masuk otomatis dengan source `website`, payment `pending`, foto private. Admin verifikasi bukti transfer dan ubah menjadi `paid`.
 
+## Review pendaftaran
+Buka **Pendaftaran Masuk** dari sidebar. Data terbaru tampil lebih dulu dan dapat difilter berdasarkan season, lomba, kategori, status review, pembayaran, provinsi, atau sumber.
+
+1. Pilih **Periksa detail peserta** untuk melihat seluruh isian formulir dan foto privat.
+2. Pilih `approved` bila data valid, atau `rejected` bila pendaftaran ditolak. Catatan internal opsional tersimpan di audit log.
+3. Verifikasi pembayaran secara terpisah. Kode peserta berstatus `verified` hanya jika review pendaftaran `approved` dan pembayaran `paid`.
+
+Perubahan pada pendaftaran, pembayaran, karya, klaim, dan pengiriman memperbarui halaman admin melalui Supabase Realtime. Jika daftar kosong, halaman menampilkan status kosong dan bukan error.
+
+## Admin melalui ponsel
+Halaman `/admin` memiliki sidebar geser, tabel berbentuk kartu pada layar kecil, dan manifest PWA khusus dengan start URL `/admin/dashboard`. Pasang PWA dari halaman admin agar aplikasi langsung membuka ruang pengelola.
+
 ## Registrasi DM
 Admin buka `Tambah Peserta`, isi data, source `instagram_dm`, simpan. Kode registrasi dibuat otomatis.
 
@@ -43,3 +55,6 @@ CSV export untuk peserta, payment, hasil, klaim, pengiriman. Filter aktif harus 
 
 ## Data publik
 Jangan publish WA, alamat, nama orang tua, notes, data pembayaran, atau private URLs.
+
+## Hapus data season
+Super admin dapat menghapus satu pendaftaran beserta file privat/publik terkait dari halaman detail. Gunakan purge media pada Pengaturan Season untuk menghapus seluruh media season setelah backup dan verifikasi manual.

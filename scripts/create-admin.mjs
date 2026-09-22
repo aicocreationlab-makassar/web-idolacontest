@@ -24,13 +24,18 @@ if (!user) {
   });
   if (error) throw error;
   user = data.user;
-}
-const { error } = await db
-  .from("admin_profiles")
-  .upsert({
-    user_id: user.id,
-    display_name: "Administrator Idola Contest",
-    role: "super_admin",
+} else {
+  const { data, error } = await db.auth.admin.updateUserById(user.id, {
+    password,
+    email_confirm: true,
   });
+  if (error) throw error;
+  user = data.user;
+}
+const { error } = await db.from("admin_profiles").upsert({
+  user_id: user.id,
+  display_name: "Administrator Idola Contest",
+  role: "super_admin",
+});
 if (error) throw error;
-console.log(`Admin ${email} siap digunakan.`);
+console.log("Akun superadmin siap digunakan.");

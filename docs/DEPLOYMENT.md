@@ -19,7 +19,13 @@
 8. Buat akun admin.
 
 ## Admin
-Buat user via Supabase Auth, lalu insert `admin_profiles` dengan role `super_admin`. Jangan simpan password default di repo.
+Buat user via Supabase Auth, lalu insert `admin_profiles` dengan role `super_admin`. Untuk bootstrap dari environment server, isi `ADMIN_EMAIL` dan `ADMIN_PASSWORD`, lalu jalankan `npm run setup:admin`. Segera ganti password bootstrap setelah login pertama.
+
+Pastikan migration terbaru sudah terpasang dan verifikasi integrasi:
+
+```bash
+npm run check:supabase
+```
 
 ## Build checks
 ```bash

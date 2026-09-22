@@ -79,17 +79,18 @@ export async function POST(req: Request) {
           );
       }
     }
-    const { error } = input.action === "registration_review"
-      ? await db.rpc("admin_review_registration", {
-          p_id: input.id,
-          p_status: input.data.status,
-          p_note: input.data.note ?? null,
-        })
-      : await db.rpc("admin_mutate", {
-          p_action: input.action,
-          p_id: input.id,
-          p_data: input.data,
-        });
+    const { error } =
+      input.action === "registration_review"
+        ? await db.rpc("admin_review_registration", {
+            p_id: input.id,
+            p_status: input.data.status,
+            p_note: input.data.note ?? null,
+          })
+        : await db.rpc("admin_mutate", {
+            p_action: input.action,
+            p_id: input.id,
+            p_data: input.data,
+          });
     if (error)
       throw new Error(
         input.action === "registration_review"

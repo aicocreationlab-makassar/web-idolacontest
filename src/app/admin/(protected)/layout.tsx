@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { admin } from "@/lib/supabase/server";
 import { AdminSidebar } from "@/components/admin-sidebar";
+import { Realtime } from "@/components/realtime";
 export const dynamic = "force-dynamic";
 export default async function Layout({
   children,
@@ -17,8 +18,17 @@ export default async function Layout({
     <div className="admin-shell">
       <AdminSidebar role={role} />
       <div className="admin-workspace">
-        <header className="admin-topbar"><div><span>Idola Contest</span><b>Ruang Pengelola</b></div><span className="admin-live-dot">Sistem aktif</span></header>
-        <div className="admin-page">{children}</div>
+        <header className="admin-topbar">
+          <div>
+            <span>Idola Contest</span>
+            <b>Ruang Pengelola</b>
+          </div>
+          <span className="admin-live-dot">Sistem aktif</span>
+        </header>
+        <div className="admin-page">
+          <Realtime />
+          {children}
+        </div>
       </div>
     </div>
   );

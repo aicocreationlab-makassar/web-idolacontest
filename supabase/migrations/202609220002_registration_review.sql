@@ -14,6 +14,8 @@ end;
 alter table public.registrations
   drop constraint if exists registrations_review_status_check;
 alter table public.registrations
+  drop constraint if exists bounded_registration_review_note;
+alter table public.registrations
   add constraint registrations_review_status_check
   check (review_status in ('pending','approved','rejected'));
 alter table public.registrations
