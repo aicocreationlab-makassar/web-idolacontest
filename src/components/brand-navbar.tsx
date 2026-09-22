@@ -16,6 +16,20 @@ const links = [
 export function BrandNavbar() {
   const [open, setOpen] = useState(false);
   const path = usePathname();
+  function followSection(
+    event: React.MouseEvent<HTMLAnchorElement>,
+    url: string,
+  ) {
+    setOpen(false);
+    if (url === "/#hadiah" && path === "/") {
+      event.preventDefault();
+      document.getElementById("hadiah")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      window.history.replaceState(null, "", "/#hadiah");
+    }
+  }
   return (
     <header className="brand-header">
       <nav className="wrap brand-nav" aria-label="Navigasi utama">
@@ -33,7 +47,12 @@ export function BrandNavbar() {
         </Link>
         <div className="desktop-nav">
           {links.map(([url, label]) => (
-            <Link key={url} className={path === url ? "active" : ""} href={url}>
+            <Link
+              key={url}
+              className={path === url ? "active" : ""}
+              href={url}
+              onClick={(event) => followSection(event, url)}
+            >
               {label}
             </Link>
           ))}
@@ -66,7 +85,11 @@ export function BrandNavbar() {
         <div className="mobile-menu wrap" id="mobile-menu">
           <div className="mobile-menu-panel">
             {[...links, ["/cek-status", "Cek status"]].map(([url, label]) => (
-              <Link key={url} href={url} onClick={() => setOpen(false)}>
+              <Link
+                key={url}
+                href={url}
+                onClick={(event) => followSection(event, url)}
+              >
                 {label}
                 <ArrowRight size={18} />
               </Link>

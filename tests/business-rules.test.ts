@@ -67,12 +67,21 @@ test("Weighted scores honor all five criteria", () => {
   assert.throws(() => weightedScore([101, 0, 0, 0, 0]));
   assert.throws(() => weightedScore([50]));
 });
-test("Registration codes contain 96 random bits and validate", () => {
+test("Registration codes are short, name-based, random and validate", () => {
   const codes = new Set(
-    Array.from({ length: 1000 }, () => generateRegistrationCode()),
+    Array.from({ length: 1000 }, () =>
+      generateRegistrationCode("Ahmad Ghifari"),
+    ),
   );
   assert.equal(codes.size, 1000);
-  codes.forEach((c) => assert.equal(codeSchema.parse(c), c));
+  codes.forEach((c) => {
+    assert.match(c, /^IDC-AHMAD-[A-HJ-NP-Z2-9]{8}$/);
+    assert.equal(codeSchema.parse(c), c);
+  });
+  assert.equal(
+    codeSchema.safeParse("IDC-S1-1234567890ABCDEF12345678").success,
+    true,
+  );
   assert.equal(codeSchema.safeParse("IDC-S1-000001").success, false);
 });
 test("Registration refuses omitted consent and malformed address", () => {

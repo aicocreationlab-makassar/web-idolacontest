@@ -5,6 +5,7 @@ import { categories, competitions } from "@/lib/business-rules";
 import { ImageInput } from "./image-input";
 import { Fees } from "./shared";
 import { PartyPopper } from "lucide-react";
+import { showSuccess } from "@/lib/success-event";
 type Status = {
   public_name: string;
   competition_type: keyof typeof competitions;
@@ -45,6 +46,7 @@ export function Status() {
       if (!r.ok) throw new Error(d.error);
       setData(d);
       setVerifiedCode(code);
+      showSuccess("Status peserta berhasil ditemukan.");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -68,7 +70,7 @@ export function Status() {
             required
             maxLength={45}
             autoComplete="off"
-            placeholder="IDC-S1-…"
+            placeholder="IDC-AHMAD-K7P9X2Q4"
             spellCheck={false}
           />
         </label>
@@ -146,6 +148,7 @@ export function Status() {
                       const d = await r.json();
                       if (!r.ok) throw new Error(d.error);
                       setWorksheet(d.url);
+                      showSuccess("Worksheet siap dibuka dan dicetak.");
                     } catch (e) {
                       setError((e as Error).message);
                     } finally {
@@ -194,6 +197,7 @@ export function Status() {
                     const d = await r.json();
                     if (!r.ok) throw new Error(d.error);
                     setMessage(d.message);
+                    showSuccess("Karya berhasil dikirim untuk direview admin.");
                     await lookup();
                   } catch (e) {
                     setError((e as Error).message);

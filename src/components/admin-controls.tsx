@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { awards, criteria, weights, weightedScore } from "@/lib/business-rules";
 import { ImageInput } from "./image-input";
+import { showSuccess } from "@/lib/success-event";
 type Control =
   | "payment"
   | "review"
@@ -53,6 +54,9 @@ export function AdminControl({
           const d = await r.json();
           if (!r.ok) throw new Error(d.error);
           setMessage("Tersimpan.");
+          showSuccess(
+            "Perubahan admin berhasil disimpan dan sudah diperbarui.",
+          );
           router.refresh();
         } catch (e) {
           setMessage((e as Error).message);
@@ -257,6 +261,7 @@ export function PrivateMedia({
             const d = await r.json();
             if (!r.ok) throw new Error(d.error);
             setUrl(d.url);
+            showSuccess("Tautan file privat siap dibuka selama 60 detik.");
           } catch (e) {
             setMessage((e as Error).message);
           }
@@ -301,6 +306,7 @@ export function WorksheetUpload({ id }: { id: string }) {
           const d = await r.json();
           if (!r.ok) throw new Error(d.error);
           setMessage("Versi worksheet baru tersimpan.");
+          showSuccess("Worksheet baru berhasil diunggah.");
           router.refresh();
         } catch (e) {
           setMessage((e as Error).message);
@@ -357,6 +363,7 @@ export function DeleteRegistration({ id }: { id: string }) {
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error);
+            showSuccess("Peserta dan seluruh file terkait berhasil dihapus.");
             router.push("/admin/peserta");
             router.refresh();
           } catch (error) {
@@ -410,6 +417,7 @@ export function PurgeSeasonMedia({ id }: { id: string }) {
             const result = await response.json();
             if (!response.ok) throw new Error(result.error);
             setMessage("Seluruh media season telah dihapus.");
+            showSuccess("Seluruh media season berhasil dihapus.");
             setConfirmation("");
             router.refresh();
           } catch (error) {

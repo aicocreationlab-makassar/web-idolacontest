@@ -3,6 +3,7 @@ import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { FaWhatsapp } from "react-icons/fa";
 import { Fees } from "./shared";
+import { showSuccess } from "@/lib/success-event";
 const subscribe = () => () => {};
 function snapshot() {
   try {
@@ -52,6 +53,7 @@ export function Success() {
           try {
             await navigator.clipboard.writeText(code);
             setCopied("Kode disalin");
+            showSuccess("Kode registrasi berhasil disalin.");
           } catch {
             setCopied("Pilih dan salin kode di atas.");
           }

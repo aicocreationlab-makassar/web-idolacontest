@@ -1,6 +1,9 @@
 import { readForm } from "@/lib/request-body";
 import { registrationSchema } from "@/lib/validation";
-import { generateRegistrationCode } from "@/lib/business-rules";
+import {
+  generateLegacyRegistrationCode,
+  generateRegistrationCode,
+} from "@/lib/business-rules";
 import { admin, service } from "@/lib/supabase/server";
 import { getActiveSeason } from "@/lib/data";
 import { failure, json, rateLimit } from "@/lib/http";
@@ -34,15 +37,37 @@ export async function POST(req: Request) {
     if (!season) throw new Error("Pendaftaran belum dibuka.");
     const bytes = await imageBytes(f.get("photo"));
     path = await upload("participant-private", bytes);
-    const code = generateRegistrationCode(season.slug);
-    const { error } = await service().rpc("create_registration", {
-      p,
-      p_code: code,
-      p_path: path,
-      p_size: bytes.length,
-      p_actor: actor,
-    });
-    if (error)
+    let code = "";
+    let registrationError: { code?: string } | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      code = generateRegistrationCode(p.full_name);
+      const { error } = await service().rpc("create_registration", {
+        p,
+        p_code: code,
+        p_path: path,
+        p_size: bytes.length,
+        p_actor: actor,
+      });
+      registrationError = error;
+      if (!error) break;
+      if (error.code !== "23505") break;
+    }
+    if (
+      registrationError?.code === "23514" &&
+      "message" in registrationError &&
+      String(registrationError.message).includes("registration_code_shape")
+    ) {
+      code = generateLegacyRegistrationCode(season.slug);
+      const { error } = await service().rpc("create_registration", {
+        p,
+        p_code: code,
+        p_path: path,
+        p_size: bytes.length,
+        p_actor: actor,
+      });
+      registrationError = error;
+    }
+    if (registrationError)
       throw new Error(
         "Pendaftaran gagal. Periksa periode, kuota, dan data Anda.",
       );

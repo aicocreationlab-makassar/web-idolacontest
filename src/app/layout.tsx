@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { SiteChrome } from "@/components/site-chrome";
 
 import { Pwa } from "@/components/pwa";
+import { SuccessPopup } from "@/components/success-popup";
 import "@fontsource-variable/fredoka";
 import "@fontsource-variable/nunito";
 import "./globals.css";
@@ -57,6 +58,7 @@ export default function RootLayout({
           Lewati ke konten
         </a>
         <SiteChrome>{children}</SiteChrome>
+        <SuccessPopup />
         <Pwa />
       </body>
     </html>

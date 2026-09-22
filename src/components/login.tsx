@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { showSuccess } from "@/lib/success-event";
 export function Login() {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -18,6 +19,7 @@ export function Login() {
           });
           const d = await r.json();
           if (!r.ok) throw new Error(d.error);
+          showSuccess("Login berhasil. Selamat datang di ruang pengelola.");
           router.replace("/admin/dashboard");
           router.refresh();
         } catch (e) {

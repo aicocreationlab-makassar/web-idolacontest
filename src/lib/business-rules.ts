@@ -90,10 +90,29 @@ export function weightedScore(values: number[]) {
     ) / 100
   );
 }
-export function generateRegistrationCode(season = "S1") {
+export function generateRegistrationCode(name = "IDOLA") {
+  const namePart =
+    name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9 ]/g, "")
+      .trim()
+      .split(/\s+/)[0]
+      ?.slice(0, 6) || "IDOLA";
+  const safeName = namePart.length >= 2 ? namePart : "IDOLA";
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const random = Array.from(
+    crypto.getRandomValues(new Uint8Array(8)),
+    (value) => alphabet[value % alphabet.length],
+  ).join("");
+  return `IDC-${safeName}-${random}`;
+}
+
+export function generateLegacyRegistrationCode(season = "S1") {
   return `IDC-${season}-${Array.from(
     crypto.getRandomValues(new Uint8Array(12)),
-    (v) => v.toString(16).padStart(2, "0"),
+    (value) => value.toString(16).padStart(2, "0"),
   )
     .join("")
     .toUpperCase()}`;

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { FaWhatsapp } from "react-icons/fa";
+import { showSuccess } from "@/lib/success-event";
 export function Share({ url, name }: { url: string; name: string }) {
   const [message, setMessage] = useState("");
   return (
@@ -19,6 +20,7 @@ export function Share({ url, name }: { url: string; name: string }) {
           try {
             await navigator.clipboard.writeText(url);
             setMessage("Tautan disalin");
+            showSuccess("Tautan finalis berhasil disalin.");
           } catch {
             setMessage("Salin tautan dari bilah alamat browser.");
           }

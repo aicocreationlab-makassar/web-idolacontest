@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { categories, competitions, feeConsent } from "@/lib/business-rules";
 import { ImageInput } from "./image-input";
+import { showSuccess } from "@/lib/success-event";
 import {
   Check,
   Copy,
@@ -150,6 +151,9 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error);
       sessionStorage.setItem("idola-registration", JSON.stringify(data));
+      showSuccess(
+        "Pendaftaran berhasil disimpan. Jangan lupa simpan kode registrasi.",
+      );
       router.push("/daftar/sukses");
     } catch (e) {
       setError((e as Error).message);
@@ -363,6 +367,7 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
                 onClick={async () => {
                   await navigator.clipboard.writeText("7341301558");
                   setCopied(true);
+                  showSuccess("Nomor rekening berhasil disalin.");
                 }}
               >
                 <code>7341301558</code>

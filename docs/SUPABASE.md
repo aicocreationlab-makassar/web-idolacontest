@@ -33,6 +33,8 @@ Aktifkan hanya tabel yang diperlukan: registrations, payments, submissions, clai
 
 Migration `202609220002_registration_review.sql` menambahkan keputusan review pendaftaran, sinkronisasi akses peserta, metrik dashboard, serta RPC `admin_review_registration`. Jalankan seluruh migration secara berurutan. Periksa koneksi, schema review, login, dan role admin tanpa mencetak rahasia dengan:
 
+Migration `202609220003_short_registration_codes.sql` mengizinkan kode baru yang lebih singkat dan mudah dibaca, misalnya `IDC-AHMAD-K7P9X2Q4`. Format lama tetap diterima agar kode peserta lama tetap berfungsi. Terapkan migration ini sebelum deployment aplikasi terbaru.
+
 ```bash
 npm run check:supabase
 ```

@@ -4,8 +4,10 @@ export function RecentTicker({
 }: {
   items: { public_name: string; competition_type: string }[];
 }) {
-  if (!items.length) return null;
-  const repeated = [...items, ...items];
+  const source = items.length
+    ? items
+    : [{ public_name: "", competition_type: "info" }];
+  const repeated = [...source, ...source];
   return (
     <aside className="recent-ticker" aria-label="Registrasi terbaru">
       <span className="ticker-label">
@@ -15,9 +17,24 @@ export function RecentTicker({
         <div className="ticker-track">
           {repeated.map((item, index) => (
             <span key={`${item.public_name}-${index}`}>
-              {item.competition_type === "coloring" ? <Palette /> : <Camera />}
-              <b>{item.public_name}</b> telah registrasi Rp20.000 pada lomba{" "}
-              {item.competition_type === "coloring" ? "mewarnai" : "fotogenik"}
+              {item.competition_type === "info" ? (
+                <>
+                  <Sparkles /> Pendaftaran Idola Contest sedang dibuka · biaya
+                  registrasi Rp20.000
+                </>
+              ) : (
+                <>
+                  {item.competition_type === "coloring" ? (
+                    <Palette />
+                  ) : (
+                    <Camera />
+                  )}
+                  <b>{item.public_name}</b> telah registrasi Rp20.000 pada lomba{" "}
+                  {item.competition_type === "coloring"
+                    ? "mewarnai"
+                    : "fotogenik"}
+                </>
+              )}
             </span>
           ))}
         </div>

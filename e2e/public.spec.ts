@@ -12,6 +12,14 @@ test("Homepage, mobile fit, navigation and manifest", async ({
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBeTruthy();
+  if ((page.viewportSize()?.width ?? 0) <= 760) {
+    await page.getByRole("button", { name: "Buka menu" }).click();
+    await page.getByRole("link", { name: "Hadiah" }).click();
+  } else {
+    await page.getByRole("link", { name: "Hadiah" }).click();
+  }
+  await expect(page).toHaveURL(/#hadiah$/);
+  await expect(page.locator("#hadiah")).toBeInViewport();
   await expect(page.getByText("Rp120.000").first()).toBeVisible();
   await page.getByRole("link", { name: "Lihat Finalis" }).click();
   await expect(
@@ -79,6 +87,8 @@ test("Admin can login, open mobile navigation, and view incoming registrations",
   await page.getByLabel("Password").fill(process.env.ADMIN_PASSWORD!);
   await page.getByRole("button", { name: "Masuk" }).click();
   await expect(page).toHaveURL(/\/admin\/dashboard/);
+  await expect(page.getByText("Semuanya sudah beres")).toBeVisible();
+  await page.getByRole("button", { name: "Tutup pemberitahuan" }).click();
   await expect(page.getByText("Realtime aktif")).toBeVisible();
 
   if ((page.viewportSize()?.width ?? 0) <= 980) {
@@ -98,6 +108,13 @@ test("Admin can login, open mobile navigation, and view incoming registrations",
   const manifest = await request.get("/admin/manifest.webmanifest");
   expect(manifest.ok()).toBeTruthy();
   expect((await manifest.json()).start_url).toBe("/admin/dashboard");
+});
+
+test("Gallery opens with quiet collapsed filters", async ({ page }) => {
+  await page.goto("/galeri");
+  const filters = page.locator(".gallery-filter");
+  await expect(filters).not.toHaveAttribute("open", "");
+  await expect(page.getByText("Buka jika ingin mencari peserta tertentu")).toBeVisible();
 });
 test("Coloring never offers Preschool", async ({ page }) => {
   await page.goto("/daftar");

@@ -48,4 +48,7 @@ export const codeSchema = z
   .string()
   .trim()
   .toUpperCase()
-  .regex(/^IDC-[A-Z0-9]{1,12}-[A-F0-9]{24}$/, "Kode registrasi tidak valid.");
+  .regex(
+    /^IDC-(?:[A-Z0-9]{1,12}-[A-F0-9]{24}|[A-Z0-9]{2,6}-[A-HJ-NP-Z2-9]{8})$/,
+    "Kode registrasi tidak valid.",
+  );
