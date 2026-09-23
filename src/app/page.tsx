@@ -57,8 +57,8 @@ export default async function Home() {
               <SparkleDecoration className="headline-sparkle" />
             </h1>
             <p>
-              Kompetisi kreatif anak Indonesia untuk menunjukkan senyum,
-              keberanian, dan karya terbaik si kecil.
+              Lomba online anak Indonesia untuk menunjukkan senyum, keberanian,
+              dan karya terbaik melalui lomba fotogenik serta mewarnai.
             </p>
             <div className="actions">
               <Link className="btn" href="/daftar">

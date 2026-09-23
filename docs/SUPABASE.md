@@ -45,6 +45,8 @@ Migration `202609220003_short_registration_codes.sql` mengizinkan kode baru yang
 
 Migration `202609230001_optional_postcode_wib.sql` menjadikan kode pos opsional, memperbarui RPC registrasi agar menyimpan kode pos kosong sebagai `NULL`, dan mengubah jadwal Season 1 serta metadata timeline menjadi WIB (`Asia/Jakarta`).
 
+Migration `202609240001_admin_push_notifications.sql` menambahkan penyimpanan privat subscription Web Push milik admin. Jalankan migration ini sebelum mengaktifkan notifikasi pada PWA admin. Data endpoint push tidak boleh dibaca dari browser atau halaman publik.
+
 ```bash
 npm run check:supabase
 ```

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { admin } from "@/lib/supabase/server";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { Realtime } from "@/components/realtime";
+import { AdminNotifications } from "@/components/admin-notifications";
 export const dynamic = "force-dynamic";
 export default async function Layout({
   children,
@@ -26,6 +27,7 @@ export default async function Layout({
           <span className="admin-live-dot">Sistem aktif</span>
         </header>
         <div className="admin-page">
+          <AdminNotifications />
           <Realtime />
           {children}
         </div>

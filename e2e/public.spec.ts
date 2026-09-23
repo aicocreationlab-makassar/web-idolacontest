@@ -71,7 +71,28 @@ test("PWA offers a generic offline page without caching private data", async ({
     page.getByRole("heading", { name: "Koneksi sedang beristirahat." }),
   ).toBeVisible();
   const worker = await page.request.get("/sw.js");
-  expect(await worker.text()).toContain("event.request.mode==='navigate'");
+  const workerSource = await worker.text();
+  expect(workerSource).toContain('event.request.mode === "navigate"');
+  expect(workerSource).toContain('self.addEventListener("push"');
+  expect(workerSource).toContain('self.addEventListener("notificationclick"');
+});
+
+test("SEO exposes indexable robots and an official sitemap", async ({
+  request,
+}) => {
+  const robots = await request.get("/robots.txt");
+  expect(robots.ok()).toBeTruthy();
+  const robotsText = await robots.text();
+  expect(robotsText).toContain("Allow: /");
+  expect(robotsText).toContain("Disallow: /admin/");
+  expect(robotsText).toContain("https://idolacontest.my.id/sitemap.xml");
+
+  const sitemap = await request.get("/sitemap.xml");
+  expect(sitemap.ok()).toBeTruthy();
+  const sitemapText = await sitemap.text();
+  expect(sitemapText).toContain("https://idolacontest.my.id/lomba/fotogenik");
+  expect(sitemapText).toContain("https://idolacontest.my.id/lomba/mewarnai");
+  expect(sitemapText).not.toContain("/admin/");
 });
 test("Admin guard and status endpoint fail safely", async ({
   page,
@@ -100,6 +121,7 @@ test("Admin can login, open mobile navigation, and view incoming registrations",
   await expect(page.getByText("Selamat datang kembali!")).toBeVisible();
   await page.getByRole("button", { name: "Tutup pemberitahuan" }).click();
   await expect(page.getByText("Pembaruan otomatis aktif")).toBeVisible();
+  await expect(page.getByText("Notifikasi PWA di HP")).toBeVisible();
 
   if ((page.viewportSize()?.width ?? 0) <= 980) {
     await page.getByRole("button", { name: "Buka menu admin" }).click();

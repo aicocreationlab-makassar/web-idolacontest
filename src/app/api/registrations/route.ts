@@ -3,12 +3,14 @@ import { registrationSchema } from "@/lib/validation";
 import {
   generateLegacyRegistrationCode,
   generateRegistrationCode,
+  competitions,
 } from "@/lib/business-rules";
 import { admin, service } from "@/lib/supabase/server";
 import { getActiveSeason } from "@/lib/data";
 import { failure, json, rateLimit } from "@/lib/http";
 import { imageBytes, upload, remove } from "@/lib/media";
 import { validateRegions } from "@/lib/locations";
+import { sendAdminPush } from "@/lib/push-notifications";
 export async function POST(req: Request) {
   let path: string | undefined;
   try {
@@ -38,10 +40,11 @@ export async function POST(req: Request) {
     const bytes = await imageBytes(f.get("photo"));
     path = await upload("participant-private", bytes);
     let code = "";
+    let registrationId = "";
     let registrationError: { code?: string } | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       code = generateRegistrationCode(p.full_name);
-      const { error } = await service().rpc("create_registration", {
+      const { data, error } = await service().rpc("create_registration", {
         p,
         p_code: code,
         p_path: path,
@@ -49,6 +52,7 @@ export async function POST(req: Request) {
         p_actor: actor,
       });
       registrationError = error;
+      if (!error) registrationId = String(data);
       if (!error) break;
       if (error.code !== "23505") break;
     }
@@ -58,7 +62,7 @@ export async function POST(req: Request) {
       String(registrationError.message).includes("registration_code_shape")
     ) {
       code = generateLegacyRegistrationCode(season.slug);
-      const { error } = await service().rpc("create_registration", {
+      const { data, error } = await service().rpc("create_registration", {
         p,
         p_code: code,
         p_path: path,
@@ -66,6 +70,7 @@ export async function POST(req: Request) {
         p_actor: actor,
       });
       registrationError = error;
+      if (!error) registrationId = String(data);
     }
     if (registrationError)
       throw new Error(
@@ -76,6 +81,14 @@ export async function POST(req: Request) {
       .select("created_at")
       .eq("registration_code", code)
       .single();
+    await sendAdminPush({
+      title: "Pendaftaran baru masuk",
+      body: `${p.public_name} mendaftar Lomba ${competitions[p.competition_type]}.`,
+      url: registrationId
+        ? `/admin/peserta/${registrationId}`
+        : "/admin/pendaftaran",
+      tag: `registration-${registrationId || code}`,
+    });
     return json(
       {
         code,

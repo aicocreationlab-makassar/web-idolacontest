@@ -3,6 +3,7 @@ import { codeSchema } from "@/lib/validation";
 import { service } from "@/lib/supabase/server";
 import { failure, json, rateLimit } from "@/lib/http";
 import { imageBytes, upload, remove } from "@/lib/media";
+import { sendAdminPush } from "@/lib/push-notifications";
 export async function POST(req: Request) {
   let path: string | undefined;
   try {
@@ -13,14 +14,23 @@ export async function POST(req: Request) {
     const code = codeSchema.parse(f.get("code"));
     const bytes = await imageBytes(f.get("photo"));
     path = await upload("submission-private", bytes);
-    const { error } = await service().rpc("create_submission", {
-      p_code: code,
-      p_path: path,
-    });
+    const { data: submissionId, error } = await service().rpc(
+      "create_submission",
+      {
+        p_code: code,
+        p_path: path,
+      },
+    );
     if (error)
       throw new Error(
         "Karya belum dapat dikirim. Periksa pembayaran, tenggat, dan status karya sebelumnya.",
       );
+    await sendAdminPush({
+      title: "Karya baru dikirim",
+      body: `Peserta ${code} sudah mengirim karya dan menunggu pemeriksaan.`,
+      url: "/admin/karya",
+      tag: `submission-${submissionId || code}`,
+    });
     return json(
       { message: "Karya tersimpan privat dan menunggu review admin." },
       201,

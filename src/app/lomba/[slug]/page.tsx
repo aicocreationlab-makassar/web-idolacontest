@@ -8,7 +8,23 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  return { title: `Lomba ${(await params).slug}` };
+  const { slug } = await params;
+  const coloring = slug === "mewarnai";
+  const name = coloring ? "Mewarnai" : "Fotogenik";
+  const description = coloring
+    ? "Lomba mewarnai online anak Indonesia untuk PAUD, TK, dan SD dengan worksheet personal bertema Cita Citaku."
+    : "Lomba fotogenik online anak Indonesia bertema Cita Citaku untuk Preschool, PAUD, TK, dan SD.";
+  return {
+    title: `Lomba ${name} Online Anak Indonesia`,
+    description,
+    alternates: { canonical: `/lomba/${slug}` },
+    openGraph: {
+      title: `Lomba ${name} Online Anak Indonesia | Idola Contest`,
+      description,
+      url: `/lomba/${slug}`,
+      images: ["/logo.png"],
+    },
+  };
 }
 export default async function Page({
   params,
