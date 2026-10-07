@@ -2,15 +2,18 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { cache } from "react";
 import { configured, service } from "@/lib/supabase/server";
-import { publicImage } from "@/lib/data";
+import { getActiveSeason, publicImage } from "@/lib/data";
 import { Share } from "@/components/share";
 export const dynamic = "force-dynamic";
 const get = cache(async (slug: string) => {
   if (!configured() || !/^[a-f0-9]{24}$/.test(slug)) return null;
+  const season = await getActiveSeason();
+  if (!season) return null;
   const { data, error } = await service()
     .from("public_gallery")
     .select("*")
     .eq("slug", slug)
+    .eq("season_id", season.id)
     .maybeSingle();
   if (error) throw new Error("Galeri tidak dapat dimuat.");
   return data;

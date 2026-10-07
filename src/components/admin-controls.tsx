@@ -16,7 +16,6 @@ type Control =
   | "invoice"
   | "claim_paid"
   | "shipment"
-  | "settings"
   | "registration_review";
 export function AdminControl({
   action,
@@ -188,29 +187,6 @@ export function AdminControl({
           </label>
         </>
       )}
-      {action === "settings" && (
-        <>
-          {[
-            "registration_open_at",
-            "registration_close_at",
-            "submission_global_close_at",
-          ].map((v) => (
-            <label className="field" key={v}>
-              {v} (ISO 8601 beserta zona waktu)
-              <input name={v} required defaultValue={initial[v] ?? ""} />
-            </label>
-          ))}
-          <label className="field">
-            Kuota (kosong = tanpa batas)
-            <input
-              name="quota"
-              type="number"
-              min={1}
-              defaultValue={initial.quota ?? ""}
-            />
-          </label>
-        </>
-      )}
       <button className="btn secondary" disabled={busy}>
         {busy
           ? "Menyimpan…"
@@ -227,7 +203,6 @@ export function AdminControl({
               score: "Simpan nilai",
               award: "Tetapkan penghargaan",
               shipment: "Simpan pengiriman",
-              settings: "Simpan pengaturan",
               registration_review: "Simpan keputusan pendaftaran",
             }[action]}
       </button>

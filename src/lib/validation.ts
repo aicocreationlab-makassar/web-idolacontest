@@ -9,7 +9,11 @@ export const registrationSchema = z
   .object({
     full_name: text,
     public_name: text,
-    age: z.coerce.number().int().min(1).max(18),
+    age: z.coerce
+      .number()
+      .int("Usia harus berupa angka bulat")
+      .min(1, "Usia minimal 1"),
+    age_unit: z.enum(["years", "months"]).default("years"),
     school_name: text,
     parent_name: text,
     whatsapp: z
@@ -45,6 +49,22 @@ export const registrationSchema = z
     consent_terms: z.literal(true),
     consent_fee: z.literal(true),
     website: z.string().max(0).optional(),
+  })
+  .superRefine((d, ctx) => {
+    const maximum = d.age_unit === "months" ? 216 : 18;
+    if (d.age > maximum) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_big,
+        maximum,
+        inclusive: true,
+        origin: "number",
+        path: ["age"],
+        message:
+          d.age_unit === "months"
+            ? "Usia maksimal 216 bulan"
+            : "Usia maksimal 18 tahun",
+      });
+    }
   })
   .refine((d) => validateCompetitionCategory(d.competition_type, d.category), {
     path: ["category"],

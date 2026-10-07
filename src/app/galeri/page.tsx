@@ -11,7 +11,7 @@ export default async function Page({
   searchParams: Promise<GalleryFilters>;
 }) {
   const filters = await searchParams;
-  const { items, count, page, seasons } = await galleryPage(filters);
+  const { items, count, page, season } = await galleryPage(filters);
   const q = new URLSearchParams(
     Object.entries(filters).filter(([k, v]) => k !== "page" && !!v),
   );
@@ -21,9 +21,13 @@ export default async function Page({
   return (
     <div className="wrap section">
       <PageHeading
-        eyebrow="Panggung bintang kecil"
+        eyebrow={season ? "Panggung " + season.name : "Panggung bintang kecil"}
         title="Mimpi mereka, inspirasi kita."
-        description="Jelajahi karya finalis yang sudah disetujui dan dipublikasikan."
+        description={
+          season
+            ? "Jelajahi karya finalis dari season aktif yang sudah disetujui dan dipublikasikan."
+            : "Galeri season berikutnya sedang disiapkan."
+        }
       />
       <nav className="gallery-competition-tabs" aria-label="Pilih jenis lomba">
         <Link
@@ -82,17 +86,6 @@ export default async function Page({
               defaultValue={filters.province}
               maxLength={120}
             />
-          </label>
-          <label className="field">
-            Season
-            <select name="season" defaultValue={filters.season}>
-              <option value="">Semua season</option>
-              {seasons.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
           </label>
           <button className="btn self-end">Terapkan filter</button>
         </form>

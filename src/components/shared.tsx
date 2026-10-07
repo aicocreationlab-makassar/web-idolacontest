@@ -15,7 +15,7 @@ export const faqs = [
   ],
   [
     "Kapan batas pengumpulan karya?",
-    "Maksimal 7 hari setelah mendaftar atau 6 Oktober 2026 pukul 23.59 WIB, mana yang lebih awal.",
+    "Maksimal 7 hari setelah mendaftar atau pukul 23.59 WIB pada tanggal penutupan pengumpulan karya di season aktif, mana yang lebih awal.",
   ],
   [
     "Apakah foto anak langsung tampil di galeri?",

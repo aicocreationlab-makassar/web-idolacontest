@@ -46,7 +46,7 @@ export default async function Home() {
           <div className="hero-copy">
             <span className="pill season-pill">
               <span aria-hidden>★</span> IDOLA CONTEST —{" "}
-              {season?.name.toUpperCase() || "SEASON 1"}
+              {season?.name.toUpperCase() || "SEASON BERIKUTNYA"}
             </span>
             <h1>
               Saatnya Si Kecil
@@ -88,7 +88,7 @@ export default async function Home() {
               <div className="season-dates">
                 <CalendarDays size={20} />
                 <span>
-                  21 September – 6 Oktober 2026
+                  Season berikutnya segera hadir
                   <small>Registrasi Rp20.000 · Tema Cita Citaku</small>
                 </span>
               </div>
@@ -118,7 +118,8 @@ export default async function Home() {
               </span>
             </FloatingSticker>
             <span className="theme-sticker">
-              TEMA SEASON 1<strong>Cita Citaku</strong>
+              {season?.name.toUpperCase() || "IDOLA CONTEST"}
+              <strong>Cita Citaku</strong>
             </span>
             <div className="artboard-ground" />
           </div>
@@ -128,12 +129,13 @@ export default async function Home() {
       <CompetitionCards />
       <PersonalizedWorksheetSection />
       <PrizeSection />
-      <CompetitionTimeline />
+      <CompetitionTimeline season={season} />
       <RegistrationSteps />
       <HomeFinalists
         works={works
           .slice(0, 3)
           .map((w) => ({ ...w, image: publicImage(w.public_file_path) }))}
+        seasonName={season?.name}
       />
       <section className="section wrap info-section">
         <div className="grid2">

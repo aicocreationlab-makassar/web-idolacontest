@@ -3,6 +3,8 @@ import Link from "next/link";
 import { categories, criteria, weights } from "@/lib/business-rules";
 import { Fees, PageHeading } from "@/components/shared";
 import { ToyArt } from "@/components/decorations";
+import { formatWibDate, getActiveSeason } from "@/lib/data";
+export const dynamic = "force-dynamic";
 export async function generateMetadata({
   params,
 }: {
@@ -34,6 +36,7 @@ export default async function Page({
   const { slug } = await params;
   if (!["fotogenik", "mewarnai"].includes(slug)) notFound();
   const coloring = slug === "mewarnai";
+  const season = await getActiveSeason();
   return (
     <div className="wrap section">
       <PageHeading
@@ -74,9 +77,11 @@ export default async function Page({
             </p>
           )}
           <p>
-            Karya dikirim maksimal 7 hari setelah registrasi atau 6 Oktober 2026
-            pukul 23.59 WIB, mana yang lebih awal. Gambar JPG, PNG, atau WebP
-            maksimum 2 MB.
+            Karya dikirim maksimal 7 hari setelah registrasi atau{" "}
+            {season
+              ? `${formatWibDate(season.submission_global_close_at)} pukul 23.59 WIB`
+              : "penutupan season aktif"}
+            , mana yang lebih awal. Gambar JPG, PNG, atau WebP maksimum 2 MB.
           </p>
           <p>
             Unggahan bersifat privat sampai disetujui dan dipublikasikan admin.

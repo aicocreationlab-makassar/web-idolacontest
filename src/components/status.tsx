@@ -7,8 +7,11 @@ import { ImageInput } from "./image-input";
 import { Fees } from "./shared";
 import { Download, Paintbrush, PartyPopper, Printer } from "lucide-react";
 import { showSuccess } from "@/lib/success-event";
+import { formatParticipantAge } from "@/lib/participant";
 type Status = {
   public_name: string;
+  age?: number;
+  age_unit?: "years" | "months";
   competition_type: keyof typeof competitions;
   category: keyof typeof categories;
   payment_status: string;
@@ -136,6 +139,11 @@ export function Status() {
               {competitions[data.competition_type]} ·{" "}
               {categories[data.category]}
             </p>
+            {data.age !== undefined && (
+              <p>
+                Usia peserta: <b>{formatParticipantAge(data.age, data.age_unit)}</b>
+              </p>
+            )}
             {data.payment_status === "paid" ? (
               <div className="notice bg-mint! flex items-center gap-3">
                 <PartyPopper aria-hidden="true" /> Yeay! Pembayaranmu Sudah

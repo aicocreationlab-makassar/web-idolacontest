@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Faq, Fees, PageHeading } from "@/components/shared";
+import { formatWibDate, getActiveSeason } from "@/lib/data";
 const titles: Record<string, string> = {
   timeline: "Catat setiap momennya.",
   faq: "Pertanyaan yang sering ditanyakan.",
@@ -13,6 +14,7 @@ export async function generateMetadata({
 }) {
   return { title: titles[(await params).page] || "Halaman tidak ditemukan" };
 }
+export const dynamic = "force-dynamic";
 export default async function Page({
   params,
 }: {
@@ -20,48 +22,64 @@ export default async function Page({
 }) {
   const { page } = await params;
   if (!titles[page]) notFound();
+  const season = page === "timeline" ? await getActiveSeason() : null;
   return (
     <div className="wrap section max-w-4xl">
-      <PageHeading title={titles[page]} eyebrow="Idola Contest · Season 1" />
+      <PageHeading
+        title={titles[page]}
+        eyebrow={season ? "Idola Contest · " + season.name : "Idola Contest"}
+      />
       {page === "faq" ? (
         <Faq />
       ) : page === "timeline" ? (
         <div className="stack">
-          {[
-            [
-              "21 September – 6 Oktober 2026",
-              "Pendaftaran & pengumpulan karya",
-              "Batas kirim individu: 7 hari setelah registrasi atau penutupan global, mana yang lebih awal.",
-            ],
-            [
-              "7 Oktober 2026",
-              "Penilaian juri",
-              "Karya dinilai dengan lima kriteria berbobot.",
-            ],
-            [
-              "8 Oktober 2026",
-              "Pengumuman",
-              "Hasil tersedia setelah admin mempublikasikan di website dan @idola.contest.",
-            ],
-            [
-              "9–12 Oktober 2026",
-              "Persiapan penghargaan",
-              "Konfirmasi klaim, pembayaran, dan alamat melalui admin.",
-            ],
-            [
-              "Mulai 13 Oktober 2026",
-              "Pengiriman",
-              "Nomor resi dapat dilihat melalui Cek Status.",
-            ],
-          ].map(([d, t, p], i) => (
-            <article className="card" key={d}>
-              <span className="number">{i + 1}</span>
-              <p className="eyebrow">{d}</p>
-              <h3 className="my-3">{t}</h3>
-              <p className="muted">{p}</p>
-            </article>
-          ))}
-          <p className="muted">Seluruh waktu menggunakan WIB (Asia/Jakarta).</p>
+          {season ? (
+            <>
+              {[
+                [
+                  formatWibDate(season.registration_open_at) +
+                    " – " +
+                    formatWibDate(season.registration_close_at),
+                  "Pendaftaran & pengumpulan karya",
+                  "Batas kirim individu: 7 hari setelah registrasi atau penutupan global, mana yang lebih awal.",
+                ],
+                [
+                  formatWibDate(season.judging_at),
+                  "Penilaian juri",
+                  "Karya dinilai dengan lima kriteria berbobot.",
+                ],
+                [
+                  formatWibDate(season.announcement_at),
+                  "Pengumuman",
+                  "Hasil tersedia setelah admin mempublikasikan di website dan @idola.contest.",
+                ],
+                [
+                  formatWibDate(season.announcement_at) +
+                    " – " +
+                    formatWibDate(season.shipping_at),
+                  "Persiapan penghargaan",
+                  "Konfirmasi klaim, pembayaran, dan alamat melalui admin.",
+                ],
+                [
+                  "Mulai " + formatWibDate(season.shipping_at),
+                  "Pengiriman",
+                  "Nomor resi dapat dilihat melalui Cek Status.",
+                ],
+              ].map(([d, t, p], i) => (
+                <article className="card" key={d}>
+                  <span className="number">{i + 1}</span>
+                  <p className="eyebrow">{d}</p>
+                  <h3 className="my-3">{t}</h3>
+                  <p className="muted">{p}</p>
+                </article>
+              ))}
+              <p className="muted">
+                Seluruh waktu menggunakan WIB (Asia/Jakarta).
+              </p>
+            </>
+          ) : (
+            <p className="notice">Jadwal season berikutnya sedang disiapkan.</p>
+          )}
         </div>
       ) : page === "syarat-ketentuan" ? (
         <div className="card stack">
@@ -97,7 +115,7 @@ export default async function Page({
             pembayaran, atau permintaan pengembalian dana. Keputusan
             pengembalian dikonfirmasi penyelenggara sesuai kondisi transaksi.
             Klaim penghargaan dilakukan setelah hasil dipublikasikan. Pengiriman
-            mulai 13 Oktober 2026 dengan kurir pilihan admin.
+            mengikuti jadwal season aktif dengan kurir pilihan admin.
           </p>
           <p>
             Hubungi @idola.contest untuk pertanyaan atau keberatan sebelum

@@ -21,6 +21,7 @@ const groups = [
     "full_name",
     "public_name",
     "age",
+    "age_unit",
     "school_name",
     "class_label",
     "dream_job",
@@ -54,6 +55,7 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
     defaultValues: {
       competition_type: "photogenic",
       category: "paud",
+      age_unit: "years",
       registration_source: manual ? "instagram_dm" : "website",
     },
   });
@@ -67,6 +69,11 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
   const [locations, setLocations] = useState<Region[][]>([[], [], [], []]);
   const [loading, setLoading] = useState(true);
   const competition = useWatch({ control, name: "competition_type" });
+  const ageUnit =
+    useWatch({ control, name: "age_unit" }) === "months"
+      ? "months"
+      : "years";
+  const ageMaximum = ageUnit === "months" ? 216 : 18;
   async function loadRegions(index: number, parent = "") {
     setLoading(true);
     try {
@@ -222,7 +229,43 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
           <div className="grid2">
             {field("full_name", "Nama lengkap anak")}
             {field("public_name", "Nama publik / nama panggilan")}
-            {field("age", "Usia (tahun)", "number")}
+            <label className="field">
+              Usia anak
+              <div className="age-input-row">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={ageMaximum}
+                  placeholder={ageUnit === "months" ? "Contoh: 18" : "Contoh: 7"}
+                  {...register("age", {
+                    required: "Usia wajib diisi",
+                    min: { value: 1, message: "Usia minimal 1" },
+                    max: {
+                      value: ageMaximum,
+                      message:
+                        ageUnit === "months"
+                          ? "Usia maksimal 216 bulan"
+                          : "Usia maksimal 18 tahun",
+                    },
+                  })}
+                  aria-invalid={!!errors.age}
+                />
+                <select
+                  {...register("age_unit", { required: "Pilih satuan usia" })}
+                  aria-label="Satuan usia"
+                >
+                  <option value="years">Tahun</option>
+                  <option value="months">Bulan</option>
+                </select>
+              </div>
+              <span className="field-help">
+                Masukkan usia dalam {ageUnit === "months" ? "bulan" : "tahun"}.
+              </span>
+              {errors.age && (
+                <span className="field-error">{String(errors.age.message)}</span>
+              )}
+            </label>
             {field("school_name", "Nama sekolah / belum sekolah")}
             {field("class_label", "Kelas (opsional)", "text", false)}
             {field("dream_job", "Cita-cita anak")}

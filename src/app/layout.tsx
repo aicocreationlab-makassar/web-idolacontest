@@ -5,6 +5,7 @@ import { Pwa } from "@/components/pwa";
 import { SuccessPopup } from "@/components/success-popup";
 import { BackgroundAudio } from "@/components/background-audio";
 import { NavigationEffects } from "@/components/navigation-effects";
+import { getActiveSeason } from "@/lib/data";
 import "@fontsource-variable/fredoka";
 import "@fontsource-variable/nunito";
 import "aos/dist/aos.css";
@@ -67,11 +68,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
 };
-export default function RootLayout({
+export const dynamic = "force-dynamic";
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const season = await getActiveSeason();
   return (
     <html lang="id">
       <body>
@@ -99,15 +102,24 @@ export default function RootLayout({
                     "@id": "https://idolacontest.my.id/#organization",
                   },
                 },
-                ...["fotogenik", "mewarnai"].map((competition) => ({
+                ...(season
+                  ? ["fotogenik", "mewarnai"].map((competition) => ({
                   "@type": "Event",
-                  name: `Lomba ${competition === "fotogenik" ? "Fotogenik" : "Mewarnai"} Online Anak Indonesia`,
-                  description: `Lomba ${competition} anak Indonesia bertema Cita Citaku oleh Idola Contest.`,
+                   name:
+                     "Lomba " +
+                     (competition === "fotogenik" ? "Fotogenik" : "Mewarnai") +
+                     " Online Anak Indonesia" +
+                     (season ? " — " + season.name : ""),
+                   description:
+                     "Lomba " +
+                     competition +
+                     " anak Indonesia bertema Cita Citaku oleh Idola Contest." +
+                     (season ? " " + season.name + " sedang berlangsung." : ""),
                   eventAttendanceMode:
                     "https://schema.org/OnlineEventAttendanceMode",
                   eventStatus: "https://schema.org/EventScheduled",
-                  startDate: "2026-09-21T00:00:00+07:00",
-                  endDate: "2026-10-06T23:59:59+07:00",
+                   startDate: season?.registration_open_at,
+                   endDate: season?.registration_close_at,
                   url: `https://idolacontest.my.id/lomba/${competition}`,
                   image: "https://idolacontest.my.id/logo.png",
                   organizer: {
@@ -120,7 +132,8 @@ export default function RootLayout({
                     availability: "https://schema.org/InStock",
                     url: "https://idolacontest.my.id/daftar",
                   },
-                })),
+                    }))
+                  : []),
               ],
             }).replaceAll("<", "\\u003c"),
           }}
