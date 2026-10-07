@@ -1,51 +1,80 @@
-import { configured, service } from "@/lib/supabase/server";
-import { PageHeading, Fees } from "@/components/shared";
 import Link from "next/link";
 import { Trophy } from "lucide-react";
 import { categories, competitions } from "@/lib/business-rules";
+import { resultsPage } from "@/lib/data";
+import { Fees, PageHeading } from "@/components/shared";
+
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Hasil & penghargaan" };
-export default async function Page() {
-  const result = configured()
-    ? await service()
-        .from("public_results")
-        .select("*")
-        .order("final_score", { ascending: false })
-    : { data: [], error: null };
-  if (result.error) throw new Error("Hasil belum dapat dimuat.");
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ season?: string }>;
+}) {
+  const { season } = await searchParams;
+  const { items, seasons, selectedSeasonId } = await resultsPage(season);
+  const selected = seasons.find((item) => item.id === selectedSeasonId);
+
   return (
     <div className="wrap section">
       <PageHeading
-        eyebrow="Setiap usaha punya cerita"
+        eyebrow={selected ? selected.name : "Penghargaan Idola Contest"}
         title="Rayakan bintang kecil kita."
-        description="Pengumuman Season 1: 8 Oktober 2026. Hasil muncul setelah dipublikasikan oleh admin."
+        description={
+          selected
+            ? "Pemenang yang telah diumumkan secara resmi oleh Idola Contest."
+            : "Hasil akan muncul setelah diumumkan secara resmi oleh admin."
+        }
       />
-      {result.data?.length ? (
+
+      {seasons.length > 1 && (
+        <nav
+          className="gallery-competition-tabs result-season-tabs"
+          aria-label="Pilih season pemenang"
+        >
+          {seasons.map((item) => (
+            <Link
+              className={item.id === selectedSeasonId ? "active" : ""}
+              href={"/hasil?season=" + item.id}
+              key={item.id}
+            >
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+      )}
+
+      {items.length ? (
         <div className="grid3">
-          {result.data.map((r, i) => (
-            <div className="card stack" key={i}>
+          {items.map((result, index) => (
+            <article className="card stack" key={result.public_name + index}>
               <Trophy className="art-icon-modern" aria-hidden="true" />
-              <span className="eyebrow">{r.award_code}</span>
-              <h3>{r.public_name}</h3>
+              <span className="eyebrow">{result.award_code}</span>
+              <h3>{result.public_name}</h3>
               <p>
-                {competitions[r.competition_type as keyof typeof competitions]}{" "}
-                · {categories[r.category as keyof typeof categories]}
+                {
+                  competitions[
+                    result.competition_type as keyof typeof competitions
+                  ]
+                }{" "}
+                · {categories[result.category as keyof typeof categories]}
               </p>
               <p className="muted">
-                {r.regency_name}, {r.province_name}
+                {result.regency_name}, {result.province_name}
               </p>
-              {r.award_code !== "Best Social Media" && (
-                <p>Skor akhir: {r.final_score}</p>
+              {result.award_code !== "Best Social Media" && (
+                <p>Skor akhir: {result.final_score}</p>
               )}
-            </div>
+            </article>
           ))}
         </div>
       ) : (
         <p className="notice mb-8">
-          Hasil belum dipublikasikan. Pantau @idola.contest untuk pengumuman
-          resmi.
+          Belum ada pemenang yang dipublikasikan untuk season ini.
         </p>
       )}
+
       <div className="max-w-2xl mt-8 stack">
         <Fees />
         <p>

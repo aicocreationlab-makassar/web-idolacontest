@@ -8,6 +8,7 @@ import {
   PrivateMedia,
   PurgeSeasonMedia,
 } from "@/components/admin-controls";
+import { SeasonManager } from "@/components/season-manager";
 import { RegistrationForm } from "@/components/registration-form";
 import { PageHeading } from "@/components/shared";
 import { categories, competitions } from "@/lib/business-rules";
@@ -101,17 +102,29 @@ export default async function Page({
     return (
       <>
         <PageHeading title={titles[section]} />
-        <div className="grid2">
-          {data.map((s) => (
-            <div className="card stack" key={s.id}>
-              <h3>
-                {s.name} {s.is_active ? "· aktif" : ""}
-              </h3>
-              <AdminControl action="settings" id={s.id} initial={s} />
-              <PurgeSeasonMedia id={s.id} />
-            </div>
-          ))}
-        </div>
+        <p className="notice mb-6">
+          Atur pendaftaran dengan kalender. Waktu akan otomatis mengikuti WIB:
+          buka 00.00 dan tutup 23.59.
+        </p>
+        <SeasonManager seasons={data} />
+        <section className="season-media-admin card stack mt-6">
+          <div>
+            <span className="eyebrow">MEDIA SEASON</span>
+            <h2>Hapus foto setelah season selesai</h2>
+            <p className="muted">
+              Gunakan hanya setelah rekap dan backup selesai. Penghapusan ini
+              tidak menghapus data pemenang maupun catatan pendaftaran.
+            </p>
+          </div>
+          <div className="grid2">
+            {data.map((s) => (
+              <div className="season-media-card" key={s.id}>
+                <h3>{s.name}</h3>
+                <PurgeSeasonMedia id={s.id} />
+              </div>
+            ))}
+          </div>
+        </section>
       </>
     );
   }

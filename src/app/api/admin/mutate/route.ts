@@ -16,7 +16,6 @@ const schema = z.object({
     "invoice",
     "claim_paid",
     "shipment",
-    "settings",
     "registration_review",
   ]),
   id: z.uuid(),
@@ -30,9 +29,7 @@ export async function POST(req: Request) {
     const { db } = await admin(
       input.action === "score"
         ? ["admin", "super_admin", "judge"]
-        : input.action === "settings"
-          ? ["super_admin"]
-          : ["admin", "super_admin"],
+        : ["admin", "super_admin"],
     );
     let oldPath: string | null = null;
     if (["publish", "unpublish"].includes(input.action)) {

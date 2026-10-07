@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const [p, e, s, w, c, h] = await Promise.all([
       db
         .from("participants")
-        .select("public_name")
+        .select("public_name,age,age_unit")
         .eq("id", r.participant_id)
         .single(),
       db
@@ -51,6 +51,8 @@ export async function POST(req: Request) {
       throw new Error("Layanan status belum tersedia.");
     return json({
       public_name: p.data?.public_name,
+      age: p.data?.age,
+      age_unit: p.data?.age_unit,
       competition_type: r.competition_type,
       category: r.category,
       payment_status: r.payment_status,

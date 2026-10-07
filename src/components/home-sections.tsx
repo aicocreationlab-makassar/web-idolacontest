@@ -23,6 +23,17 @@ import {
   FloatingSticker,
   SparkleDecoration,
 } from "./decorations";
+import { formatWibDate, formatWibDayMonth } from "@/lib/data";
+
+type TimelineSeason = {
+  name: string;
+  registration_open_at: string;
+  registration_close_at: string;
+  submission_global_close_at: string;
+  judging_at: string;
+  announcement_at: string;
+  shipping_at: string;
+};
 export function SectionHeading({
   eyebrow,
   title,
@@ -339,7 +350,35 @@ export function PrizeSection() {
     </section>
   );
 }
-export function CompetitionTimeline() {
+export function CompetitionTimeline({
+  season,
+}: {
+  season: TimelineSeason | null;
+}) {
+  const milestones = season
+    ? [
+        [
+          formatWibDayMonth(season.registration_open_at),
+          "Pendaftaran dibuka",
+          Pencil,
+        ],
+        [
+          formatWibDayMonth(season.registration_close_at),
+          "Batas daftar & karya",
+          Camera,
+        ],
+        [formatWibDayMonth(season.judging_at), "Penilaian juri", Star],
+        [formatWibDayMonth(season.announcement_at), "Pengumuman", Trophy],
+        [
+          formatWibDayMonth(season.announcement_at) +
+            "–" +
+            formatWibDayMonth(season.shipping_at),
+          "Persiapan hadiah",
+          Palette,
+        ],
+        [formatWibDayMonth(season.shipping_at), "Mulai pengiriman", Truck],
+      ]
+    : [];
   return (
     <section className="section timeline-section">
       <div className="wrap">
@@ -348,34 +387,39 @@ export function CompetitionTimeline() {
           title="Perjalanan menuju panggung."
           description="Catat tanggalnya, siapkan karya terbaiknya. Semua waktu dalam WIB."
         />
-        <div className="journey">
-          {[
-            ["21 SEP", "Pendaftaran dibuka", Pencil],
-            ["06 OKT", "Batas daftar & karya", Camera],
-            ["07 OKT", "Penilaian juri", Star],
-            ["08 OKT", "Pengumuman", Trophy],
-            ["09–12 OKT", "Persiapan hadiah", Palette],
-            ["13 OKT", "Mulai pengiriman", Truck],
-          ].map(([date, label, icon], i) => {
-            const Icon = icon as typeof Star;
-            return (
-              <div className="journey-stop" key={String(date)}>
-                <span
-                  className={`journey-icon tone-${["pink", "sky", "yellow", "purple", "mint", "peach"][i]}`}
-                >
-                  <Icon size={26} />
-                  <small>{i + 1}</small>
-                </span>
-                <b>{String(date)}</b>
-                <p>{String(label)}</p>
-              </div>
-            );
-          })}
-        </div>
-        <p className="text-center muted text-sm mt-6">
-          Batas kirim karya: 7 hari setelah registrasi atau 6 Oktober 2026, mana
-          yang lebih awal.
-        </p>
+        {season ? (
+          <>
+            <div className="journey">
+              {milestones.map(([date, label, icon], i) => {
+                const Icon = icon as typeof Star;
+                return (
+                  <div className="journey-stop" key={String(date)}>
+                    <span
+                      className={
+                        "journey-icon tone-" +
+                        ["pink", "sky", "yellow", "purple", "mint", "peach"][i]
+                      }
+                    >
+                      <Icon size={26} />
+                      <small>{i + 1}</small>
+                    </span>
+                    <b>{String(date)}</b>
+                    <p>{String(label)}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-center muted text-sm mt-6">
+              Batas kirim karya: 7 hari setelah registrasi atau{" "}
+              {formatWibDate(season.submission_global_close_at)}, mana yang
+              lebih awal.
+            </p>
+          </>
+        ) : (
+          <p className="notice text-center">
+            Jadwal season berikutnya sedang disiapkan.
+          </p>
+        )}
       </div>
     </section>
   );
@@ -414,6 +458,7 @@ export function RegistrationSteps() {
 }
 export function HomeFinalists({
   works,
+  seasonName,
 }: {
   works: {
     slug: string;
@@ -421,6 +466,7 @@ export function HomeFinalists({
     regency_name: string;
     image: string;
   }[];
+  seasonName?: string;
 }) {
   return (
     <section className="section gallery-scene">
@@ -462,7 +508,8 @@ export function HomeFinalists({
             <div>
               <h3>Panggungnya siap. Bintang kecilnya segera hadir!</h3>
               <p>
-                Jadi bagian dari cerita Season 1. Karya finalis tampil setelah
+                Jadi bagian dari cerita {seasonName || "season berikutnya"}.
+                Karya finalis tampil setelah
                 proses review.
               </p>
             </div>
