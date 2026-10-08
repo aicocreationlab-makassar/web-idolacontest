@@ -94,7 +94,7 @@ function WinnerCard({ row, special = false }: { row: Row; special?: boolean }) {
             alt={`Karya juara ${row.public_name}`}
             width={640}
             height={640}
-            sizes="(max-width:760px) 90vw, 30vw"
+            unoptimized
           />
           <span className="winner-award-badge">
             <Trophy size={14} aria-hidden="true" /> {row.award_code}

@@ -22,7 +22,7 @@ import type { Season } from "@/lib/season";
 import { asList, firstOf } from "@/lib/embed";
 import { CopyMessage } from "@/components/copy-message";
 import { WinnersAdmin, type WinnerRow } from "@/components/winners-admin";
-import { winnerImageUrl } from "@/lib/winners";
+import { backfillWinnerImages, winnerImageUrl } from "@/lib/winners";
 import { calculateSubmissionDeadline } from "@/lib/business-rules";
 import type { MessageContext } from "@/lib/messages";
 
@@ -311,6 +311,8 @@ export default async function Page({
     const boardSeason = seasonRows.find((s) => s.id === scopedSeason) ?? activeSeason;
     let winnerRows: WinnerRow[] = [];
     if (section === "hasil") {
+      // Winners announced before the artwork-copy step existed get their copy here.
+      await backfillWinnerImages(24);
       let winnersQuery = db.from("winners").select("*").order("published_at", { ascending: false });
       if (scopedSeason) winnersQuery = winnersQuery.eq("season_id", scopedSeason);
       const { data: winnerData } = await winnersQuery;
