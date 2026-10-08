@@ -5,6 +5,11 @@ import { admin, service } from "@/lib/supabase/server";
 import { failure, json, sameOrigin, VisibleError } from "@/lib/http";
 import { upload, remove } from "@/lib/media";
 import { describeDatabaseError } from "@/lib/admin-errors";
+import {
+  ensureWinnerImages,
+  removePublicObjects,
+  winnerImagePaths,
+} from "@/lib/winners";
 
 const actions = [
   "payment",
@@ -85,6 +90,27 @@ export async function POST(req: Request) {
           );
       }
     }
+
+    // Winner snapshots: find the registrations affected by a (un)publish so the
+    // artwork copy can be created afterwards or its object removed.
+    const publishing =
+      input.action === "result_publish" || input.action === "publish_group";
+    let affected: string[] = [];
+    let staleImages: string[] = [];
+    if (publishing) {
+      if (input.action === "result_publish") affected = [input.id];
+      else {
+        const { data: rows } = await service()
+          .from("registrations")
+          .select("id,results!inner(id)")
+          .eq("season_id", input.id)
+          .eq("competition_type", String(input.data.competition ?? ""))
+          .eq("category", String(input.data.category ?? ""));
+        affected = (rows ?? []).map((row) => row.id as string);
+      }
+      if (!input.data.published) staleImages = await winnerImagePaths(affected);
+    }
+
     const { error } =
       input.action === "registration_review"
         ? await db.rpc("admin_review_registration", {
@@ -98,6 +124,11 @@ export async function POST(req: Request) {
             p_data: input.data,
           });
     if (error) throw new VisibleError(describeDatabaseError(error));
+
+    if (publishing) {
+      if (input.data.published) await ensureWinnerImages(affected);
+      else if (staleImages.length) await removePublicObjects(staleImages);
+    }
     return json({ ok: true });
   } catch (e) {
     if (copy) await remove("gallery-public", copy);

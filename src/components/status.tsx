@@ -49,7 +49,9 @@ type Status = {
     final_score: number;
     rank_position: number | null;
     published_at: string | null;
+    image_url?: string | null;
   } | null;
+  archived?: boolean;
   claim: {
     invoice_number: string;
     amount: number;
@@ -304,21 +306,42 @@ export function Status() {
               </p>
             )}
             {data.result && (
-              <div className="winner-banner">
-                <Trophy aria-hidden="true" />
+              <div className="winner-showcase">
+                {data.result.image_url ? (
+                  <Image
+                    src={data.result.image_url}
+                    alt={`Karya juara ${data.public_name}`}
+                    width={720}
+                    height={720}
+                    unoptimized
+                  />
+                ) : (
+                  <div className="winner-image placeholder" aria-hidden="true">
+                    <Trophy />
+                  </div>
+                )}
                 <div>
-                  <span className="eyebrow">SELAMAT!</span>
+                  <span className="eyebrow">SELAMAT, JUARA!</span>
                   <h3>{data.result.award_code}</h3>
                   <p>
                     {data.result.rank_position
                       ? `Peringkat ${data.result.rank_position} kategori ${categories[data.category]} · `
                       : ""}
-                    skor akhir {Number(data.result.final_score)} · diumumkan{" "}
-                    {formatDate(data.result.published_at)}.
+                    {data.result.final_score !== null && data.result.final_score !== undefined
+                      ? `skor akhir ${Number(data.result.final_score)} · `
+                      : ""}
+                    diumumkan {formatDate(data.result.published_at)}.
                   </p>
+                  <p>
+                    Karya juara {data.public_name} tampil permanen di halaman pemenang.
+                  </p>
+                  <Link className="btn secondary" href="/hasil">
+                    Lihat halaman pemenang →
+                  </Link>
                 </div>
               </div>
             )}
+            {!data.archived && (
             <ol className="journey-tracker" aria-label="Perjalanan peserta">
               {steps.map((step, i) => (
                 <li className={`journey-step ${step.state}`} key={step.key}>
@@ -332,6 +355,9 @@ export function Status() {
                 </li>
               ))}
             </ol>
+            )}
+            {!data.archived && (
+              <>
             {data.payment_status === "paid" ? (
               <div className="notice bg-mint! flex items-center gap-3">
                 <PartyPopper aria-hidden="true" /> Yeay! Pembayaranmu Sudah
@@ -345,6 +371,8 @@ export function Status() {
                   Jika sudah, konfirmasikan ke admin dan tunggu verifikasi.
                 </p>
                 <Fees />
+              </>
+            )}
               </>
             )}
             {data.submission?.publication_status === "approved" &&

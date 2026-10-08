@@ -37,10 +37,28 @@ export function AdminNotifications() {
   const [state, setState] = useState<NotificationState>("checking");
   const [busy, setBusy] = useState(false);
   const [detail, setDetail] = useState("");
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
+  const [publicKey, setPublicKey] = useState(
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "",
+  );
+
+  /** The key is generated and kept server-side, so no deployment setup is needed. */
+  const loadKey = useCallback(async () => {
+    if (publicKey) return publicKey;
+    try {
+      const response = await fetch("/api/admin/push-key");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      setPublicKey(data.publicKey);
+      return data.publicKey as string;
+    } catch (error) {
+      setDetail((error as Error).message || "Kunci notifikasi belum tersedia.");
+      return "";
+    }
+  }, [publicKey]);
 
   const inspect = useCallback(async () => {
-    if (!publicKey) {
+    const key = await loadKey();
+    if (!key) {
       setState("no-key");
       return;
     }
@@ -63,7 +81,7 @@ export function AdminNotifications() {
     } catch {
       setState("disabled");
     }
-  }, [publicKey]);
+  }, [loadKey]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void inspect(), 0);
@@ -76,10 +94,11 @@ export function AdminNotifications() {
   }, [inspect]);
 
   async function enable() {
-    if (!publicKey) return;
     setBusy(true);
     setDetail("");
     try {
+      const key = await loadKey();
+      if (!key) throw new Error("Kunci notifikasi belum tersedia. Coba lagi sebentar.");
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setState(permission === "denied" ? "denied" : "disabled");
@@ -96,7 +115,7 @@ export function AdminNotifications() {
         existing ||
         (await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: applicationServerKey(publicKey),
+          applicationServerKey: applicationServerKey(key),
         }));
       const response = await fetch("/api/admin/push-subscription", {
         method: "POST",
@@ -161,7 +180,7 @@ export function AdminNotifications() {
       "Aktif — pendaftar baru dan karya baru langsung muncul sebagai notifikasi.",
     denied:
       "Izin notifikasi diblokir. Buka pengaturan situs/aplikasi di HP untuk mengizinkannya.",
-    "no-key": "Kunci VAPID belum dipasang di server (.env).",
+    "no-key": "Kunci notifikasi sedang disiapkan server. Muat ulang halaman ini sebentar lagi.",
   };
 
   return (

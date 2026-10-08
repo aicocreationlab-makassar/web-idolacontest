@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Palette, Plus, Power, Trash2, Pencil, X } from "lucide-react";
+import { CalendarDays, Palette, Plus, Power, Trash2, Pencil, X, EyeOff, Flag } from "lucide-react";
 import {
   themes,
   themeKeys,
@@ -10,6 +10,7 @@ import {
   toWibInput,
   fromWibInput,
   formatDate,
+  seasonPhase,
   type Season,
 } from "@/lib/season";
 import { showSuccess } from "@/lib/success-event";
@@ -200,6 +201,11 @@ export function SeasonManager({
                 <span className={`admin-status ${season.is_active ? "status-approved" : ""}`}>
                   {season.is_active ? "Season aktif" : "Tidak aktif"}
                 </span>
+                {seasonPhase(season) === "shipping" && (
+                  <span className="season-done-badge">
+                    <Flag size={12} aria-hidden="true" /> Jadwal selesai · data peserta tetap tersimpan
+                  </span>
+                )}
               </div>
               <dl className="season-dates-grid">
                 <div>
@@ -275,12 +281,45 @@ export function SeasonManager({
                   </button>
                 )}
               </div>
-              {canPurge && (
-                <details>
-                  <summary className="muted text-sm">Zona berbahaya: hapus semua foto season</summary>
-                  <PurgeSeasonMedia id={season.id} />
-                </details>
-              )}
+              <details>
+                <summary className="muted text-sm">Zona berbahaya: tarik publikasi & hapus media</summary>
+                <div className="danger-zone stack">
+                  <h3>Tarik semua publikasi karya season ini</h3>
+                  <p>
+                    Semua karya yang tampil di galeri publik disembunyikan dan file publiknya
+                    dihapus permanen dari storage. Data pendaftaran, nilai, dan karya juara
+                    (data pemenang) tetap ada.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn danger-button"
+                    disabled={busy === `unpublish-${season.id}`}
+                    onClick={async () => {
+                      if (window.prompt(`Ketik TARIK PUBLIKASI untuk menarik semua karya ${season.name} dari galeri`) !== "TARIK PUBLIKASI") return;
+                      setBusy(`unpublish-${season.id}`);
+                      setMessage("");
+                      try {
+                        const response = await fetch("/api/admin/unpublish-season", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ id: season.id, confirmation: "TARIK PUBLIKASI" }),
+                        });
+                        const result = await response.json();
+                        if (!response.ok) throw new Error(result.error);
+                        showSuccess(`${result.removed} file publik dihapus. Galeri ${season.name} kini kosong.`, "delete");
+                        router.refresh();
+                      } catch (error) {
+                        setMessage((error as Error).message);
+                      } finally {
+                        setBusy("");
+                      }
+                    }}
+                  >
+                    <EyeOff /> {busy === `unpublish-${season.id}` ? "Menarik publikasi…" : "Tarik semua publikasi karya"}
+                  </button>
+                </div>
+                {canPurge && <PurgeSeasonMedia id={season.id} />}
+              </details>
             </article>
           );
         })}

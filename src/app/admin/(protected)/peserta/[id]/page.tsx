@@ -9,6 +9,9 @@ import {
 import { PageHeading } from "@/components/shared";
 import { categories, competitions } from "@/lib/business-rules";
 import { formatParticipantAge } from "@/lib/participant";
+import { CopyMessage } from "@/components/copy-message";
+import { asList, firstOf } from "@/lib/embed";
+import { calculateSubmissionDeadline } from "@/lib/business-rules";
 
 const labels: Record<string, string> = {
   ...categories,
@@ -57,7 +60,7 @@ export default async function Page({
   const { data: registration, error } = await db
     .from("registrations")
     .select(
-      "*,participants(*),participant_media(*),worksheets(*),submissions(*)",
+      "*,participants(*),participant_media(*),worksheets(*),submissions(*),results(*),claim_invoices(*),shipments(*)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -68,6 +71,43 @@ export default async function Page({
   const participantMedia = registration.participant_media ?? [];
   const worksheets = registration.worksheets ?? [];
   const submissions = registration.submissions ?? [];
+  const { data: season } = await db
+    .from("seasons")
+    .select("*")
+    .eq("id", registration.season_id)
+    .maybeSingle();
+  const latestSubmission = [...submissions].sort((a: { created_at: string }, b: { created_at: string }) =>
+    a.created_at < b.created_at ? 1 : -1,
+  )[0] as { status: string; publication_status: string } | undefined;
+  const result = firstOf(registration.results as { award_code: string; rank_position: number | null; is_published: boolean }[] | null);
+  const claim = firstOf(registration.claim_invoices as { invoice_number: string; status: string }[] | null);
+  const shipment = firstOf(registration.shipments as { courier: string; tracking_number: string | null; shipping_status: string }[] | null);
+  const messageContext = {
+    public_name: participant.public_name,
+    registration_code: registration.registration_code,
+    competition_type: registration.competition_type,
+    category: registration.category,
+    season_name: season?.name,
+    theme_title: season?.theme_title || "Cita Citaku",
+    announcement_at: season?.announcement_at,
+    shipping_at: season?.shipping_at,
+    deadline: season
+      ? calculateSubmissionDeadline(registration.created_at, season.submission_global_close_at).toISOString()
+      : null,
+    payment_status: registration.payment_status,
+    review_status: reviewStatus,
+    worksheet_ready: asList(worksheets).length > 0,
+    submission_status: latestSubmission?.status ?? null,
+    publication_status: latestSubmission?.publication_status ?? null,
+    award_code: result?.award_code ?? null,
+    rank_position: result?.rank_position ?? null,
+    result_published: result?.is_published ?? false,
+    invoice_number: claim?.invoice_number ?? null,
+    claim_status: claim?.status ?? null,
+    courier: shipment?.courier ?? null,
+    tracking_number: shipment?.tracking_number ?? null,
+    shipping_status: shipment?.shipping_status ?? null,
+  };
 
   return (
     <>
@@ -102,6 +142,20 @@ export default async function Page({
           id={registration.id}
           initial={{ status: reviewStatus, note: registration.review_note }}
         />
+      </section>
+
+      <section className="card stack mb-6">
+        <div className="admin-section-title">
+          <div>
+            <span className="eyebrow">Kabari Mommy via DM Instagram</span>
+            <h2>Pesan personal siap salin</h2>
+            <p className="muted text-sm">
+              Pesan menyesuaikan tahap peserta: kode registrasi, cara cek status, pembayaran,
+              worksheet, karya, pengumuman juara, invoice klaim, sampai resi.
+            </p>
+          </div>
+        </div>
+        <CopyMessage context={messageContext} />
       </section>
 
       <div className="admin-detail-layout">

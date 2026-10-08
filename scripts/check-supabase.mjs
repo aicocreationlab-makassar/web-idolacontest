@@ -45,8 +45,13 @@ const push = await db
 console.log(
   `PUSH_SCHEMA=${push.error ? `MISSING_OR_ERROR:${push.error.code}` : `OK (${push.count ?? 0} perangkat)`}`,
 );
+const vapid = await db.from("app_config").select("value").eq("key", "vapid").maybeSingle();
 console.log(
-  `PUSH_KEYS=${process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY && process.env.VAPID_SUBJECT ? "OK" : "MISSING"}`,
+  `PUSH_KEYS=${process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY ? "OK (env)" : vapid.data ? "OK (app_config)" : vapid.error ? `MISSING (apply 202610090001: ${vapid.error.code})` : "AUTO (generated on first use)"}`,
+);
+const winners = await db.from("winners").select("id", { count: "exact", head: true });
+console.log(
+  `WINNERS_SCHEMA=${winners.error ? `MISSING_OR_ERROR:${winners.error.code} (apply 202610090001_winners_push_config_cleanup.sql)` : `OK (${winners.count ?? 0} pemenang)`}`,
 );
 
 const auth = createClient(url, publicKey, { auth: { persistSession: false } });
