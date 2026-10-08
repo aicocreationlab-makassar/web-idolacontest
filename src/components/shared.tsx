@@ -1,35 +1,47 @@
 import Link from "next/link";
 import Image from "next/image";
-export const faqs = [
-  [
-    "Apakah peserta perlu membuat akun?",
-    "Tidak. Simpan kode registrasi pribadi untuk cek pembayaran, mengambil worksheet, dan mengirim karya.",
-  ],
-  [
-    "Berapa biaya yang perlu disiapkan?",
-    "Registrasi Rp20.000. Setelah pengumuman, klaim paket penghargaan Rp120.000 termasuk gratis ongkir seluruh Indonesia. Transfer ke BSI 7341301558 a.n. Riswan Ramadhan.",
-  ],
-  [
-    "Apakah Preschool bisa ikut mewarnai?",
-    "Preschool hanya dapat mengikuti fotogenik. Mewarnai dimulai dari PAUD hingga SD kelas 5–6.",
-  ],
-  [
-    "Kapan batas pengumpulan karya?",
-    "Maksimal 7 hari setelah mendaftar atau pukul 23.59 WIB pada tanggal penutupan pengumpulan karya di season aktif, mana yang lebih awal.",
-  ],
-  [
-    "Apakah foto anak langsung tampil di galeri?",
-    "Tidak. Semua unggahan disimpan privat. Karya baru tampil setelah disetujui dan dipublikasikan oleh admin.",
-  ],
-  [
-    "Bagaimana mendapatkan worksheet personal?",
-    "Setelah pembayaran mewarnai terverifikasi, admin menyiapkan worksheet berdasarkan foto dan cita-cita anak. Unduh melalui Cek Status, lalu cetak A4.",
-  ],
-];
-export function Faq() {
+import { formatDateTime, type Season } from "@/lib/season";
+
+export function faqs(season?: Season | null) {
+  const deadline = season
+    ? formatDateTime(season.submission_global_close_at)
+    : "penutupan global season";
+  return [
+    [
+      "Apakah peserta perlu membuat akun?",
+      "Tidak. Simpan kode registrasi pribadi untuk cek pembayaran, mengambil worksheet, mengirim karya, melihat hasil juara, klaim hadiah, dan resi pengiriman.",
+    ],
+    [
+      "Berapa biaya yang perlu disiapkan?",
+      "Registrasi Rp20.000. Setelah pengumuman, klaim paket penghargaan Rp120.000 termasuk gratis ongkir seluruh Indonesia. Transfer ke BSI 7341301558 a.n. Riswan Ramadhan.",
+    ],
+    [
+      "Apakah Preschool bisa ikut mewarnai?",
+      "Preschool hanya dapat mengikuti fotogenik. Mewarnai dimulai dari PAUD hingga SD kelas 5–6.",
+    ],
+    [
+      "Kapan batas pengumpulan karya?",
+      `Maksimal 7 hari setelah mendaftar atau ${deadline}, mana yang lebih awal.`,
+    ],
+    [
+      "Apakah foto anak langsung tampil di galeri?",
+      "Tidak. Semua unggahan disimpan privat. Karya baru tampil setelah disetujui dan dipublikasikan oleh admin.",
+    ],
+    [
+      "Bagaimana mendapatkan worksheet personal?",
+      "Setelah pembayaran mewarnai terverifikasi, admin menyiapkan worksheet berdasarkan foto dan tema season. Unduh melalui Cek Status, lalu cetak A4.",
+    ],
+    [
+      "Bagaimana juara ditentukan?",
+      "Juri menilai lima kriteria berbobot. Sistem meranking otomatis setiap peserta dibandingkan peserta lain pada jenis lomba dan kategori usia yang sama, lalu admin mengumumkan juaranya.",
+    ],
+  ];
+}
+
+export function Faq({ season }: { season?: Season | null }) {
   return (
     <div>
-      {faqs.map(([q, a]) => (
+      {faqs(season).map(([q, a]) => (
         <details key={q}>
           <summary>{q}</summary>
           <p className="muted mt-3">{a}</p>

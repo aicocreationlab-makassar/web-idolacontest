@@ -1,230 +1,456 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CalendarDays, CheckCircle2, Trophy } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CalendarDays, Palette, Plus, Power, Trash2, Pencil, X } from "lucide-react";
+import {
+  themes,
+  themeKeys,
+  themeFor,
+  toWibInput,
+  fromWibInput,
+  formatDate,
+  type Season,
+} from "@/lib/season";
 import { showSuccess } from "@/lib/success-event";
+import { PurgeSeasonMedia } from "./admin-controls";
 
-export type ManagedSeason = {
-  id: string;
+type Draft = {
   name: string;
   slug: string;
+  theme_key: string;
+  theme_title: string;
+  tagline: string;
+  description: string;
   registration_open_at: string;
   registration_close_at: string;
-  is_active: boolean;
+  submission_global_close_at: string;
+  judging_at: string;
+  announcement_at: string;
+  shipping_at: string;
+  prize_preparation_start: string;
+  prize_preparation_end: string;
+  quota: string;
 };
 
-function dateInputValue(value: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date(value));
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((item) => item.type === type)?.value || "";
-  return `${part("year")}-${part("month")}-${part("day")}`;
+function draftFrom(season?: Season | null, nextSlug = "S2"): Draft {
+  if (!season)
+    return {
+      name: `Season ${nextSlug.replace(/\D/g, "") || "baru"}`,
+      slug: nextSlug,
+      theme_key: "sunset",
+      theme_title: "",
+      tagline: "",
+      description: "",
+      registration_open_at: "",
+      registration_close_at: "",
+      submission_global_close_at: "",
+      judging_at: "",
+      announcement_at: "",
+      shipping_at: "",
+      prize_preparation_start: "",
+      prize_preparation_end: "",
+      quota: "",
+    };
+  return {
+    name: season.name,
+    slug: season.slug,
+    theme_key: season.theme_key,
+    theme_title: season.theme_title,
+    tagline: season.tagline || "",
+    description: season.description || "",
+    registration_open_at: toWibInput(season.registration_open_at),
+    registration_close_at: toWibInput(season.registration_close_at),
+    submission_global_close_at: toWibInput(season.submission_global_close_at),
+    judging_at: toWibInput(season.judging_at),
+    announcement_at: toWibInput(season.announcement_at),
+    shipping_at: toWibInput(season.shipping_at),
+    prize_preparation_start: season.prize_preparation_start || "",
+    prize_preparation_end: season.prize_preparation_end || "",
+    quota: season.quota ? String(season.quota) : "",
+  };
 }
 
-async function request(payload: Record<string, string>) {
-  const response = await fetch("/api/admin/seasons", {
+async function call(body: Record<string, unknown>) {
+  const response = await fetch("/api/admin/season", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
-  const data = (await response.json()) as { error?: string };
-  if (!response.ok) throw new Error(data.error || "Perubahan belum tersimpan.");
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "Season belum dapat disimpan.");
+  return result;
 }
 
-export function SeasonManager({ seasons }: { seasons: ManagedSeason[] }) {
+const dateFields: Array<[keyof Draft, string, string]> = [
+  ["registration_open_at", "Pendaftaran dibuka", "Form daftar terbuka mulai waktu ini."],
+  ["registration_close_at", "Pendaftaran ditutup", "Setelah ini form daftar tertutup."],
+  ["submission_global_close_at", "Batas akhir kirim karya", "Batas global; tiap peserta juga punya batas 7 hari."],
+  ["judging_at", "Penilaian juri", "Juri mulai menilai karya."],
+  ["announcement_at", "Pengumuman juara", "Tanggal pengumuman yang tampil di website."],
+  ["shipping_at", "Mulai pengiriman hadiah", "Tanggal pengiriman serentak."],
+];
+
+export function SeasonManager({
+  seasons,
+  canPurge,
+  canDelete,
+}: {
+  seasons: Season[];
+  canPurge: boolean;
+  canDelete: boolean;
+}) {
   const router = useRouter();
-  const active = seasons.find((season) => season.is_active);
-  const archived = seasons.filter((season) => !season.is_active);
-  const [saving, setSaving] = useState<"dates" | "create" | null>(null);
+  const [editing, setEditing] = useState<string | "new" | null>(null);
   const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState("");
+  const nextSlug = `S${seasons.length + 1}`;
+  const editingSeason = editing && editing !== "new" ? seasons.find((s) => s.id === editing) : null;
 
-  async function updateDates(form: HTMLFormElement) {
-    if (!active) return;
-    const data = new FormData(form);
-    setSaving("dates");
+  async function run(key: string, body: Record<string, unknown>, success: string) {
+    setBusy(key);
     setMessage("");
     try {
-      await request({
-        action: "update_dates",
-        seasonId: active.id,
-        openDate: String(data.get("openDate") || ""),
-        closeDate: String(data.get("closeDate") || ""),
-      });
-      setMessage("Tanggal pendaftaran sudah tersimpan.");
-      showSuccess(
-        "Tanggal pendaftaran berhasil diperbarui.",
-        "admin",
-        "Jadwal season siap!",
-      );
+      await call(body);
+      showSuccess(success, "admin", "Season diperbarui");
+      setEditing(null);
       router.refresh();
     } catch (error) {
       setMessage((error as Error).message);
     } finally {
-      setSaving(null);
-    }
-  }
-
-  async function createSeason(form: HTMLFormElement) {
-    const data = new FormData(form);
-    setSaving("create");
-    setMessage("");
-    try {
-      await request({
-        action: "create",
-        name: String(data.get("name") || ""),
-        openDate: String(data.get("openDate") || ""),
-        closeDate: String(data.get("closeDate") || ""),
-      });
-      form.reset();
-      setMessage("Season baru aktif dan informasi publik sudah diperbarui.");
-      showSuccess(
-        "Season baru berhasil dibuat dan langsung aktif.",
-        "star",
-        "Panggung baru sudah dibuka!",
-      );
-      router.refresh();
-    } catch (error) {
-      setMessage((error as Error).message);
-    } finally {
-      setSaving(null);
+      setBusy("");
     }
   }
 
   return (
-    <div className="season-manager stack">
-      <section className="season-manager-current card stack">
-        <div className="season-manager-heading">
-          <span className="season-manager-icon" aria-hidden="true">
-            <CalendarDays />
-          </span>
-          <div>
-            <span className="eyebrow">SEASON AKTIF</span>
-            <h2>{active?.name || "Belum ada season aktif"}</h2>
-            <p className="muted">
-              Pilih tanggal melalui kalender. Pendaftaran dibuka pukul 00.00
-              WIB dan ditutup pukul 23.59 WIB pada tanggal yang dipilih.
-            </p>
-          </div>
-        </div>
-        {active ? (
-          <form
-            className="season-date-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void updateDates(event.currentTarget);
-            }}
-          >
-            <label className="field">
-              Tanggal buka pendaftaran
-              <input
-                name="openDate"
-                type="date"
-                required
-                defaultValue={dateInputValue(active.registration_open_at)}
-              />
-            </label>
-            <label className="field">
-              Tanggal tutup pendaftaran
-              <input
-                name="closeDate"
-                type="date"
-                required
-                defaultValue={dateInputValue(active.registration_close_at)}
-              />
-            </label>
-            <button className="btn" disabled={saving !== null}>
-              {saving === "dates" ? "Menyimpan…" : "Simpan tanggal"}
-            </button>
-          </form>
-        ) : (
-          <p className="notice">Buat season baru untuk membuka pendaftaran.</p>
-        )}
-      </section>
-
-      <section className="season-manager-create card stack">
-        <div className="season-manager-heading">
-          <span className="season-manager-icon pink" aria-hidden="true">
-            <CheckCircle2 />
-          </span>
-          <div>
-            <span className="eyebrow">EVENT BERIKUTNYA</span>
-            <h2>Buat season baru</h2>
-            <p className="muted">
-              Season baru langsung menjadi season aktif. Season sebelumnya
-              tersimpan sebagai arsip dan hanya pemenangnya yang tetap tampil
-              untuk pengunjung.
-            </p>
-          </div>
-        </div>
-        <form
-          className="season-create-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void createSeason(event.currentTarget);
-          }}
-        >
-          <label className="field season-name-field">
-            Nama event / season
-            <input
-              name="name"
-              required
-              minLength={2}
-              maxLength={80}
-              placeholder="Contoh: Season 2"
-            />
-          </label>
-          <label className="field">
-            Tanggal buka pendaftaran
-            <input name="openDate" type="date" required />
-          </label>
-          <label className="field">
-            Tanggal tutup pendaftaran
-            <input name="closeDate" type="date" required />
-          </label>
-          <button className="btn" disabled={saving !== null}>
-            {saving === "create" ? "Membuat season…" : "Buat & aktifkan season"}
-          </button>
-        </form>
-      </section>
-
+    <div className="stack">
       {message && (
-        <p className="notice" role="status">
+        <p className="notice error" role="alert">
           {message}
         </p>
       )}
-
-      {archived.length > 0 && (
-        <section className="season-archive card stack">
-          <div className="season-manager-heading">
-            <span className="season-manager-icon purple" aria-hidden="true">
-              <Trophy />
-            </span>
-            <div>
-              <span className="eyebrow">ARSIP</span>
-              <h2>Season sebelumnya</h2>
-            </div>
-          </div>
-          <div className="season-archive-list">
-            {archived.map((season) => (
-              <div key={season.id} className="season-archive-row">
-                <div>
-                  <b>{season.name}</b>
-                  <span>Pendaftaran telah ditutup</span>
-                </div>
-                <Link className="btn secondary" href={`/hasil?season=${season.id}`}>
-                  Lihat pemenang
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
+      <div className="actions">
+        <button
+          type="button"
+          className="btn"
+          onClick={() => {
+            setEditing("new");
+            setMessage("");
+          }}
+        >
+          <Plus /> Buat season baru
+        </button>
+      </div>
+      {editing && (
+        <SeasonForm
+          key={editing}
+          initial={draftFrom(editingSeason, nextSlug)}
+          title={editingSeason ? `Ubah ${editingSeason.name}` : "Season baru"}
+          busy={busy === "save"}
+          onCancel={() => setEditing(null)}
+          onSubmit={(draft) =>
+            run(
+              "save",
+              {
+                action: "save",
+                id: editingSeason?.id ?? null,
+                data: {
+                  ...draft,
+                  registration_open_at: fromWibInput(draft.registration_open_at),
+                  registration_close_at: fromWibInput(draft.registration_close_at),
+                  submission_global_close_at: fromWibInput(draft.submission_global_close_at),
+                  judging_at: fromWibInput(draft.judging_at),
+                  announcement_at: fromWibInput(draft.announcement_at),
+                  shipping_at: fromWibInput(draft.shipping_at),
+                },
+              },
+              editingSeason
+                ? "Season, tema, dan timeline tersimpan."
+                : "Season baru dibuat. Aktifkan saat siap dimulai.",
+            )
+          }
+        />
       )}
+      <div className="season-list">
+        {seasons.map((season) => {
+          const theme = themeFor(season.theme_key);
+          return (
+            <article
+              className={`card stack season-card${season.is_active ? " active" : ""}`}
+              key={season.id}
+            >
+              <div className="season-card-head">
+                <span
+                  className="season-swatch"
+                  aria-hidden="true"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryLight})`,
+                  }}
+                >
+                  {theme.motifs[0]}
+                </span>
+                <div>
+                  <h3>
+                    {season.name} <small>· {season.slug}</small>
+                  </h3>
+                  <p className="muted">
+                    Tema <b>{season.theme_title}</b> · tampilan {theme.name}
+                  </p>
+                </div>
+                <span className={`admin-status ${season.is_active ? "status-approved" : ""}`}>
+                  {season.is_active ? "Season aktif" : "Tidak aktif"}
+                </span>
+              </div>
+              <dl className="season-dates-grid">
+                <div>
+                  <dt>Pendaftaran</dt>
+                  <dd>
+                    {formatDate(season.registration_open_at)} – {formatDate(season.registration_close_at)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Penilaian</dt>
+                  <dd>{formatDate(season.judging_at)}</dd>
+                </div>
+                <div>
+                  <dt>Pengumuman</dt>
+                  <dd>{formatDate(season.announcement_at)}</dd>
+                </div>
+                <div>
+                  <dt>Pengiriman</dt>
+                  <dd>Mulai {formatDate(season.shipping_at)}</dd>
+                </div>
+                <div>
+                  <dt>Kuota</dt>
+                  <dd>{season.quota ?? "Tanpa batas"}</dd>
+                </div>
+              </dl>
+              <div className="actions">
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() => {
+                    setEditing(season.id);
+                    setMessage("");
+                  }}
+                >
+                  <Pencil /> Ubah tema & timeline
+                </button>
+                {!season.is_active && (
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={busy === season.id}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Aktifkan ${season.name}? Website publik akan berganti tema ke "${theme.name}" dan jadwal baru. Season sebelumnya dinonaktifkan.`,
+                        )
+                      )
+                        run(
+                          season.id,
+                          { action: "activate", id: season.id },
+                          `${season.name} aktif. Website kini memakai tema ${theme.name}.`,
+                        );
+                    }}
+                  >
+                    <Power /> {busy === season.id ? "Mengaktifkan…" : "Aktifkan season ini"}
+                  </button>
+                )}
+                {canDelete && !season.is_active && (
+                  <button
+                    type="button"
+                    className="btn secondary danger-text"
+                    disabled={busy === `delete-${season.id}`}
+                    onClick={() => {
+                      if (window.prompt(`Ketik HAPUS SEASON untuk menghapus ${season.name}`) === "HAPUS SEASON")
+                        run(
+                          `delete-${season.id}`,
+                          { action: "delete", id: season.id, confirmation: "HAPUS SEASON" },
+                          "Season dihapus.",
+                        );
+                    }}
+                  >
+                    <Trash2 /> Hapus
+                  </button>
+                )}
+              </div>
+              {canPurge && (
+                <details>
+                  <summary className="muted text-sm">Zona berbahaya: hapus semua foto season</summary>
+                  <PurgeSeasonMedia id={season.id} />
+                </details>
+              )}
+            </article>
+          );
+        })}
+      </div>
     </div>
+  );
+}
+
+function SeasonForm({
+  initial,
+  title,
+  busy,
+  onCancel,
+  onSubmit,
+}: {
+  initial: Draft;
+  title: string;
+  busy: boolean;
+  onCancel: () => void;
+  onSubmit: (draft: Draft) => void;
+}) {
+  const [draft, setDraft] = useState<Draft>(initial);
+  const set = (key: keyof Draft, value: string) =>
+    setDraft((old) => ({ ...old, [key]: value }));
+  const theme = themeFor(draft.theme_key);
+  return (
+    <form
+      className="card stack season-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(draft);
+      }}
+    >
+      <div className="admin-section-title">
+        <div>
+          <span className="eyebrow">Season & tema</span>
+          <h2>{title}</h2>
+        </div>
+        <button type="button" className="admin-install-close" aria-label="Tutup" onClick={onCancel}>
+          <X />
+        </button>
+      </div>
+      <div className="grid2">
+        <label className="field">
+          Nama season
+          <input required maxLength={80} value={draft.name} onChange={(e) => set("name", e.target.value)} placeholder="Season 2" />
+        </label>
+        <label className="field">
+          Kode season (unik, huruf besar)
+          <input
+            required
+            maxLength={12}
+            pattern="[A-Za-z0-9]{1,12}"
+            value={draft.slug}
+            onChange={(e) => set("slug", e.target.value.toUpperCase())}
+            placeholder="S2"
+          />
+        </label>
+        <label className="field">
+          Tema lomba
+          <input
+            required
+            maxLength={80}
+            value={draft.theme_title}
+            onChange={(e) => set("theme_title", e.target.value)}
+            placeholder="Contoh: Pahlawanku, Alam Indonesia"
+          />
+        </label>
+        <label className="field">
+          Tagline (opsional)
+          <input maxLength={160} value={draft.tagline} onChange={(e) => set("tagline", e.target.value)} placeholder="Jadi pahlawan kecil hari ini" />
+        </label>
+      </div>
+      <label className="field">
+        Deskripsi singkat (opsional, tampil di halaman lomba)
+        <textarea maxLength={600} value={draft.description} onChange={(e) => set("description", e.target.value)} />
+      </label>
+
+      <fieldset className="theme-picker">
+        <legend>
+          <Palette /> Tampilan website season ini
+        </legend>
+        <p className="muted text-sm">
+          Setiap season wajib tampil berbeda. Pilih gaya warna; header, hero, tombol,
+          dan dekorasi website publik akan mengikuti saat season diaktifkan.
+        </p>
+        <div className="theme-options">
+          {themeKeys.map((key) => {
+            const option = themes[key];
+            return (
+              <label
+                key={key}
+                className={`theme-option${draft.theme_key === key ? " selected" : ""}`}
+                style={{
+                  background: `linear-gradient(150deg, ${option.primary}, ${option.primaryLight})`,
+                }}
+              >
+                <input
+                  type="radio"
+                  name="theme_key"
+                  value={key}
+                  checked={draft.theme_key === key}
+                  onChange={() => set("theme_key", key)}
+                />
+                <span className="theme-option-motifs" aria-hidden="true">
+                  {option.motifs.join(" ")}
+                </span>
+                <b>{option.name}</b>
+                <small>{option.mood}</small>
+                <span
+                  className="theme-option-btn"
+                  style={{ background: option.accentTwo, color: option.primaryDark }}
+                >
+                  Tombol
+                </span>
+                <span className="theme-option-accent" style={{ background: option.accent }} />
+              </label>
+            );
+          })}
+        </div>
+        <p className="theme-preview-note">
+          Pratinjau: header <span style={{ background: theme.primary }} /> aksen{" "}
+          <span style={{ background: theme.accent }} /> tombol{" "}
+          <span style={{ background: theme.accentTwo }} /> stiker {theme.motifs.join(" ")} ·{" "}
+          <i>“{theme.sticker}”</i>
+        </p>
+      </fieldset>
+
+      <fieldset className="timeline-fields">
+        <legend>
+          <CalendarDays /> Timeline (waktu WIB)
+        </legend>
+        <div className="grid2">
+          {dateFields.map(([key, label, hint]) => (
+            <label className="field" key={key}>
+              {label}
+              <input
+                type="datetime-local"
+                required
+                value={draft[key]}
+                onChange={(e) => set(key, e.target.value)}
+              />
+              <small className="muted">{hint}</small>
+            </label>
+          ))}
+          <label className="field">
+            Persiapan hadiah mulai
+            <input type="date" value={draft.prize_preparation_start} onChange={(e) => set("prize_preparation_start", e.target.value)} />
+          </label>
+          <label className="field">
+            Persiapan hadiah selesai
+            <input type="date" value={draft.prize_preparation_end} onChange={(e) => set("prize_preparation_end", e.target.value)} />
+          </label>
+          <label className="field">
+            Kuota pendaftar (kosong = tanpa batas)
+            <input type="number" min={1} value={draft.quota} onChange={(e) => set("quota", e.target.value)} />
+          </label>
+        </div>
+        <p className="muted text-sm">
+          Urutan wajib: dibuka → ditutup → batas karya → penilaian → pengumuman → pengiriman.
+        </p>
+      </fieldset>
+      <div className="actions">
+        <button className="btn" disabled={busy}>
+          {busy ? "Menyimpan…" : "Simpan season"}
+        </button>
+        <button type="button" className="btn secondary" onClick={onCancel}>
+          Batal
+        </button>
+      </div>
+    </form>
   );
 }

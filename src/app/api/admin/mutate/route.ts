@@ -2,25 +2,32 @@ import { readJson } from "@/lib/request-body";
 import { z } from "zod";
 import sharp from "sharp";
 import { admin, service } from "@/lib/supabase/server";
-import { failure, json, sameOrigin } from "@/lib/http";
+import { failure, json, sameOrigin, VisibleError } from "@/lib/http";
 import { upload, remove } from "@/lib/media";
+import { describeDatabaseError } from "@/lib/admin-errors";
+
+const actions = [
+  "payment",
+  "review",
+  "publish",
+  "unpublish",
+  "score",
+  "award",
+  "result_publish",
+  "publish_group",
+  "invoice",
+  "claim_paid",
+  "claim_status",
+  "shipment",
+  "registration_review",
+] as const;
+
 const schema = z.object({
-  action: z.enum([
-    "payment",
-    "review",
-    "publish",
-    "unpublish",
-    "score",
-    "award",
-    "result_publish",
-    "invoice",
-    "claim_paid",
-    "shipment",
-    "registration_review",
-  ]),
+  action: z.enum(actions),
   id: z.uuid(),
   data: z.record(z.string(), z.unknown()).default({}),
 });
+
 export async function POST(req: Request) {
   let copy: string | undefined;
   try {
@@ -55,7 +62,9 @@ export async function POST(req: Request) {
           r.registration_status !== "verified" ||
           !r.consent_publication
         )
-          throw new Error("Karya belum memenuhi syarat publikasi.");
+          throw new Error(
+            "Karya belum memenuhi syarat publikasi: pembayaran lunas, pendaftaran aktif, dan izin publikasi.",
+          );
         const { data: blob, error: downloadError } = await service()
           .storage.from("submission-private")
           .download(s.private_file_path);
@@ -88,12 +97,7 @@ export async function POST(req: Request) {
             p_id: input.id,
             p_data: input.data,
           });
-    if (error)
-      throw new Error(
-        input.action === "registration_review"
-          ? "Review pendaftaran belum dapat disimpan. Pastikan migration terbaru sudah diterapkan."
-          : "Data belum dapat diubah. Periksa prasyarat, periode, dan status terkait.",
-      );
+    if (error) throw new VisibleError(describeDatabaseError(error));
     return json({ ok: true });
   } catch (e) {
     if (copy) await remove("gallery-public", copy);

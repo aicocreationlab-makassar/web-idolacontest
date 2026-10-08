@@ -13,19 +13,22 @@ export default async function Page({
   const filters = await searchParams;
   const { items, count, page, season } = await galleryPage(filters);
   const q = new URLSearchParams(
-    Object.entries(filters).filter(([k, v]) => k !== "page" && !!v),
+    Object.entries(filters).filter(
+      ([k, v]) => k !== "page" && k !== "season" && !!v,
+    ),
   );
   const activeFilterCount = Object.entries(filters).filter(
-    ([key, value]) => key !== "page" && key !== "highlight" && Boolean(value),
+    ([key, value]) =>
+      key !== "page" && key !== "highlight" && key !== "season" && Boolean(value),
   ).length;
   return (
     <div className="wrap section">
       <PageHeading
-        eyebrow={season ? "Panggung " + season.name : "Panggung bintang kecil"}
+        eyebrow={season ? `Panggung ${season.name} · Tema ${season.theme_title}` : "Panggung bintang kecil"}
         title="Mimpi mereka, inspirasi kita."
         description={
           season
-            ? "Jelajahi karya finalis dari season aktif yang sudah disetujui dan dipublikasikan."
+            ? "Jelajahi karya finalis season aktif yang sudah disetujui dan dipublikasikan. Pemenang season sebelumnya tetap tampil di halaman Hasil."
             : "Galeri season berikutnya sedang disiapkan."
         }
       />
@@ -92,6 +95,7 @@ export default async function Page({
       </details>
       {items.length ? (
         <GalleryGrid
+          themeTitle={season?.theme_title || "Cita Citaku"}
           highlighted={filters.highlight}
           items={items.map((item) => ({
             ...item,

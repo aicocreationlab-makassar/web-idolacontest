@@ -19,7 +19,8 @@ export function registrationQuery(db: SupabaseClient, filters: Filters) {
       { count: "exact" },
     )
     .order("created_at", { ascending: false });
-  if (filters.season) q = q.eq("season_id", filters.season);
+  if (filters.season && filters.season !== "all")
+    q = q.eq("season_id", filters.season);
   if (filters.competition) q = q.eq("competition_type", filters.competition);
   if (filters.category) q = q.eq("category", filters.category);
   if (filters.payment) q = q.eq("payment_status", filters.payment);

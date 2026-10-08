@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { Faq, Fees, PageHeading } from "@/components/shared";
-import { formatWibDate, getActiveSeason } from "@/lib/data";
+import { getActiveSeason } from "@/lib/data";
+import { formatDate, seasonTimeline } from "@/lib/season";
+export const dynamic = "force-dynamic";
 const titles: Record<string, string> = {
   timeline: "Catat setiap momennya.",
   faq: "Pertanyaan yang sering ditanyakan.",
@@ -14,7 +16,6 @@ export async function generateMetadata({
 }) {
   return { title: titles[(await params).page] || "Halaman tidak ditemukan" };
 }
-export const dynamic = "force-dynamic";
 export default async function Page({
   params,
 }: {
@@ -22,64 +23,27 @@ export default async function Page({
 }) {
   const { page } = await params;
   if (!titles[page]) notFound();
-  const season = page === "timeline" ? await getActiveSeason() : null;
+  const season = await getActiveSeason();
+  const themeTitle = season?.theme_title || "Cita Citaku";
   return (
     <div className="wrap section max-w-4xl">
       <PageHeading
         title={titles[page]}
-        eyebrow={season ? "Idola Contest · " + season.name : "Idola Contest"}
+        eyebrow={`Idola Contest · ${season?.name || "Season baru"}${season ? ` · Tema ${season.theme_title}` : ""}`}
       />
       {page === "faq" ? (
-        <Faq />
+        <Faq season={season} />
       ) : page === "timeline" ? (
         <div className="stack">
-          {season ? (
-            <>
-              {[
-                [
-                  formatWibDate(season.registration_open_at) +
-                    " – " +
-                    formatWibDate(season.registration_close_at),
-                  "Pendaftaran & pengumpulan karya",
-                  "Batas kirim individu: 7 hari setelah registrasi atau penutupan global, mana yang lebih awal.",
-                ],
-                [
-                  formatWibDate(season.judging_at),
-                  "Penilaian juri",
-                  "Karya dinilai dengan lima kriteria berbobot.",
-                ],
-                [
-                  formatWibDate(season.announcement_at),
-                  "Pengumuman",
-                  "Hasil tersedia setelah admin mempublikasikan di website dan @idola.contest.",
-                ],
-                [
-                  formatWibDate(season.announcement_at) +
-                    " – " +
-                    formatWibDate(season.shipping_at),
-                  "Persiapan penghargaan",
-                  "Konfirmasi klaim, pembayaran, dan alamat melalui admin.",
-                ],
-                [
-                  "Mulai " + formatWibDate(season.shipping_at),
-                  "Pengiriman",
-                  "Nomor resi dapat dilihat melalui Cek Status.",
-                ],
-              ].map(([d, t, p], i) => (
-                <article className="card" key={d}>
-                  <span className="number">{i + 1}</span>
-                  <p className="eyebrow">{d}</p>
-                  <h3 className="my-3">{t}</h3>
-                  <p className="muted">{p}</p>
-                </article>
-              ))}
-              <p className="muted">
-                Seluruh waktu menggunakan WIB (Asia/Jakarta).
-              </p>
-            </>
-          ) : (
-            <p className="notice">Jadwal season berikutnya sedang disiapkan.</p>
-          )}
+          {seasonTimeline(season).map((stop, i) => (
+            <article className="card" key={stop.key}>
+              <span className="number">{i + 1}</span>
+              <p className="eyebrow">{stop.date}</p>
+              <h3 className="my-3">{stop.label}</h3>
+              <p className="muted">{stop.detail}</p>
+            </article>
+          ))}
+          <p className="muted">Seluruh waktu menggunakan WIB (Asia/Jakarta).</p>
         </div>
       ) : page === "syarat-ketentuan" ? (
         <div className="card stack">
@@ -87,8 +51,8 @@ export default async function Page({
           <p>
             Orang tua/wali mendaftarkan anak dengan identitas yang benar dan
             persetujuan publikasi. Preschool hanya mengikuti fotogenik. Tema
-            kedua lomba adalah Cita Citaku. Karya harus milik peserta dan tidak
-            melanggar hak pihak lain.
+            kedua lomba pada {season?.name || "season ini"} adalah {themeTitle}.
+            Karya harus milik peserta dan tidak melanggar hak pihak lain.
           </p>
           <p>
             Pendaftaran menjadi resmi setelah pembayaran diverifikasi. Kode
@@ -100,8 +64,9 @@ export default async function Page({
           <p>
             Admin dapat meminta revisi atau menolak karya yang tidak sesuai.
             Publikasi dilakukan setelah review. Penilaian mengikuti kriteria
-            yang tercantum pada halaman lomba; Best Social Media terpisah dari
-            skor juri utama.
+            yang tercantum pada halaman lomba. Peringkat dihitung otomatis
+            dengan membandingkan peserta pada jenis lomba dan kategori usia
+            yang sama; Best Social Media terpisah dari skor juri utama.
           </p>
           <h3>Sportivitas</h3>
           <p>
@@ -115,7 +80,8 @@ export default async function Page({
             pembayaran, atau permintaan pengembalian dana. Keputusan
             pengembalian dikonfirmasi penyelenggara sesuai kondisi transaksi.
             Klaim penghargaan dilakukan setelah hasil dipublikasikan. Pengiriman
-            mengikuti jadwal season aktif dengan kurir pilihan admin.
+            mulai {season ? formatDate(season.shipping_at) : "tanggal yang diumumkan"}{" "}
+            dengan kurir pilihan admin.
           </p>
           <p>
             Hubungi @idola.contest untuk pertanyaan atau keberatan sebelum

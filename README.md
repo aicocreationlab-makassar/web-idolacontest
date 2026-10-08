@@ -29,7 +29,7 @@ Dokumentasi produk dan implementasi untuk membangun **Idola Contest**, platform 
 **Brand:** Idola Contest  
 **Instagram:** `@idola.contest`  
 **Tagline:** **Saatnya Si Kecil Menjadi Idola!**
-**Season aktif:** Season 1
+**Season aktif:** dikelola dari `/admin/settings` (tema, tampilan, timeline)
 
 ## Stack wajib
 
@@ -60,7 +60,9 @@ Dokumentasi produk dan implementasi untuk membangun **Idola Contest**, platform 
 - `AI_EXECUTION_PROMPT.md`
 - `.env.example`
 
-## Timeline Season 1
+## Timeline
+
+Timeline, tema, dan tampilan website mengikuti season aktif di database (menu admin **Season & Tema**). Season 1 (tema Cita Citaku, tampilan Langit Ceria):
 
 - Pendaftaran: **21 September 2026 – 06 Oktober 2026**
 - Penilaian: **07 Oktober 2026**

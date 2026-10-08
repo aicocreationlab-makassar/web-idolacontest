@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { categories } from "@/lib/business-rules";
+import { formatDateTime, seasonTimeline, type Season } from "@/lib/season";
 import {
   ToyArt,
   WaveDivider,
@@ -23,17 +24,6 @@ import {
   FloatingSticker,
   SparkleDecoration,
 } from "./decorations";
-import { formatWibDate, formatWibDayMonth } from "@/lib/data";
-
-type TimelineSeason = {
-  name: string;
-  registration_open_at: string;
-  registration_close_at: string;
-  submission_global_close_at: string;
-  judging_at: string;
-  announcement_at: string;
-  shipping_at: string;
-};
 export function SectionHeading({
   eyebrow,
   title,
@@ -106,7 +96,11 @@ export function FeatureStrip() {
     </section>
   );
 }
-export function CompetitionCards() {
+export function CompetitionCards({
+  themeTitle = "Cita Citaku",
+}: {
+  themeTitle?: string;
+}) {
   return (
     <section className="section wrap competition-section" id="lomba">
       <SectionHeading
@@ -116,7 +110,7 @@ export function CompetitionCards() {
             Beda bakat, <span className="text-pink">sama hebatnya!</span>
           </>
         }
-        description="Dua kompetisi seru, satu tema penuh inspirasi: Cita Citaku."
+        description={`Dua kompetisi seru, satu tema penuh inspirasi: ${themeTitle}.`}
       />
       <div className="grid2">
         {[
@@ -192,14 +186,18 @@ export function CompetitionCards() {
     </section>
   );
 }
-export function PersonalizedWorksheetSection() {
+export function PersonalizedWorksheetSection({
+  themeTitle = "Cita Citaku",
+}: {
+  themeTitle?: string;
+}) {
   return (
     <section className="blue-scene worksheet-section">
       <WaveDivider flip />
       <div className="wrap grid2 items-center">
         <div className="worksheet-art">
           <div className="worksheet-paper">
-            <span>IDOLA CONTEST · CITA CITAKU</span>
+            <span>IDOLA CONTEST · {themeTitle.toUpperCase()}</span>
             <svg viewBox="0 0 200 190" aria-hidden="true">
               <g
                 fill="none"
@@ -350,35 +348,9 @@ export function PrizeSection() {
     </section>
   );
 }
-export function CompetitionTimeline({
-  season,
-}: {
-  season: TimelineSeason | null;
-}) {
-  const milestones = season
-    ? [
-        [
-          formatWibDayMonth(season.registration_open_at),
-          "Pendaftaran dibuka",
-          Pencil,
-        ],
-        [
-          formatWibDayMonth(season.registration_close_at),
-          "Batas daftar & karya",
-          Camera,
-        ],
-        [formatWibDayMonth(season.judging_at), "Penilaian juri", Star],
-        [formatWibDayMonth(season.announcement_at), "Pengumuman", Trophy],
-        [
-          formatWibDayMonth(season.announcement_at) +
-            "–" +
-            formatWibDayMonth(season.shipping_at),
-          "Persiapan hadiah",
-          Palette,
-        ],
-        [formatWibDayMonth(season.shipping_at), "Mulai pengiriman", Truck],
-      ]
-    : [];
+export function CompetitionTimeline({ season }: { season: Season | null }) {
+  const stops = seasonTimeline(season);
+  const icons = [Pencil, Camera, Star, Trophy, Palette, Truck];
   return (
     <section className="section timeline-section">
       <div className="wrap">
@@ -387,39 +359,28 @@ export function CompetitionTimeline({
           title="Perjalanan menuju panggung."
           description="Catat tanggalnya, siapkan karya terbaiknya. Semua waktu dalam WIB."
         />
-        {season ? (
-          <>
-            <div className="journey">
-              {milestones.map(([date, label, icon], i) => {
-                const Icon = icon as typeof Star;
-                return (
-                  <div className="journey-stop" key={String(date)}>
-                    <span
-                      className={
-                        "journey-icon tone-" +
-                        ["pink", "sky", "yellow", "purple", "mint", "peach"][i]
-                      }
-                    >
-                      <Icon size={26} />
-                      <small>{i + 1}</small>
-                    </span>
-                    <b>{String(date)}</b>
-                    <p>{String(label)}</p>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="text-center muted text-sm mt-6">
-              Batas kirim karya: 7 hari setelah registrasi atau{" "}
-              {formatWibDate(season.submission_global_close_at)}, mana yang
-              lebih awal.
-            </p>
-          </>
-        ) : (
-          <p className="notice text-center">
-            Jadwal season berikutnya sedang disiapkan.
-          </p>
-        )}
+        <div className="journey">
+          {stops.map((stop, i) => {
+            const Icon = icons[i % icons.length];
+            return (
+              <div className="journey-stop" key={stop.key} title={stop.date}>
+                <span
+                  className={`journey-icon tone-${["pink", "sky", "yellow", "purple", "mint", "peach"][i]}`}
+                >
+                  <Icon size={26} />
+                  <small>{i + 1}</small>
+                </span>
+                <b>{stop.short}</b>
+                <p>{stop.label}</p>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-center muted text-sm mt-6">
+          Batas kirim karya: 7 hari setelah registrasi atau{" "}
+          {season ? formatDateTime(season.submission_global_close_at) : "penutupan global"}, mana
+          yang lebih awal.
+        </p>
       </div>
     </section>
   );
@@ -458,15 +419,15 @@ export function RegistrationSteps() {
 }
 export function HomeFinalists({
   works,
-  seasonName,
+  seasonName = "season ini",
 }: {
+  seasonName?: string;
   works: {
     slug: string;
     public_name: string;
     regency_name: string;
     image: string;
   }[];
-  seasonName?: string;
 }) {
   return (
     <section className="section gallery-scene">
@@ -508,9 +469,8 @@ export function HomeFinalists({
             <div>
               <h3>Panggungnya siap. Bintang kecilnya segera hadir!</h3>
               <p>
-                Jadi bagian dari cerita {seasonName || "season berikutnya"}.
-                Karya finalis tampil setelah
-                proses review.
+                Jadi bagian dari cerita {seasonName}. Karya finalis tampil
+                setelah proses review.
               </p>
             </div>
             <Link className="btn secondary" href="/daftar">
