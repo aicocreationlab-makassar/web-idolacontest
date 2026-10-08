@@ -61,6 +61,8 @@ Saat juara diumumkan, sistem membuat **data pemenang** (tabel `winners`) lengkap
 
 Menyembunyikan hasil (Sembunyikan hasil / Sembunyikan semua hasil kategori) juga menghapus data pemenang beserta salinan karyanya.
 
+Pemenang yang diumumkan sebelum fitur ini ada mendapat salinan karyanya otomatis saat halaman `/hasil` atau Juara & Hasil dibuka (maksimal 12–24 per muat), atau sekaligus lewat `npm run winners:sync`.
+
 ## Juara & hasil
 
 Papan peringkat per kategori diperbarui realtime. Untuk setiap peserta tersedia **Atur**: ganti penghargaan secara manual (atau kembalikan ke otomatis) dan **Umumkan juara / Sembunyikan hasil**. Tombol **Umumkan semua juara kategori ini** memublikasikan satu kategori sekaligus.
