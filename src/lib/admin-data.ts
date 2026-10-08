@@ -15,7 +15,7 @@ export function registrationQuery(db: SupabaseClient, filters: Filters) {
   let q = db
     .from("registrations")
     .select(
-      "*,participants!inner(*),payments(*),results(*),claim_invoices(*),shipments(*)",
+      "*,participants!inner(*),payments(*),results(*),claim_invoices(*),shipments(*),submissions(status,publication_status,created_at),worksheets(id)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false });

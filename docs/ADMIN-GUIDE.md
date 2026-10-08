@@ -11,12 +11,18 @@ Halaman `/admin/*` memakai manifest khusus (`/admin/manifest.webmanifest`, scope
 - **iPhone/iPad:** buka `/admin/dashboard` di Safari → Bagikan → *Tambah ke Layar Utama* → buka dari ikon **Idola Admin** → ketuk **Aktifkan notifikasi** pada kartu di atas dashboard → Izinkan.
 - **Android/Chrome:** kartu “Pasang Idola Admin” menampilkan tombol *Pasang sekarang*; notifikasi juga bisa diaktifkan tanpa memasang.
 - Satu akun boleh mengaktifkan notifikasi di beberapa perangkat. Pendaftar baru dan karya baru dikirim sebagai push notification secara langsung dari server saat data masuk.
+- Tidak perlu mengatur kunci VAPID: server membuat kuncinya sekali dan menyimpannya di tabel `app_config` (migration `202610090001`). Variabel `NEXT_PUBLIC_VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` hanya dipakai bila memang diisi.
+- Di mode aplikasi (PWA) bilah atas dan tombol menu otomatis turun di bawah status bar iPhone.
 
 Indikator di atas halaman menunjukkan koneksi realtime: **Realtime terhubung** (pembaruan instan + toast pendaftar baru) atau **Realtime terputus · memperbarui otomatis tiap 20 detik** (mode cadangan).
 
 ## Dashboard
 
 Menampilkan total peserta, perlu diperiksa, pembayaran lunas, karya perlu diperiksa, karya sudah dinilai, juara diumumkan, klaim lunas, paket terkirim, serta sebaran per kategori/provinsi/sumber. Setiap kartu bisa diklik menuju halaman kerjanya. Filter season default = season aktif.
+
+## Salin pesan DM personal
+
+Di setiap baris Pendaftaran Masuk, Data Peserta, Juara & Hasil, Klaim Hadiah, Pengiriman, dan di halaman detail peserta ada panel **Pesan DM untuk Mommy {nama}**. Sistem memilih tahap yang sedang berlaku (kode registrasi terbit, pengingat/verifikasi pembayaran, worksheet siap, pengingat/penerimaan/revisi karya, karya tampil di galeri, pengumuman juara, invoice klaim, klaim lunas, resi, paket diterima, terima kasih) dan menyusun pesan hangat-profesional berisi kode registrasi, cara cek status, nominal/rekening, nomor invoice, kurir dan resi sesuai data peserta. Ketuk **Salin pesan** lalu tempel di DM Instagram. Tahap lain bisa dipilih dari menu.
 
 ## Pendaftaran masuk & peserta
 
@@ -44,6 +50,17 @@ Begitu nilai disimpan, database **otomatis meranking** semua peserta pada jenis 
 
 Juara Umum dan Best Social Media ditetapkan manual.
 
+## Data pemenang permanen
+
+Saat juara diumumkan, sistem membuat **data pemenang** (tabel `winners`) lengkap dengan salinan karya di `gallery-public/winners/`. Data ini:
+
+- tampil di halaman publik `/hasil` sebagai karya juara beserta penghargaannya (tab per season),
+- muncul di Cek Status peserta sebagai foto karya juara dan penghargaan (menggantikan tampilan finalis), bahkan setelah data pendaftaran dihapus,
+- tetap ada ketika data pendaftaran/peserta dihapus atau publikasi galeri ditarik,
+- hanya hilang bila dihapus lewat tombol **Hapus data pemenang** di bagian bawah Juara & Hasil (hapus permanen dari database dan storage).
+
+Menyembunyikan hasil (Sembunyikan hasil / Sembunyikan semua hasil kategori) juga menghapus data pemenang beserta salinan karyanya.
+
 ## Juara & hasil
 
 Papan peringkat per kategori diperbarui realtime. Untuk setiap peserta tersedia **Atur**: ganti penghargaan secara manual (atau kembalikan ke otomatis) dan **Umumkan juara / Sembunyikan hasil**. Tombol **Umumkan semua juara kategori ini** memublikasikan satu kategori sekaligus.
@@ -70,6 +87,10 @@ Menu **Season & Tema** (admin dan super admin):
 2. **Simpan season** → season tersimpan nonaktif.
 3. **Aktifkan season ini** → season lama dinonaktifkan, website publik langsung berganti tema, jadwal, dan teks tema di beranda, timeline, FAQ, halaman lomba, galeri, dan Cek Status.
 4. Season bisa diubah kapan saja (tema & timeline). Super admin dapat menghapus season nonaktif tanpa peserta dan membersihkan foto season.
+5. Season yang jadwalnya sudah lewat ditandai **Jadwal selesai · data peserta tetap tersimpan**; data pendaftaran dan peserta tetap tampil normal di menu admin.
+6. **Tarik semua publikasi karya season ini** (zona berbahaya tiap season) menyembunyikan seluruh karya season dari galeri dan menghapus file publiknya dari storage secara permanen. Data pendaftaran, nilai, dan data pemenang tidak ikut terhapus.
+
+Semua perintah hapus di admin (peserta, foto season, publikasi, data pemenang) menghapus baris database dan objek storage secara permanen, bukan sekadar menyembunyikan.
 
 ## Cek Status peserta
 

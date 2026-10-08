@@ -219,6 +219,20 @@ test("Migrations, RLS and full database lifecycle", async () => {
   // Publishing is the admin decision: no calendar gate, and the claim invoice is issued automatically.
   await mutate("result_publish", rid, { published: true });
   assert.equal((await db.query("select * from public_results")).rows.length, 1);
+  // Announcing a winner creates a permanent snapshot visible through public_winners
+  // (which never exposes the registration code).
+  const winnerRows = (
+    await db.query<{ award_code: string; registration_code: string; source_image_path: string }>(
+      "select * from winners",
+    )
+  ).rows;
+  assert.equal(winnerRows.length, 1);
+  assert.equal(winnerRows[0].award_code, "Juara Utama 1");
+  assert.equal(winnerRows[0].registration_code, code);
+  assert.equal(winnerRows[0].source_image_path, "work.webp");
+  const publicWinners = (await db.query("select * from public_winners")).rows;
+  assert.equal(publicWinners.length, 1);
+  assert.ok(!JSON.stringify(publicWinners).includes(code));
   assert.equal(
     (await db.query("select * from claim_invoices where status='issued'")).rows
       .length,
@@ -270,6 +284,19 @@ test("Migrations, RLS and full database lifecycle", async () => {
   assert.ok(
     (await db.query("select * from admin_audit_logs")).rows.length >= 10,
   );
+  // Withdrawing a whole season from the gallery returns the public paths to delete.
+  const seasonId = (
+    await db.query<{ id: string }>("select id from seasons where slug='S1'")
+  ).rows[0].id;
+  const withdrawn = (
+    await db.query<{ admin_unpublish_season: string }>(
+      "select admin_unpublish_season($1)",
+      [seasonId],
+    )
+  ).rows.map((row) => row.admin_unpublish_season);
+  assert.deepEqual(withdrawn, ["public.webp"]);
+  assert.equal((await db.query("select * from public_gallery")).rows.length, 0);
+  assert.equal((await db.query("select * from winners")).rows.length, 1);
   await mutate("unpublish", sid);
   assert.equal((await db.query("select * from public_gallery")).rows.length, 0);
   await db.query(
@@ -369,6 +396,17 @@ test("Migrations, RLS and full database lifecycle", async () => {
   await db.query("select admin_delete_registration($1)", [optionalPostcodeRid]);
   assert.equal((await db.query("select * from registrations")).rows.length, 0);
   assert.equal((await db.query("select * from participants")).rows.length, 0);
+  // The winner record outlives the registration, then can be hard-deleted on its own.
+  const survivors = (
+    await db.query<{ id: string; registration_id: string | null; public_name: string }>(
+      "select id,registration_id,public_name from winners",
+    )
+  ).rows;
+  assert.equal(survivors.length, 1);
+  assert.equal(survivors[0].registration_id, null);
+  assert.equal(survivors[0].public_name, "Little Star");
+  await db.query("select admin_delete_winner($1)", [survivors[0].id]);
+  assert.equal((await db.query("select * from winners")).rows.length, 0);
   assert.ok(
     (
       await db.query(
