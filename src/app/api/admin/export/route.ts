@@ -1,6 +1,7 @@
 import { admin } from "@/lib/supabase/server";
 import { registrationQuery, type Filters } from "@/lib/admin-data";
 import { failure } from "@/lib/http";
+import { firstOf } from "@/lib/embed";
 import { formatParticipantAge } from "@/lib/participant";
 function cell(v: unknown) {
   let s = String(v ?? "");
@@ -55,28 +56,28 @@ export async function GET(req: Request) {
             : kind === "hasil"
               ? {
                   ...base,
-                  penghargaan: r.results[0]?.award_code,
-                  skor: r.results[0]?.final_score,
-                  published: r.results[0]?.is_published,
+                  penghargaan: firstOf(r.results)?.award_code,
+                  skor: firstOf(r.results)?.final_score,
+                  published: firstOf(r.results)?.is_published,
                 }
               : kind === "klaim-hadiah"
                 ? {
                     ...base,
-                    invoice: r.claim_invoices[0]?.invoice_number,
-                    status: r.claim_invoices[0]?.status,
-                    jumlah: r.claim_invoices[0]?.amount,
+                    invoice: firstOf(r.claim_invoices)?.invoice_number,
+                    status: firstOf(r.claim_invoices)?.status,
+                    jumlah: firstOf(r.claim_invoices)?.amount,
                   }
                 : kind === "pengiriman"
                   ? {
                       ...base,
-                      kurir: r.shipments[0]?.courier,
-                      resi: r.shipments[0]?.tracking_number,
-                      status: r.shipments[0]?.shipping_status,
+                      kurir: firstOf(r.shipments)?.courier,
+                      resi: firstOf(r.shipments)?.tracking_number,
+                      status: firstOf(r.shipments)?.shipping_status,
                     }
                   : {
                       ...base,
                       pembayaran_registrasi: r.payment_status,
-                      claim: r.claim_invoices[0]?.status,
+                      claim: firstOf(r.claim_invoices)?.status,
                     };
         if (!lines.length) lines.push(Object.keys(row).map(cell).join(","));
         lines.push(Object.values(row).map(cell).join(","));

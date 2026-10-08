@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   applicationName: "Idola Admin",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Idola Admin",
     startupImage: ["/icon-512.png"],
   },

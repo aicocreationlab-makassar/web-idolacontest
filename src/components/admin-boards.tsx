@@ -3,6 +3,31 @@ import { Trophy, Medal, Receipt, Truck, Star, Users } from "lucide-react";
 import { categories, competitions } from "@/lib/business-rules";
 import { formatDate, formatDateTime } from "@/lib/season";
 import { AdminControl, PrivateMedia } from "./admin-controls";
+import { CopyMessage } from "./copy-message";
+import type { MessageContext } from "@/lib/messages";
+
+export function boardContext(row: BoardRow, season?: { name: string; theme_title: string; shipping_at: string; announcement_at: string } | null): MessageContext {
+  return {
+    public_name: row.public_name,
+    registration_code: row.registration_code,
+    competition_type: row.competition_type,
+    category: row.category,
+    season_name: season?.name,
+    theme_title: season?.theme_title,
+    announcement_at: season?.announcement_at,
+    shipping_at: season?.shipping_at,
+    payment_status: "paid",
+    submission_status: "approved",
+    award_code: row.award_code,
+    rank_position: row.rank_position,
+    result_published: row.is_published,
+    invoice_number: row.invoice_number,
+    claim_status: row.claim_status,
+    courier: row.courier,
+    tracking_number: row.tracking_number,
+    shipping_status: row.shipping_status,
+  };
+}
 
 export type QueueRow = {
   submission_id: string;
@@ -162,7 +187,15 @@ export function JudgingBoard({ rows, judge }: { rows: QueueRow[]; judge: boolean
 }
 
 /** Results: live leaderboard per group with automatic awards, overrides and publishing. */
-export function ResultsBoard({ rows, seasonId }: { rows: BoardRow[]; seasonId: string | null }) {
+export function ResultsBoard({
+  rows,
+  seasonId,
+  season,
+}: {
+  rows: BoardRow[];
+  seasonId: string | null;
+  season?: { name: string; theme_title: string; shipping_at: string; announcement_at: string } | null;
+}) {
   if (!rows.length)
     return (
       <p className="notice">
@@ -272,6 +305,11 @@ export function ResultsBoard({ rows, seasonId }: { rows: BoardRow[]; seasonId: s
                                 compact
                               />
                             )}
+                            <CopyMessage
+                              compact
+                              context={boardContext(row, season)}
+                              stage={row.is_published ? "winner_announced" : "thank_you"}
+                            />
                           </div>
                         </details>
                       </td>
@@ -288,7 +326,13 @@ export function ResultsBoard({ rows, seasonId }: { rows: BoardRow[]; seasonId: s
 }
 
 /** Claims: every announced winner with invoice state and one-tap actions. */
-export function ClaimsBoard({ rows }: { rows: BoardRow[] }) {
+export function ClaimsBoard({
+  rows,
+  season,
+}: {
+  rows: BoardRow[];
+  season?: { name: string; theme_title: string; shipping_at: string; announcement_at: string } | null;
+}) {
   const winners = rows.filter((row) => row.award_code && row.is_published);
   if (!winners.length)
     return (
@@ -390,6 +434,7 @@ export function ClaimsBoard({ rows }: { rows: BoardRow[] }) {
                         <Truck size={16} /> Atur pengiriman
                       </Link>
                     )}
+                    <CopyMessage compact context={boardContext(row, season)} />
                   </div>
                 </td>
               </tr>
@@ -402,7 +447,13 @@ export function ClaimsBoard({ rows }: { rows: BoardRow[] }) {
 }
 
 /** Shipping: winners whose claim is paid, with courier + tracking that shows up on Cek Status. */
-export function ShippingBoard({ rows }: { rows: BoardRow[] }) {
+export function ShippingBoard({
+  rows,
+  season,
+}: {
+  rows: BoardRow[];
+  season?: { name: string; theme_title: string; shipping_at: string; announcement_at: string } | null;
+}) {
   const ready = rows.filter((row) => row.claim_status === "paid");
   const pendingClaims = rows.filter((row) => row.is_published && row.claim_status !== "paid").length;
   if (!ready.length)
@@ -475,16 +526,19 @@ export function ShippingBoard({ rows }: { rows: BoardRow[] }) {
                   )}
                 </td>
                 <td data-label="Operasi" className="min-w-64">
-                  <AdminControl
-                    action="shipment"
-                    id={row.registration_id}
-                    compact
-                    initial={{
-                      courier: row.courier,
-                      tracking_number: row.tracking_number,
-                      shipping_status: row.shipping_status || "prepared",
-                    }}
-                  />
+                  <div className="stack">
+                    <AdminControl
+                      action="shipment"
+                      id={row.registration_id}
+                      compact
+                      initial={{
+                        courier: row.courier,
+                        tracking_number: row.tracking_number,
+                        shipping_status: row.shipping_status || "prepared",
+                      }}
+                    />
+                    <CopyMessage compact context={boardContext(row, season)} />
+                  </div>
                 </td>
               </tr>
             ))}
