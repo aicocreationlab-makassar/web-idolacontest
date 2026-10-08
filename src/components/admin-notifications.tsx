@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Bell, BellOff, Smartphone } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Bell, BellOff, BellRing, Smartphone } from "lucide-react";
 import { showSuccess } from "@/lib/success-event";
+import { isIos, isStandalone } from "./admin-pwa";
 
 type NotificationState =
-  "checking" | "unsupported" | "disabled" | "enabled" | "denied";
+  | "checking"
+  | "unsupported"
+  | "needs-install"
+  | "disabled"
+  | "enabled"
+  | "denied"
+  | "no-key";
 
 function applicationServerKey(value: string) {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
@@ -14,43 +21,76 @@ function applicationServerKey(value: string) {
   return Uint8Array.from([...raw].map((character) => character.charCodeAt(0)));
 }
 
+/** `navigator.serviceWorker.ready` never resolves without a registration; bound it. */
+async function readyRegistration(timeoutMs = 6000) {
+  const registered = await navigator.serviceWorker.getRegistration("/admin/");
+  if (registered?.active) return registered;
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<ServiceWorkerRegistration>((_, reject) =>
+      window.setTimeout(() => reject(new Error("timeout")), timeoutMs),
+    ),
+  ]);
+}
+
 export function AdminNotifications() {
   const [state, setState] = useState<NotificationState>("checking");
   const [busy, setBusy] = useState(false);
+  const [detail, setDetail] = useState("");
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 
-  useEffect(() => {
-    async function inspectPermission() {
-      await Promise.resolve();
-      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-        setState("unsupported");
-        return;
-      }
-      if (Notification.permission === "denied") {
-        setState("denied");
-        return;
-      }
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
-        setState(subscription ? "enabled" : "disabled");
-      } catch {
-        setState("unsupported");
-      }
+  const inspect = useCallback(async () => {
+    if (!publicKey) {
+      setState("no-key");
+      return;
     }
-    void inspectPermission();
-  }, []);
+    if (!("serviceWorker" in navigator)) {
+      setState("unsupported");
+      return;
+    }
+    if (!("PushManager" in window) || !("Notification" in window)) {
+      setState(isIos() && !isStandalone() ? "needs-install" : "unsupported");
+      return;
+    }
+    if (Notification.permission === "denied") {
+      setState("denied");
+      return;
+    }
+    try {
+      const registration = await readyRegistration();
+      const subscription = await registration.pushManager.getSubscription();
+      setState(subscription ? "enabled" : "disabled");
+    } catch {
+      setState("disabled");
+    }
+  }, [publicKey]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void inspect(), 0);
+    const again = () => void inspect();
+    window.addEventListener("focus", again);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", again);
+    };
+  }, [inspect]);
 
   async function enable() {
     if (!publicKey) return;
     setBusy(true);
+    setDetail("");
     try {
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setState(permission === "denied" ? "denied" : "disabled");
+        setDetail(
+          permission === "denied"
+            ? "Izin notifikasi diblokir browser. Buka pengaturan situs untuk mengizinkan."
+            : "Izin belum diberikan. Ketuk lagi dan pilih Izinkan.",
+        );
         return;
       }
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await readyRegistration(10000);
       const existing = await registration.pushManager.getSubscription();
       const subscription =
         existing ||
@@ -67,15 +107,16 @@ export function AdminNotifications() {
       if (!response.ok) throw new Error(data.error);
       setState("enabled");
       showSuccess(
-        "Perangkat ini akan menerima kabar pendaftaran dan karya baru.",
+        "Perangkat ini akan menerima notifikasi pendaftar dan karya baru secara langsung.",
         "admin",
         "Notifikasi admin aktif!",
       );
     } catch (error) {
-      showSuccess(
-        (error as Error).message || "Notifikasi belum dapat diaktifkan.",
-        "admin",
-        "Coba aktifkan kembali",
+      const message = (error as Error).message;
+      setDetail(
+        message === "timeout"
+          ? "Service worker belum siap. Muat ulang halaman lalu coba lagi."
+          : message || "Notifikasi belum dapat diaktifkan. Coba lagi.",
       );
     } finally {
       setBusy(false);
@@ -85,7 +126,7 @@ export function AdminNotifications() {
   async function disable() {
     setBusy(true);
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await readyRegistration();
       const subscription = await registration.pushManager.getSubscription();
       if (subscription) {
         await fetch("/api/admin/push-subscription", {
@@ -101,29 +142,41 @@ export function AdminNotifications() {
         "admin",
         "Notifikasi dimatikan",
       );
+    } catch {
+      setDetail("Notifikasi belum dapat dimatikan. Coba lagi.");
     } finally {
       setBusy(false);
     }
   }
 
+  const copy: Record<NotificationState, string> = {
+    checking: "Memeriksa status notifikasi perangkat ini…",
+    unsupported:
+      "Browser ini belum mendukung notifikasi push. Gunakan Chrome/Safari terbaru.",
+    "needs-install":
+      "Di iPhone/iPad, pasang dulu Idola Admin ke layar utama (Bagikan → Tambah ke Layar Utama), buka dari ikon aplikasi, lalu aktifkan notifikasi di sini.",
+    disabled:
+      "Aktifkan agar pendaftar baru dan karya baru langsung muncul sebagai notifikasi di HP ini.",
+    enabled:
+      "Aktif — pendaftar baru dan karya baru langsung muncul sebagai notifikasi.",
+    denied:
+      "Izin notifikasi diblokir. Buka pengaturan situs/aplikasi di HP untuk mengizinkannya.",
+    "no-key": "Kunci VAPID belum dipasang di server (.env).",
+  };
+
   return (
     <section className={`admin-push-card ${state}`}>
       <span className="admin-push-icon" aria-hidden="true">
-        {state === "enabled" ? <Bell /> : <Smartphone />}
+        {state === "enabled" ? <BellRing /> : state === "disabled" ? <Bell /> : <Smartphone />}
       </span>
       <div>
-        <b>Notifikasi PWA di HP</b>
-        <p>
-          {state === "enabled"
-            ? "Aktif — pendaftaran dan karya baru akan muncul sebagai notifikasi."
-            : state === "unsupported"
-              ? "Pasang PWA Admin ke layar utama HP, lalu buka kembali untuk mengaktifkan notifikasi."
-              : state === "denied"
-                ? "Izin diblokir. Buka pengaturan situs di HP untuk mengizinkannya."
-                : !publicKey
-                  ? "Konfigurasi notifikasi belum dipasang pada server."
-                  : "Aktifkan agar kabar pendaftaran dan karya baru langsung masuk ke HP admin."}
-        </p>
+        <b>Notifikasi realtime di HP</b>
+        <p>{copy[state]}</p>
+        {detail && (
+          <p className="admin-push-detail" role="alert">
+            {detail}
+          </p>
+        )}
       </div>
       {state === "enabled" ? (
         <button
@@ -138,13 +191,7 @@ export function AdminNotifications() {
         <button
           type="button"
           className="btn"
-          disabled={
-            busy ||
-            state === "checking" ||
-            state === "denied" ||
-            state === "unsupported" ||
-            !publicKey
-          }
+          disabled={busy || state !== "disabled"}
           onClick={() => void enable()}
         >
           <Bell /> {busy ? "Mengaktifkan…" : "Aktifkan notifikasi"}

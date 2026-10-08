@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { cache } from "react";
 import { configured, service } from "@/lib/supabase/server";
-import { publicImage } from "@/lib/data";
+import { publicImage, getActiveSeason } from "@/lib/data";
 import { Share } from "@/components/share";
 export const dynamic = "force-dynamic";
 const get = cache(async (slug: string) => {
@@ -37,7 +37,7 @@ export default async function Page({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const d = await get(slug);
+  const [d, season] = await Promise.all([get(slug), getActiveSeason()]);
   if (!d) notFound();
   const url = `https://idolacontest.my.id/finalis/${slug}`;
   return (
@@ -61,7 +61,7 @@ export default async function Page({
         <p className="muted">
           {d.regency_name}, {d.province_name}
         </p>
-        <p>Tema: Cita Citaku</p>
+        <p>Tema: {season?.theme_title || "Cita Citaku"}</p>
         <Share url={url} name={d.public_name} />
       </div>
     </div>

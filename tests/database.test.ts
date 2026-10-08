@@ -162,22 +162,86 @@ test("Migrations, RLS and full database lifecycle", async () => {
   await assert.rejects(() =>
     mutate("score", sid, { scores: [101, 0, 0, 0, 0] }),
   );
+  // Judges see only public identity in their queue, with their own total.
+  const queue = (
+    await db.query<{ my_total: string; public_name: string; award_code: string }>(
+      "select * from admin_judging_queue()",
+    )
+  ).rows;
+  assert.equal(queue.length, 1);
+  assert.equal(Number(queue[0].my_total), 70);
+  assert.equal(queue[0].public_name, "Little Star");
+  await assert.rejects(() => db.query("select * from admin_leaderboard()"));
   await asUser(admin);
-  await mutate("award", rid, { award: "Juara Utama 1" });
-  await assert.rejects(() =>
-    mutate("result_publish", rid, { published: true }),
+  // Saving a score ranks the category automatically and assigns the award.
+  const autoResult = (
+    await db.query<{
+      award_code: string;
+      award_source: string;
+      rank_position: number;
+      final_score: string;
+      is_published: boolean;
+    }>("select * from results where registration_id=$1", [rid])
+  ).rows[0];
+  assert.equal(autoResult.award_code, "Juara Utama 1");
+  assert.equal(autoResult.award_source, "auto");
+  assert.equal(autoResult.rank_position, 1);
+  assert.equal(Number(autoResult.final_score), 70);
+  assert.equal(autoResult.is_published, false);
+  const board = (
+    await db.query<{ rank_position: number; claim_status: string | null }>(
+      "select * from admin_leaderboard()",
+    )
+  ).rows;
+  assert.equal(board.length, 1);
+  assert.equal(board[0].rank_position, 1);
+  assert.equal(board[0].claim_status, null);
+  await mutate("award", rid, { award: "Juara Umum" });
+  assert.deepEqual(
+    (
+      await db.query<{ award_code: string; award_source: string }>(
+        "select award_code,award_source from results where registration_id=$1",
+        [rid],
+      )
+    ).rows[0],
+    { award_code: "Juara Umum", award_source: "manual" },
   );
-  await assert.rejects(() => mutate("invoice", rid));
+  await mutate("award", rid, { award: "auto" });
+  assert.equal(
+    (
+      await db.query<{ award_code: string }>(
+        "select award_code from results where registration_id=$1",
+        [rid],
+      )
+    ).rows[0].award_code,
+    "Juara Utama 1",
+  );
+  // Publishing is the admin decision: no calendar gate, and the claim invoice is issued automatically.
+  await mutate("result_publish", rid, { published: true });
+  assert.equal((await db.query("select * from public_results")).rows.length, 1);
+  assert.equal(
+    (await db.query("select * from claim_invoices where status='issued'")).rows
+      .length,
+    1,
+  );
+  assert.equal(
+    (await db.query("select * from payments where payment_type='award_claim'"))
+      .rows.length,
+    1,
+  );
+  await asUser(judge);
+  await assert.rejects(() =>
+    mutate("score", sid, { scores: [10, 10, 10, 10, 10] }),
+  );
+  await asUser(admin);
   await db.exec(
-    `reset role;update seasons set registration_open_at=now()-interval '10 days',registration_close_at=now()-interval '7 days',submission_global_close_at=now()-interval '7 days',judging_at=now()-interval '6 days',announcement_at=now()-interval '5 days',shipping_at=now()-interval '1 day';`,
+    `reset role;update seasons set registration_open_at=now()-interval '10 days',registration_close_at=now()-interval '7 days',submission_global_close_at=now()-interval '7 days',judging_at=now()-interval '6 days',announcement_at=now()-interval '5 days',shipping_at=now()+interval '5 days';`,
   );
   await assert.rejects(() => register(data));
   await assert.rejects(() =>
     db.query(`select create_submission($1,'late.webp')`, [code]),
   );
   await asUser(admin);
-  await mutate("result_publish", rid, { published: true });
-  assert.equal((await db.query("select * from public_results")).rows.length, 1);
   await mutate("invoice", rid);
   await assert.rejects(() =>
     mutate("shipment", rid, {
@@ -186,7 +250,10 @@ test("Migrations, RLS and full database lifecycle", async () => {
       status: "shipped",
     }),
   );
-  await mutate("claim_paid", rid);
+  await mutate("claim_status", rid, { status: "paid" });
+  await assert.rejects(() =>
+    mutate("shipment", rid, { courier: "J&T", tracking: "", status: "shipped" }),
+  );
   await mutate("shipment", rid, {
     courier: "J&T",
     tracking: "123",
@@ -234,6 +301,70 @@ test("Migrations, RLS and full database lifecycle", async () => {
     false,
   );
   await asUser(admin);
+  // Season management: create, edit, activate and keep exactly one active season.
+  const seasonPayload = {
+    name: "Season 2",
+    slug: "s2",
+    theme_key: "sunset",
+    theme_title: "Pahlawanku",
+    tagline: "Jadi pahlawan kecil hari ini",
+    registration_open_at: "2027-01-01T00:00:00+07:00",
+    registration_close_at: "2027-01-20T23:59:59+07:00",
+    submission_global_close_at: "2027-01-20T23:59:59+07:00",
+    judging_at: "2027-01-22T00:00:00+07:00",
+    announcement_at: "2027-01-25T00:00:00+07:00",
+    shipping_at: "2027-02-01T00:00:00+07:00",
+    prize_preparation_start: "2027-01-26",
+    prize_preparation_end: "2027-01-30",
+    quota: "",
+  };
+  const seasonTwo = (
+    await db.query<{ id: string }>(
+      "select admin_save_season(null,$1::jsonb) id",
+      [JSON.stringify(seasonPayload)],
+    )
+  ).rows[0].id;
+  await assert.rejects(() =>
+    db.query("select admin_save_season(null,$1::jsonb)", [
+      JSON.stringify({ ...seasonPayload, slug: "S3", theme_key: "neon" }),
+    ]),
+  );
+  await assert.rejects(() =>
+    db.query("select admin_save_season(null,$1::jsonb)", [
+      JSON.stringify({
+        ...seasonPayload,
+        slug: "S3",
+        announcement_at: "2026-01-01T00:00:00+07:00",
+      }),
+    ]),
+  );
+  await db.query("select admin_save_season($1,$2::jsonb)", [
+    seasonTwo,
+    JSON.stringify({ ...seasonPayload, name: "Season 2 Pahlawanku" }),
+  ]);
+  await db.query("select admin_activate_season($1)", [seasonTwo]);
+  assert.deepEqual(
+    (
+      await db.query<{ slug: string; theme_key: string; name: string }>(
+        "select slug,theme_key,name from seasons where is_active",
+      )
+    ).rows,
+    [{ slug: "S2", theme_key: "sunset", name: "Season 2 Pahlawanku" }],
+  );
+  assert.equal(
+    (await db.query("select * from event_settings where season_id=$1", [seasonTwo]))
+      .rows.length,
+    2,
+  );
+  await assert.rejects(() =>
+    db.query("select admin_delete_season($1)", [seasonTwo]),
+  );
+  const seasonOne = (
+    await db.query<{ id: string }>("select id from seasons where slug='S1'")
+  ).rows[0].id;
+  await db.query("select admin_activate_season($1)", [seasonOne]);
+  await db.query("select admin_delete_season($1)", [seasonTwo]);
+  assert.equal((await db.query("select * from seasons")).rows.length, 1);
   await db.query("select admin_delete_registration($1)", [rid]);
   await db.query("select admin_delete_registration($1)", [optionalPostcodeRid]);
   assert.equal((await db.query("select * from registrations")).rows.length, 0);

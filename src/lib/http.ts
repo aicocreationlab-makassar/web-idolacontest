@@ -8,8 +8,17 @@ export function json(data: unknown, status = 200) {
     headers: { "Cache-Control": "no-store" },
   });
 }
+/** An error whose message is safe and useful to show to the person using the app. */
+export class VisibleError extends Error {
+  constructor(message: string, public status = 400) {
+    super(message);
+    this.name = "VisibleError";
+  }
+}
 export function failure(error: unknown) {
   const message = error instanceof Error ? error.message : "Permintaan gagal.";
+  if (error instanceof VisibleError)
+    return json({ error: message }, error.status);
   const safe =
     /^(Layanan|Silakan|Akses|Batas|File|Gambar|Kode|Pendaftaran|Karya|Pembayaran|Data|Wilayah|Permintaan)/.test(
       message,

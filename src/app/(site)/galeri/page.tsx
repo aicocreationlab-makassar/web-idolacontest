@@ -1,4 +1,9 @@
-import { galleryPage, publicImage, type GalleryFilters } from "@/lib/data";
+import {
+  galleryPage,
+  publicImage,
+  getActiveSeason,
+  type GalleryFilters,
+} from "@/lib/data";
 import Link from "next/link";
 import { categories, competitions } from "@/lib/business-rules";
 import { PageHeading } from "@/components/shared";
@@ -11,7 +16,10 @@ export default async function Page({
   searchParams: Promise<GalleryFilters>;
 }) {
   const filters = await searchParams;
-  const { items, count, page, seasons } = await galleryPage(filters);
+  const [{ items, count, page, seasons }, activeSeason] = await Promise.all([
+    galleryPage(filters),
+    getActiveSeason(),
+  ]);
   const q = new URLSearchParams(
     Object.entries(filters).filter(([k, v]) => k !== "page" && !!v),
   );
@@ -99,6 +107,7 @@ export default async function Page({
       </details>
       {items.length ? (
         <GalleryGrid
+          themeTitle={activeSeason?.theme_title || "Cita Citaku"}
           highlighted={filters.highlight}
           items={items.map((item) => ({
             ...item,

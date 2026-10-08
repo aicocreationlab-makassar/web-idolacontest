@@ -17,7 +17,7 @@ import {
   PanelLeftOpen,
   Paintbrush,
   ScrollText,
-  Settings,
+  Sparkles,
   Star,
   Trophy,
   UsersRound,
@@ -30,15 +30,21 @@ const allPages = [
   ["peserta", "Data Peserta", UsersRound],
   ["tambah-peserta", "Tambah Peserta", FilePlus2],
   ["karya", "Review Karya", Images],
-  ["penilaian", "Penilaian", Star],
-  ["hasil", "Hasil & Juara", Trophy],
+  ["penilaian", "Penilaian Juri", Star],
+  ["hasil", "Juara & Hasil", Trophy],
   ["klaim-hadiah", "Klaim Hadiah", Medal],
   ["pengiriman", "Pengiriman", PackageCheck],
-  ["settings", "Pengaturan", Settings],
+  ["settings", "Season & Tema", Sparkles],
   ["audit", "Audit Log", ScrollText],
 ] as const;
 
-export function AdminSidebar({ role }: { role: string }) {
+const roleLabel: Record<string, string> = {
+  super_admin: "Super admin",
+  admin: "Admin",
+  judge: "Juri",
+};
+
+export function AdminSidebar({ role, name }: { role: string; name?: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -95,7 +101,7 @@ export function AdminSidebar({ role }: { role: string }) {
         <div className="admin-role">
           <Paintbrush size={17} />
           <span>Masuk sebagai</span>
-          <b>{role.replace("_", " ")}</b>
+          <b>{name ? `${name} · ` : ""}{roleLabel[role] || role.replace("_", " ")}</b>
         </div>
         <nav aria-label="Menu admin">
           {pages.map(([key, label, Icon]) => {

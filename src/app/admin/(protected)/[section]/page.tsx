@@ -2,23 +2,33 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { admin } from "@/lib/supabase/server";
 import { registrationQuery, type Filters } from "@/lib/admin-data";
+import { describeDatabaseError } from "@/lib/admin-errors";
 import { AdminFilters } from "@/components/admin-filters";
+import { AdminControl, PrivateMedia } from "@/components/admin-controls";
 import {
-  AdminControl,
-  PrivateMedia,
-  PurgeSeasonMedia,
-} from "@/components/admin-controls";
+  JudgingBoard,
+  ResultsBoard,
+  ClaimsBoard,
+  ShippingBoard,
+  type BoardRow,
+  type QueueRow,
+} from "@/components/admin-boards";
+import { SeasonManager } from "@/components/season-manager";
+import { LoadError } from "@/components/load-error";
 import { RegistrationForm } from "@/components/registration-form";
 import { PageHeading } from "@/components/shared";
 import { categories, competitions } from "@/lib/business-rules";
+import type { Season } from "@/lib/season";
 
 const dashboardMetrics: Array<[string, string]> = [
   ["total_registrasi", "Total peserta"],
   ["review_pending", "Perlu diperiksa"],
-  ["review_approved", "Pendaftaran diterima"],
-  ["pembayaran_paid", "Pembayaran diterima"],
+  ["pembayaran_paid", "Pembayaran lunas"],
   ["karya_pending", "Karya perlu diperiksa"],
-  ["pengiriman", "Pesanan dikirim"],
+  ["karya_dinilai", "Karya sudah dinilai"],
+  ["juara_diumumkan", "Juara diumumkan"],
+  ["klaim_dibayar", "Klaim lunas"],
+  ["terkirim", "Paket terkirim"],
 ];
 const dashboardSections: Record<string, string> = {
   per_kategori: "Peserta per kategori",
@@ -35,11 +45,21 @@ const friendlyLabels: Record<string, string> = {
   pending_review: "Menunggu pemeriksaan",
   approved: "Disetujui",
   rejected: "Ditolak",
+  revision_required: "Perlu revisi",
   paid: "Sudah dibayar",
   unpaid: "Belum dibayar",
+  refunded: "Dikembalikan",
   verified: "Aktif",
+  registered: "Terdaftar",
+  cancelled: "Dibatalkan",
+  hidden: "Belum tampil",
   published: "Sudah tampil",
   draft: "Belum ditampilkan",
+  issued: "Menunggu pembayaran",
+  waiting: "Menunggu",
+  prepared: "Disiapkan",
+  shipped: "Dikirim",
+  delivered: "Diterima",
 };
 const friendly = (value: string) =>
   friendlyLabels[value] || value.replaceAll("_", " ");
@@ -50,16 +70,45 @@ const titles: Record<string, string> = {
   "tambah-peserta": "Tambah peserta",
   karya: "Review karya",
   penilaian: "Penilaian juri",
-  hasil: "Hasil & penghargaan",
-  "klaim-hadiah": "Klaim penghargaan",
+  hasil: "Juara & hasil",
+  "klaim-hadiah": "Klaim hadiah",
   pengiriman: "Pengiriman",
-  settings: "Pengaturan season",
+  settings: "Season & tema",
   audit: "Audit log",
 };
 export const metadata = {
   title: "Admin",
   robots: { index: false, follow: false },
 };
+
+function SeasonPicker({
+  seasons,
+  value,
+  activeId,
+}: {
+  seasons: { id: string; name: string; is_active?: boolean }[];
+  value?: string;
+  activeId: string | null;
+}) {
+  return (
+    <form className="card flex flex-wrap gap-4 mb-6 season-picker">
+      <label className="field">
+        Season
+        <select name="season" defaultValue={value ?? ""}>
+          <option value="">{activeId ? "Season aktif" : "Semua season"}</option>
+          {seasons.map((s) => (
+            <option value={s.id} key={s.id}>
+              {s.name}
+              {s.is_active ? " · aktif" : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button className="btn secondary self-end">Terapkan</button>
+    </form>
+  );
+}
+
 export default async function Page({
   params,
   searchParams,
@@ -81,6 +130,7 @@ export default async function Page({
   const filters = await searchParams;
   const page = Math.max(1, Math.min(10000, Number(filters.page) || 1));
   const offset = (page - 1) * 25;
+
   if (section === "tambah-peserta")
     return (
       <>
@@ -88,40 +138,45 @@ export default async function Page({
         <RegistrationForm manual />
       </>
     );
+
+  const seasons =
+    profile.role === "judge"
+      ? { data: [] as Season[], error: null }
+      : await db.from("seasons").select("*").order("created_at", { ascending: false });
+  if (seasons.error)
+    return <LoadError message={describeDatabaseError(seasons.error, "Season tidak dapat dimuat.")} />;
+  const seasonRows = ((seasons.data ?? []) as Season[]).map((s) => ({
+    ...s,
+    theme_key: s.theme_key || "sky",
+    theme_title: s.theme_title || "Cita Citaku",
+  }));
+  const activeSeason = seasonRows.find((s) => s.is_active) ?? null;
+  const scopedSeason =
+    filters.season === "all" ? null : filters.season || activeSeason?.id || null;
+
   if (section === "settings") {
-    if (profile.role !== "super_admin")
-      return (
-        <p className="notice">Pengaturan hanya dapat diubah super admin.</p>
-      );
-    const { data, error } = await db
-      .from("seasons")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error("Tidak dapat memuat season.");
     return (
       <>
-        <PageHeading title={titles[section]} />
-        <div className="grid2">
-          {data.map((s) => (
-            <div className="card stack" key={s.id}>
-              <h3>
-                {s.name} {s.is_active ? "· aktif" : ""}
-              </h3>
-              <AdminControl action="settings" id={s.id} initial={s} />
-              <PurgeSeasonMedia id={s.id} />
-            </div>
-          ))}
-        </div>
+        <PageHeading
+          title={titles[section]}
+          description="Buat season baru, tentukan tema dan tampilan website, atur timeline, lalu aktifkan. Website publik langsung berganti tema saat season diaktifkan."
+        />
+        <SeasonManager
+          seasons={seasonRows}
+          canPurge={profile.role === "super_admin"}
+          canDelete={profile.role === "super_admin"}
+        />
       </>
     );
   }
+
   if (section === "audit") {
     const { data, error, count } = await db
       .from("admin_audit_logs")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(offset, offset + 24);
-    if (error) throw new Error("Tidak dapat memuat audit.");
+    if (error) return <LoadError message={describeDatabaseError(error, "Audit tidak dapat dimuat.")} />;
     return (
       <>
         <PageHeading title={titles[section]} />
@@ -174,105 +229,203 @@ export default async function Page({
       </>
     );
   }
-  if (section === "karya" || section === "penilaian") {
-    let query = db
-      .from("submissions")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false });
-    if (section === "penilaian") query = query.eq("status", "approved");
-    const { data, error, count } = await query.range(offset, offset + 24);
-    if (error) throw new Error("Tidak dapat memuat karya.");
+
+  if (section === "penilaian") {
+    const { data, error } = await db.rpc("admin_judging_queue", {
+      p_season: profile.role === "judge" ? null : scopedSeason,
+    });
+    if (error)
+      return <LoadError message={describeDatabaseError(error, "Antrean penilaian tidak dapat dimuat.")} />;
+    return (
+      <>
+        <PageHeading
+          title={titles[section]}
+          description="Nilai tiap kriteria 0–100. Skor akhir dihitung otomatis dengan bobot 30/25/20/15/10, lalu sistem langsung meranking peserta dibanding peserta lain pada jenis lomba dan kategori usia yang sama."
+        />
+        {profile.role !== "judge" && (
+          <SeasonPicker seasons={seasonRows} value={filters.season} activeId={activeSeason?.id ?? null} />
+        )}
+        <JudgingBoard rows={(data ?? []) as QueueRow[]} judge={profile.role === "judge"} />
+      </>
+    );
+  }
+
+  if (section === "hasil" || section === "klaim-hadiah" || section === "pengiriman") {
+    const { data, error } = await db.rpc("admin_leaderboard", { p_season: scopedSeason });
+    if (error)
+      return <LoadError message={describeDatabaseError(error, "Papan hasil tidak dapat dimuat.")} />;
+    const rows = (data ?? []) as BoardRow[];
+    const query = new URLSearchParams(
+      Object.entries(filters).filter(([k, v]) => k !== "page" && !!v),
+    );
     return (
       <>
         <PageHeading
           title={titles[section]}
           description={
-            section === "penilaian"
-              ? "Nilai tiap kriteria 0–100. Skor akhir dihitung otomatis menggunakan bobot 30/25/20/15/10."
-              : "Approve terlebih dahulu, lalu publikasikan secara terpisah."
+            section === "hasil"
+              ? "Peringkat diperbarui otomatis setiap nilai juri disimpan. Juara Utama 1–3, Harapan 1–3, dan Favorit 1–3 ditetapkan otomatis dari peringkat; Juara Umum dan Best Social Media diatur manual. Mengumumkan juara otomatis menerbitkan invoice klaim dan memperbarui Cek Status peserta."
+              : section === "klaim-hadiah"
+                ? "Invoice Rp120.000 terbit otomatis saat juara diumumkan. Tandai lunas setelah transfer diterima; peserta melihat statusnya lewat kode registrasi."
+                : "Isi kurir, nomor resi, dan status. Peserta langsung melihat resi di Cek Status."
           }
         />
-        <div className="grid2">
-          {data.map((s) => (
-            <article className="card stack" key={s.id}>
-              <h3>
-                {s.submission_type === "coloring" ? "Mewarnai" : "Fotogenik"}
-              </h3>
-              <p className="text-xs break-all muted">ID karya: {s.id}</p>
-              <p>
-                {friendly(s.status)} · {friendly(s.publication_status)}
-              </p>
-              <PrivateMedia id={s.id} kind="submission" />
-              {section === "penilaian" ? (
-                <AdminControl
-                  action="score"
-                  id={s.id}
-                  competition={s.submission_type}
-                />
-              ) : (
-                <>
-                  <Link
-                    className="text-purple underline"
-                    href={`/admin/peserta/${s.registration_id}`}
-                  >
-                    Detail peserta
-                  </Link>
-                  {s.publication_status === "approved" ? (
-                    <AdminControl action="unpublish" id={s.id} />
-                  ) : (
-                    <>
-                      <AdminControl action="review" id={s.id} />
-                      {s.status === "approved" && (
-                        <AdminControl action="publish" id={s.id} />
-                      )}
-                    </>
-                  )}
-                </>
-              )}
-            </article>
-          ))}
+        <div className="actions">
+          <SeasonPicker seasons={seasonRows} value={filters.season} activeId={activeSeason?.id ?? null} />
+          <a className="btn secondary" href={`/api/admin/export?${query}&kind=${section}`}>
+            Ekspor CSV
+          </a>
         </div>
-        {!data.length && (
-          <p className="notice">Belum ada karya untuk ditampilkan.</p>
+        {section === "hasil" ? (
+          <ResultsBoard rows={rows} seasonId={scopedSeason} />
+        ) : section === "klaim-hadiah" ? (
+          <ClaimsBoard rows={rows} />
+        ) : (
+          <ShippingBoard rows={rows} />
         )}
-        <Pagination page={page} count={count || 0} filters={filters} />
       </>
     );
   }
-  const seasons = await db.from("seasons").select("id,name");
-  if (seasons.error) throw new Error("Tidak dapat memuat season.");
-  if (section === "dashboard") {
-    const { data, error } = await db.rpc("admin_dashboard", {
-      p_season: filters.season || null,
-    });
-    if (error) throw new Error("Tidak dapat memuat dashboard.");
-    const totals = data as Record<string, unknown>;
+
+  if (section === "karya") {
+    let query = db
+      .from("submissions")
+      .select("*,registrations!inner(id,registration_code,competition_type,category,season_id,participants(public_name,full_name))", {
+        count: "exact",
+      })
+      .order("created_at", { ascending: false });
+    if (scopedSeason) query = query.eq("registrations.season_id", scopedSeason);
+    if (filters.review) query = query.eq("status", filters.review);
+    const { data, error, count } = await query.range(offset, offset + 24);
+    if (error) return <LoadError message={describeDatabaseError(error, "Karya tidak dapat dimuat.")} />;
     return (
       <>
         <PageHeading
-          title="Selamat datang, pengelola."
-          description="Pantau perjalanan peserta dari pendaftaran sampai penghargaan tiba."
+          title={titles[section]}
+          description="Setujui karya terlebih dahulu, lalu publikasikan ke galeri secara terpisah. Karya yang disetujui otomatis masuk antrean penilaian juri."
         />
-        <form className="card flex flex-wrap gap-4 mb-6">
+        <form className="card flex flex-wrap gap-4 mb-6 season-picker">
           <label className="field">
             Season
-            <select name="season" defaultValue={filters.season}>
-              <option value="">Semua season</option>
-              {seasons.data.map((s) => (
+            <select name="season" defaultValue={filters.season ?? ""}>
+              <option value="">Season aktif</option>
+              <option value="all">Semua season</option>
+              {seasonRows.map((s) => (
                 <option value={s.id} key={s.id}>
                   {s.name}
                 </option>
               ))}
             </select>
           </label>
-          <button className="btn self-end">Terapkan</button>
+          <label className="field">
+            Status karya
+            <select name="review" defaultValue={filters.review ?? ""}>
+              <option value="">Semua</option>
+              <option value="pending_review">Menunggu pemeriksaan</option>
+              <option value="approved">Disetujui</option>
+              <option value="revision_required">Perlu revisi</option>
+              <option value="rejected">Ditolak</option>
+            </select>
+          </label>
+          <button className="btn secondary self-end">Terapkan</button>
+        </form>
+        <div className="grid2">
+          {data.map((s) => {
+            const registration = s.registrations as {
+              id: string;
+              registration_code: string;
+              competition_type: string;
+              category: string;
+              participants: { public_name: string; full_name: string } | null;
+            };
+            return (
+              <article className="card stack" key={s.id}>
+                <div className="judging-head">
+                  <div>
+                    <h3>{registration.participants?.public_name || "Peserta"}</h3>
+                    <p className="muted text-sm">
+                      {friendly(registration.competition_type)} · {friendly(registration.category)} ·{" "}
+                      {registration.registration_code}
+                    </p>
+                  </div>
+                  <span className={`admin-status status-${s.status}`}>
+                    {friendly(s.status)} · {friendly(s.publication_status)}
+                  </span>
+                </div>
+                <PrivateMedia id={s.id} kind="submission" />
+                <Link className="text-purple underline" href={`/admin/peserta/${s.registration_id}`}>
+                  Detail peserta
+                </Link>
+                {s.publication_status === "approved" ? (
+                  <AdminControl action="unpublish" id={s.id} />
+                ) : (
+                  <>
+                    <AdminControl
+                      action="review"
+                      id={s.id}
+                      initial={{ status: s.status === "pending_review" ? "approved" : s.status, note: s.review_note }}
+                    />
+                    {s.status === "approved" && <AdminControl action="publish" id={s.id} />}
+                  </>
+                )}
+              </article>
+            );
+          })}
+        </div>
+        {!data.length && <p className="notice">Belum ada karya untuk ditampilkan.</p>}
+        <Pagination page={page} count={count || 0} filters={filters} />
+      </>
+    );
+  }
+
+  if (section === "dashboard") {
+    const { data, error } = await db.rpc("admin_dashboard", {
+      p_season: scopedSeason,
+    });
+    if (error) return <LoadError message={describeDatabaseError(error, "Dashboard tidak dapat dimuat.")} />;
+    const totals = (data ?? {}) as Record<string, unknown>;
+    return (
+      <>
+        <PageHeading
+          title={`Selamat datang, ${profile.display_name || "pengelola"}.`}
+          description="Pantau perjalanan peserta dari pendaftaran sampai hadiah tiba."
+        />
+        <form className="card flex flex-wrap gap-4 mb-6 season-picker">
+          <label className="field">
+            Season
+            <select name="season" defaultValue={filters.season ?? ""}>
+              <option value="">Season aktif</option>
+              <option value="all">Semua season</option>
+              {seasonRows.map((s) => (
+                <option value={s.id} key={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="btn secondary self-end">Terapkan</button>
         </form>
         <div className="grid3 admin-summary-grid">
           {dashboardMetrics.map(([key, label]) => (
-            <div className="card" key={key}>
+            <Link
+              className="card"
+              key={key}
+              href={
+                {
+                  total_registrasi: "/admin/peserta",
+                  review_pending: "/admin/pendaftaran?review=pending",
+                  pembayaran_paid: "/admin/peserta?payment=paid",
+                  karya_pending: "/admin/karya?review=pending_review",
+                  karya_dinilai: "/admin/penilaian",
+                  juara_diumumkan: "/admin/hasil",
+                  klaim_dibayar: "/admin/klaim-hadiah",
+                  terkirim: "/admin/pengiriman",
+                }[key] || "/admin/dashboard"
+              }
+            >
               <span className="muted">{label}</span>
               <h2 className="mt-3 text-purple">{String(totals[key] ?? 0)}</h2>
-            </div>
+            </Link>
           ))}
         </div>
         <div className="grid2 mt-6">
@@ -298,11 +451,12 @@ export default async function Page({
       </>
     );
   }
+
   const { data, error, count } = await registrationQuery(db, filters).range(
     offset,
     offset + 24,
   );
-  if (error) throw new Error("Tidak dapat memuat peserta.");
+  if (error) return <LoadError message={describeDatabaseError(error, "Peserta tidak dapat dimuat.")} />;
   const query = new URLSearchParams(
     Object.entries(filters).filter(([k, v]) => k !== "page" && !!v),
   );
@@ -316,7 +470,7 @@ export default async function Page({
             : undefined
         }
       />
-      <AdminFilters filters={filters} seasons={seasons.data} />
+      <AdminFilters filters={filters} seasons={seasonRows} />
       <div className="actions">
         <a
           className="btn secondary"
@@ -382,8 +536,10 @@ export default async function Page({
                       award_code: string;
                       is_published: boolean;
                       final_score: number;
+                      rank_position: number | null;
                     }) => (
                       <p key={x.id}>
+                        {x.rank_position ? `#${x.rank_position} · ` : ""}
                         {x.award_code} · {x.final_score} ·{" "}
                         {x.is_published ? "Sudah diumumkan" : "Belum diumumkan"}
                       </p>
@@ -445,33 +601,6 @@ export default async function Page({
                         initial={{ status: r.payment_status }}
                       />
                     </div>
-                  )}{" "}
-                  {section === "hasil" && (
-                    <div className="stack">
-                      <AdminControl action="award" id={r.id} />
-                      {(r.results ?? []).length > 0 && (
-                        <AdminControl
-                          action="result_publish"
-                          id={r.id}
-                          published={r.results?.[0]?.is_published ?? false}
-                        />
-                      )}
-                    </div>
-                  )}
-                  {section === "klaim-hadiah" &&
-                    ((r.claim_invoices ?? []).length === 0 ? (
-                      <AdminControl action="invoice" id={r.id} />
-                    ) : r.claim_invoices?.[0]?.status === "issued" ? (
-                      <AdminControl action="claim_paid" id={r.id} />
-                    ) : (
-                      <span>Klaim telah diproses.</span>
-                    ))}
-                  {section === "pengiriman" && (
-                    <AdminControl
-                      action="shipment"
-                      id={r.id}
-                      initial={r.shipments?.[0] || {}}
-                    />
                   )}
                 </td>
               </tr>

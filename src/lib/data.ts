@@ -1,15 +1,29 @@
 import "server-only";
+import { cache } from "react";
 import { configured, service } from "./supabase/server";
-export async function getActiveSeason() {
+import type { Season } from "./season";
+
+/** Active season, cached per request. Returns null when Supabase is not configured or unreachable. */
+export const getActiveSeason = cache(async (): Promise<Season | null> => {
   if (!configured()) return null;
-  const { data, error } = await service()
-    .from("seasons")
-    .select("*")
-    .eq("is_active", true)
-    .maybeSingle();
-  if (error) throw new Error("Tidak dapat memuat season.");
-  return data;
-}
+  try {
+    const { data, error } = await service()
+      .from("seasons")
+      .select("*")
+      .eq("is_active", true)
+      .maybeSingle();
+    if (error || !data) return null;
+    const season = data as Season;
+    return {
+      ...season,
+      theme_key: season.theme_key || "sky",
+      theme_title: season.theme_title || "Cita Citaku",
+    };
+  } catch {
+    return null;
+  }
+});
+
 export async function gallery() {
   if (!configured()) return [];
   const { data, error } = await service()
@@ -82,4 +96,24 @@ export async function galleryPage(filters: GalleryFilters) {
     page,
     seasons: seasons.data ?? [],
   };
+}
+
+/** Published results of the active season (or all seasons when none is active). */
+export async function publishedResults(seasonId?: string | null) {
+  if (!configured()) return [];
+  const build = (ranked: boolean) => {
+    let query = service()
+      .from("public_results")
+      .select("*")
+      .order("competition_type")
+      .order("category");
+    if (ranked) query = query.order("rank_position", { ascending: true, nullsFirst: false });
+    query = query.order("final_score", { ascending: false });
+    return seasonId ? query.eq("season_id", seasonId) : query;
+  };
+  let { data, error } = await build(true);
+  // Older databases (before the rankings migration) have no rank_position column.
+  if (error) ({ data, error } = await build(false));
+  if (error) throw new Error("Hasil belum dapat dimuat.");
+  return data ?? [];
 }

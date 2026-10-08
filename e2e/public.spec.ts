@@ -145,7 +145,9 @@ test("Admin can login, open mobile navigation, and view incoming registrations",
 
   const manifest = await request.get("/admin/manifest.webmanifest");
   expect(manifest.ok()).toBeTruthy();
-  expect((await manifest.json()).start_url).toBe("/admin/dashboard");
+  const adminManifest = await manifest.json();
+  expect(adminManifest.start_url).toMatch(/^\/admin\/dashboard/);
+  expect(adminManifest.scope).toBe("/admin/");
 });
 
 test("Page navigation returns mobile and desktop views to the top", async ({
@@ -276,10 +278,10 @@ test("Paid coloring participant sees worksheet immediately with A4 instructions"
   await page.getByLabel("Kode registrasi").fill("IDC-BINTANG-1234");
   await page.getByRole("button", { name: /Cek status/ }).click();
   await expect(
-    page.getByRole("heading", { name: "Worksheet Cita-Cita Si Kecil" }),
+    page.getByRole("heading", { name: /^Worksheet .* Si Kecil$/ }),
   ).toBeVisible();
   await expect(
-    page.getByAltText("Worksheet cita-cita Bintang Uji"),
+    page.getByAltText("Worksheet Bintang Uji"),
   ).toBeVisible();
   await expect(
     page.getByText("Cetak pada kertas A4 dengan ukuran penuh."),

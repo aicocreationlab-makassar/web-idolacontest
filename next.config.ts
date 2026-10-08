@@ -18,6 +18,7 @@ const csp = [
 ].join("; ");
 const config: NextConfig = {
   poweredByHeader: false,
+  agentRules: false,
   experimental: { cpus: 1, webpackMemoryOptimizations: true },
   images: {
     remotePatterns: process.env.NEXT_PUBLIC_SUPABASE_URL

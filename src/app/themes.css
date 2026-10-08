@@ -1,0 +1,344 @@
+/* Season themes. The default "sky" theme is the base stylesheet; every other
+   season swaps the brand surfaces so each season looks clearly different. */
+html[data-season-theme="sunset"] {
+  --t-primary: #ff7a3d;
+  --t-primary-dark: #d9481f;
+  --t-primary-light: #ffb75e;
+  --t-primary-soft: #fff1e6;
+  --t-primary-soft-border: #ffd3b8;
+  --t-accent: #e5438f;
+  --t-accent-two: #ffd166;
+  --t-accent-two-dark: #e09a12;
+  --t-btn-top: #ff8f5a;
+  --t-btn-bottom: #ff6a2b;
+  --t-btn-border: #ffb48f;
+  --t-btn-shadow: #c2401a;
+  --t-btn-text: #fff8f2;
+  --t-section-soft: #fff6ee;
+  --t-section-soft-2: #fff0f3;
+  --t-sky-1: #ffd9a8;
+  --t-sky-2: #ffefd6;
+  --t-sky-3: #ffc38a;
+  --t-ground-1: #ffd36b;
+  --t-ground-2: #f4a93a;
+  --t-ticker-text: #5b2a0e;
+  --color-pink: #e5438f;
+  --color-purple: #c9512a;
+}
+html[data-season-theme="jungle"] {
+  --t-primary: #22a06b;
+  --t-primary-dark: #15764d;
+  --t-primary-light: #7ddb9b;
+  --t-primary-soft: #e9f9ef;
+  --t-primary-soft-border: #bfe9cf;
+  --t-accent: #ff8a3d;
+  --t-accent-two: #ffe34d;
+  --t-accent-two-dark: #d1ac00;
+  --t-btn-top: #ffe866;
+  --t-btn-bottom: #ffd21f;
+  --t-btn-border: #fff0a3;
+  --t-btn-shadow: #b7900c;
+  --t-btn-text: #1f4d2c;
+  --t-section-soft: #eefaf1;
+  --t-section-soft-2: #fdf9e6;
+  --t-sky-1: #bdf0c9;
+  --t-sky-2: #e6fbea;
+  --t-sky-3: #9ae4b0;
+  --t-ground-1: #a5e07f;
+  --t-ground-2: #5fb857;
+  --t-ticker-text: #2a4a16;
+  --color-pink: #e8692a;
+  --color-purple: #15764d;
+}
+html[data-season-theme="candy"] {
+  --t-primary: #9a5bf0;
+  --t-primary-dark: #6b32c4;
+  --t-primary-light: #d3a7ff;
+  --t-primary-soft: #f4ecff;
+  --t-primary-soft-border: #dcc6ff;
+  --t-accent: #ff5fa8;
+  --t-accent-two: #8af0c8;
+  --t-accent-two-dark: #22a37a;
+  --t-btn-top: #ff8cc0;
+  --t-btn-bottom: #ff5fa8;
+  --t-btn-border: #ffc1dd;
+  --t-btn-shadow: #c2367b;
+  --t-btn-text: #fff6fb;
+  --t-section-soft: #f8f1ff;
+  --t-section-soft-2: #fff0f7;
+  --t-sky-1: #e9d4ff;
+  --t-sky-2: #fbeeff;
+  --t-sky-3: #ffc7e4;
+  --t-ground-1: #b9f5df;
+  --t-ground-2: #74dcb3;
+  --t-ticker-text: #1d5a44;
+  --color-pink: #ff5fa8;
+  --color-purple: #6b32c4;
+}
+html[data-season-theme="ocean"] {
+  --t-primary: #0ea5b7;
+  --t-primary-dark: #0b6f8a;
+  --t-primary-light: #6fe3ef;
+  --t-primary-soft: #e6fafb;
+  --t-primary-soft-border: #b8ecf1;
+  --t-accent: #ff7b54;
+  --t-accent-two: #ffd66b;
+  --t-accent-two-dark: #d59c0b;
+  --t-btn-top: #ffe08a;
+  --t-btn-bottom: #ffcd4d;
+  --t-btn-border: #ffeeb8;
+  --t-btn-shadow: #c7931b;
+  --t-btn-text: #113f52;
+  --t-section-soft: #eafbfc;
+  --t-section-soft-2: #fff8e8;
+  --t-sky-1: #a8f0f6;
+  --t-sky-2: #e2fbfd;
+  --t-sky-3: #7fdfe9;
+  --t-ground-1: #ffe9a8;
+  --t-ground-2: #f2c866;
+  --t-ticker-text: #113f52;
+  --color-pink: #ff7b54;
+  --color-purple: #0b6f8a;
+}
+html[data-season-theme="galaxy"] {
+  --t-primary: #4b3fd6;
+  --t-primary-dark: #2a1f8f;
+  --t-primary-light: #8c7cff;
+  --t-primary-soft: #eeedff;
+  --t-primary-soft-border: #cfc9ff;
+  --t-accent: #ff6ad5;
+  --t-accent-two: #ffe066;
+  --t-accent-two-dark: #d4b000;
+  --t-btn-top: #ffe97a;
+  --t-btn-bottom: #ffd21f;
+  --t-btn-border: #fff2a6;
+  --t-btn-shadow: #b58f00;
+  --t-btn-text: #1f1760;
+  --t-section-soft: #f1efff;
+  --t-section-soft-2: #fdeefb;
+  --t-sky-1: #c8c0ff;
+  --t-sky-2: #ebe7ff;
+  --t-sky-3: #a89bff;
+  --t-ground-1: #ffd6f3;
+  --t-ground-2: #e59ad8;
+  --t-ticker-text: #2a1f8f;
+  --color-pink: #ff6ad5;
+  --color-purple: #2a1f8f;
+}
+
+html:not([data-season-theme="sky"]) .brand-header,
+html:not([data-season-theme="sky"]) .brand-footer {
+  background: linear-gradient(120deg, var(--t-primary), var(--t-primary-dark));
+}
+html:not([data-season-theme="sky"]) .desktop-nav a.active:after,
+html:not([data-season-theme="sky"]) .desktop-nav a:hover:after {
+  background: var(--t-accent-two);
+}
+html:not([data-season-theme="sky"]) .kids-hero {
+  background: linear-gradient(165deg, var(--t-primary) 15%, var(--t-primary-light) 100%);
+}
+html:not([data-season-theme="sky"]) .hero-pink {
+  color: var(--t-accent);
+}
+html:not([data-season-theme="sky"]) .hero-yellow {
+  color: var(--t-accent-two-dark);
+  text-shadow: 0 3px 0 #0000001a;
+}
+html:not([data-season-theme="sky"]) .season-pill {
+  background: var(--t-primary-soft);
+  border-color: var(--t-primary-soft-border);
+  color: var(--t-primary-dark);
+}
+html:not([data-season-theme="sky"]) .season-pill > span {
+  color: var(--t-accent);
+}
+html:not([data-season-theme="sky"]) .eyebrow {
+  color: var(--t-primary-dark);
+}
+html:not([data-season-theme="sky"]) .btn {
+  border-color: var(--t-btn-border);
+  background: linear-gradient(var(--t-btn-top), var(--t-btn-bottom));
+  color: var(--t-btn-text);
+  box-shadow:
+    0 5px 0 var(--t-btn-shadow),
+    0 9px 18px #00000018;
+}
+html:not([data-season-theme="sky"]) .btn:hover {
+  box-shadow:
+    0 7px 0 var(--t-btn-shadow),
+    0 12px 22px #0000001c;
+}
+html:not([data-season-theme="sky"]) .btn.secondary {
+  background: white;
+  border-color: var(--t-primary-soft-border);
+  color: var(--t-primary-dark);
+  box-shadow: 0 4px 0 var(--t-primary-soft-border);
+}
+html:not([data-season-theme="sky"]) .btn.secondary:hover {
+  box-shadow: 0 6px 0 var(--t-primary-soft-border);
+}
+html:not([data-season-theme="sky"]) .blue-scene {
+  background: linear-gradient(120deg, var(--t-primary-dark), var(--t-primary));
+}
+html:not([data-season-theme="sky"]) .timeline-section {
+  background: var(--t-section-soft);
+}
+html:not([data-season-theme="sky"]) .gallery-scene {
+  background: linear-gradient(var(--t-section-soft-2), var(--t-section-soft));
+}
+html:not([data-season-theme="sky"]) .final-cta {
+  background: linear-gradient(120deg, var(--t-primary-dark), var(--t-primary-light));
+  border-color: var(--t-primary-soft);
+  box-shadow: 0 9px 0 var(--t-primary-soft-border);
+}
+html:not([data-season-theme="sky"]) .recent-ticker {
+  background: var(--t-accent-two);
+  border-bottom-color: var(--t-accent-two-dark);
+  color: var(--t-ticker-text);
+}
+html:not([data-season-theme="sky"]) .theme-sticker {
+  background: var(--t-accent-two);
+  color: var(--t-ticker-text);
+  border-color: white;
+  box-shadow: 0 6px 0 var(--t-accent-two-dark);
+}
+html:not([data-season-theme="sky"]) .artboard-sky {
+  background: linear-gradient(140deg, var(--t-sky-1), var(--t-sky-2) 50%, var(--t-sky-3));
+}
+html:not([data-season-theme="sky"]) .artboard-rainbow {
+  border-color: var(--t-accent-two);
+  border-bottom-color: transparent;
+  border-right-color: var(--t-accent);
+  opacity: 0.55;
+}
+html:not([data-season-theme="sky"]) .artboard-ground {
+  background: linear-gradient(var(--t-ground-1), var(--t-ground-2));
+}
+html:not([data-season-theme="sky"]) .star-decoration,
+html:not([data-season-theme="sky"]) .sparkle-decoration,
+html:not([data-season-theme="sky"]) .heading-star {
+  color: var(--t-accent-two);
+}
+html:not([data-season-theme="sky"]) .countdown-tile b {
+  color: var(--t-primary-dark);
+}
+html:not([data-season-theme="sky"]) .notice {
+  background: var(--t-primary-soft);
+  border-color: var(--t-primary-soft-border);
+  color: var(--t-primary-dark);
+}
+html:not([data-season-theme="sky"]) .info-card {
+  background: var(--t-section-soft-2);
+  border-color: var(--t-primary-soft-border);
+}
+html:not([data-season-theme="sky"]) .mobile-menu-panel {
+  border-color: var(--t-primary-soft);
+}
+html:not([data-season-theme="sky"]) .worksheet-paper span {
+  color: var(--t-primary-dark);
+}
+html:not([data-season-theme="sky"]) .floating-sticker {
+  box-shadow:
+    0 8px 0 var(--t-primary-soft-border),
+    0 12px 22px #0000001a;
+}
+html:not([data-season-theme="sky"]) .fee-banner {
+  background: var(--t-section-soft);
+  border-color: var(--t-primary-soft-border);
+}
+html[data-season-theme="galaxy"] .kids-hero {
+  background: radial-gradient(circle at 80% 10%, #ff6ad555 0 8%, transparent 9%),
+    radial-gradient(circle at 20% 90%, #ffe06644 0 6%, transparent 7%),
+    linear-gradient(165deg, #2a1f8f 10%, #4b3fd6 60%, #8c7cff 100%);
+}
+html[data-season-theme="galaxy"] .hero-white-shape,
+html[data-season-theme="galaxy"] .kids-hero:after {
+  background: #f6f4ff;
+}
+html[data-season-theme="sunset"] .hero-white-shape,
+html[data-season-theme="sunset"] .kids-hero:after {
+  background: #fff9f3;
+}
+html[data-season-theme="ocean"] .hero-white-shape,
+html[data-season-theme="ocean"] .kids-hero:after {
+  background: #f3fdfd;
+}
+html[data-season-theme="jungle"] .hero-white-shape,
+html[data-season-theme="jungle"] .kids-hero:after {
+  background: #f6fdf5;
+}
+html[data-season-theme="candy"] .hero-white-shape,
+html[data-season-theme="candy"] .kids-hero:after {
+  background: #fff7fc;
+}
+
+/* 3D season stickers float inside the hero artboard. */
+.season-motifs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.season-motif {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  background: white;
+  border: 3px solid white;
+  font-size: 28px;
+  line-height: 1;
+  box-shadow:
+    0 7px 0 #0000001a,
+    0 12px 22px #0000001c;
+  transform: rotate(var(--tilt, -6deg));
+  animation: motif-float 5.5s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+.season-motif:nth-child(1) {
+  left: -4%;
+  top: 8%;
+  --tilt: -9deg;
+}
+.season-motif:nth-child(2) {
+  right: 2%;
+  top: 4%;
+  --tilt: 8deg;
+  --delay: 0.8s;
+}
+.season-motif:nth-child(3) {
+  left: 2%;
+  bottom: 20%;
+  --tilt: 6deg;
+  --delay: 1.6s;
+}
+.season-motif:nth-child(4) {
+  right: 6%;
+  bottom: 24%;
+  --tilt: -7deg;
+  --delay: 2.4s;
+}
+@keyframes motif-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -9px;
+  }
+}
+@media (max-width: 760px) {
+  .season-motif {
+    width: 42px;
+    height: 42px;
+    font-size: 22px;
+    border-radius: 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .season-motif {
+    animation: none;
+  }
+}

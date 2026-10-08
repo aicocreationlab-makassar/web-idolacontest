@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { categories } from "@/lib/business-rules";
+import { formatDateTime, seasonTimeline, type Season } from "@/lib/season";
 import {
   ToyArt,
   WaveDivider,
@@ -95,7 +96,11 @@ export function FeatureStrip() {
     </section>
   );
 }
-export function CompetitionCards() {
+export function CompetitionCards({
+  themeTitle = "Cita Citaku",
+}: {
+  themeTitle?: string;
+}) {
   return (
     <section className="section wrap competition-section" id="lomba">
       <SectionHeading
@@ -105,7 +110,7 @@ export function CompetitionCards() {
             Beda bakat, <span className="text-pink">sama hebatnya!</span>
           </>
         }
-        description="Dua kompetisi seru, satu tema penuh inspirasi: Cita Citaku."
+        description={`Dua kompetisi seru, satu tema penuh inspirasi: ${themeTitle}.`}
       />
       <div className="grid2">
         {[
@@ -181,14 +186,18 @@ export function CompetitionCards() {
     </section>
   );
 }
-export function PersonalizedWorksheetSection() {
+export function PersonalizedWorksheetSection({
+  themeTitle = "Cita Citaku",
+}: {
+  themeTitle?: string;
+}) {
   return (
     <section className="blue-scene worksheet-section">
       <WaveDivider flip />
       <div className="wrap grid2 items-center">
         <div className="worksheet-art">
           <div className="worksheet-paper">
-            <span>IDOLA CONTEST · CITA CITAKU</span>
+            <span>IDOLA CONTEST · {themeTitle.toUpperCase()}</span>
             <svg viewBox="0 0 200 190" aria-hidden="true">
               <g
                 fill="none"
@@ -339,7 +348,9 @@ export function PrizeSection() {
     </section>
   );
 }
-export function CompetitionTimeline() {
+export function CompetitionTimeline({ season }: { season: Season | null }) {
+  const stops = seasonTimeline(season);
+  const icons = [Pencil, Camera, Star, Trophy, Palette, Truck];
   return (
     <section className="section timeline-section">
       <div className="wrap">
@@ -349,31 +360,25 @@ export function CompetitionTimeline() {
           description="Catat tanggalnya, siapkan karya terbaiknya. Semua waktu dalam WIB."
         />
         <div className="journey">
-          {[
-            ["21 SEP", "Pendaftaran dibuka", Pencil],
-            ["06 OKT", "Batas daftar & karya", Camera],
-            ["07 OKT", "Penilaian juri", Star],
-            ["08 OKT", "Pengumuman", Trophy],
-            ["09–12 OKT", "Persiapan hadiah", Palette],
-            ["13 OKT", "Mulai pengiriman", Truck],
-          ].map(([date, label, icon], i) => {
-            const Icon = icon as typeof Star;
+          {stops.map((stop, i) => {
+            const Icon = icons[i % icons.length];
             return (
-              <div className="journey-stop" key={String(date)}>
+              <div className="journey-stop" key={stop.key} title={stop.date}>
                 <span
                   className={`journey-icon tone-${["pink", "sky", "yellow", "purple", "mint", "peach"][i]}`}
                 >
                   <Icon size={26} />
                   <small>{i + 1}</small>
                 </span>
-                <b>{String(date)}</b>
-                <p>{String(label)}</p>
+                <b>{stop.short}</b>
+                <p>{stop.label}</p>
               </div>
             );
           })}
         </div>
         <p className="text-center muted text-sm mt-6">
-          Batas kirim karya: 7 hari setelah registrasi atau 6 Oktober 2026, mana
+          Batas kirim karya: 7 hari setelah registrasi atau{" "}
+          {season ? formatDateTime(season.submission_global_close_at) : "penutupan global"}, mana
           yang lebih awal.
         </p>
       </div>
@@ -414,7 +419,9 @@ export function RegistrationSteps() {
 }
 export function HomeFinalists({
   works,
+  seasonName = "season ini",
 }: {
+  seasonName?: string;
   works: {
     slug: string;
     public_name: string;
@@ -462,8 +469,8 @@ export function HomeFinalists({
             <div>
               <h3>Panggungnya siap. Bintang kecilnya segera hadir!</h3>
               <p>
-                Jadi bagian dari cerita Season 1. Karya finalis tampil setelah
-                proses review.
+                Jadi bagian dari cerita {seasonName}. Karya finalis tampil
+                setelah proses review.
               </p>
             </div>
             <Link className="btn secondary" href="/daftar">

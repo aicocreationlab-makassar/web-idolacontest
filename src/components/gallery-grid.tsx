@@ -20,9 +20,11 @@ type GalleryItem = {
 export function GalleryGrid({
   items,
   highlighted,
+  themeTitle = "Cita Citaku",
 }: {
   items: GalleryItem[];
   highlighted?: string;
+  themeTitle?: string;
 }) {
   const [selected, setSelected] = useState<GalleryItem | null>(null);
 
@@ -115,7 +117,7 @@ export function GalleryGrid({
                 <MapPin /> {selected.regency_name}, {selected.province_name}
               </p>
               <p>
-                Tema: <b>Cita Citaku</b>
+                Tema: <b>{themeTitle}</b>
               </p>
               <Share
                 url={`https://idolacontest.my.id/finalis/${selected.slug}`}

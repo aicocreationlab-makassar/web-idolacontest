@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./themes.css";
 @theme {
   --color-ink: #174578;
   --color-purple: #6e43b9;
@@ -4606,4 +4607,718 @@ form.card.is-revealed,
   .gallery-highlight {
     animation: none !important;
   }
+}
+
+/* Admin: realtime status, toasts, install guide, judging, leaderboard, seasons. */
+.admin-realtime.live {
+  color: #237251;
+}
+.admin-realtime.polling {
+  color: #a4540f;
+}
+.admin-realtime.connecting {
+  color: #4f6a86;
+}
+.admin-realtime svg {
+  width: 15px;
+  height: 15px;
+}
+.admin-toasts {
+  position: fixed;
+  z-index: 120;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  display: grid;
+  gap: 10px;
+  width: min(360px, calc(100vw - 32px));
+}
+.admin-toast {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 2px solid #fff;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fff, #eef7ff);
+  box-shadow:
+    0 10px 30px #0f2f5a33,
+    0 4px 0 #cfe0f3;
+  animation: toast-in 0.35s ease-out;
+}
+.admin-toast.registration {
+  background: linear-gradient(135deg, #fff, #e8fff1);
+}
+.admin-toast > span {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: #153a77;
+  color: #fff;
+}
+.admin-toast a {
+  min-width: 0;
+  color: #173a71;
+}
+.admin-toast a b,
+.admin-toast a small {
+  display: block;
+}
+.admin-toast a small {
+  color: #4f6a86;
+  font-size: 12px;
+}
+.admin-toast button {
+  border: 0;
+  background: transparent;
+  color: #4f6a86;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+.admin-install-card {
+  position: fixed;
+  z-index: 115;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  translate: -50% 0;
+  width: min(560px, calc(100vw - 24px));
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 2px solid #fff;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #153a77, #315fbd);
+  color: #fff;
+  box-shadow: 0 14px 34px #0f2a5a55;
+  font-size: 13px;
+}
+.admin-install-card p {
+  margin: 4px 0 0;
+  line-height: 1.5;
+  color: #dceaff;
+}
+.admin-install-card p svg {
+  display: inline;
+  vertical-align: -2px;
+}
+.admin-install-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #ffffff1f;
+}
+.admin-install-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-install-card .btn {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 12px;
+}
+.admin-install-close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #ffffff55;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+}
+.season-form .admin-install-close {
+  border-color: #cfdeed;
+  color: #4f6a86;
+}
+@media (max-width: 640px) {
+  .admin-install-card {
+    grid-template-columns: auto 1fr;
+  }
+  .admin-install-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+.admin-push-detail {
+  margin-top: 6px;
+  color: #b4461f;
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-push-card.needs-install,
+.admin-push-card.denied {
+  background: linear-gradient(135deg, #fff, #fff6e8);
+}
+.admin-season-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px 7px 9px;
+  border-radius: 999px;
+  color: #fff;
+  box-shadow: 0 4px 0 #0000001f;
+  font-size: 12px;
+  line-height: 1.15;
+  max-width: 60vw;
+}
+.admin-season-chip > span:first-child {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ffffff33;
+  font-size: 16px;
+}
+.admin-season-chip b,
+.admin-season-chip small {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-season-chip small {
+  opacity: 0.85;
+  font-size: 10px;
+}
+.admin-error {
+  max-width: 640px;
+  margin: 40px auto;
+  text-align: center;
+}
+.admin-error .admin-push-icon {
+  margin: auto;
+}
+.admin-error .actions {
+  justify-content: center;
+}
+.link-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  padding: 0;
+}
+.notice.success {
+  background: #eafff4;
+  border-color: #b5ecce;
+  color: #1f6b47;
+}
+.notice.error {
+  background: #fff1f3;
+  border-color: #ffc1d0;
+  color: #9b2641;
+}
+.notice.text-sm svg {
+  display: inline;
+  vertical-align: -3px;
+  margin-right: 4px;
+}
+.admin-control.compact .field {
+  margin: 0;
+}
+.admin-control.compact > * + * {
+  margin-top: 10px;
+}
+.admin-control.compact .btn {
+  min-height: 42px;
+  padding: 9px 16px;
+  font-size: 13px;
+}
+.admin-group-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.admin-group-head > svg {
+  width: 38px;
+  height: 38px;
+  padding: 8px;
+  border-radius: 13px;
+  background: #fff2b0;
+  color: #8a5a00;
+  flex: none;
+}
+.admin-group-head h2 {
+  font-size: 22px;
+  margin: 2px 0 0;
+}
+.admin-group-head > div {
+  flex: 1;
+  min-width: 200px;
+}
+.leaderboard-publish {
+  min-width: 240px;
+}
+.judging-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.judging-card.scored {
+  border-color: #b5ecce;
+  box-shadow: 0 8px 0 #b5ecce66;
+}
+.admin-scored-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border-radius: 14px;
+  background: #eafff4;
+  color: #1f6b47;
+  font-size: 13px;
+  font-weight: 800;
+}
+.admin-scored-badge svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.rank-badge {
+  background: #fff2b0;
+  color: #7a4e00;
+}
+.score-grid {
+  display: grid;
+  gap: 12px;
+}
+.score-field {
+  margin: 0;
+}
+.score-field > span:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.score-field small {
+  color: #6382a2;
+  font-weight: 700;
+}
+.score-inputs {
+  display: grid;
+  grid-template-columns: 1fr 84px;
+  gap: 10px;
+  align-items: center;
+}
+.score-inputs input[type="range"] {
+  width: 100%;
+  accent-color: #6e43b9;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.score-inputs input[type="number"] {
+  min-height: 44px;
+  padding: 8px 10px;
+  text-align: center;
+  font-weight: 900;
+}
+.score-total {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f3ebff, #fff5d6);
+  color: #3b2a66;
+  font-weight: 800;
+}
+.score-total b {
+  font-family: "Fredoka Variable", sans-serif;
+  font-size: 34px;
+  color: #6e43b9;
+}
+.score-total small {
+  color: #6382a2;
+}
+.leaderboard-table {
+  width: 100%;
+  font-size: 13px;
+}
+.leaderboard-table th,
+.leaderboard-table td {
+  vertical-align: top;
+  padding: 10px 8px;
+  border-bottom: 1px solid #e8eef6;
+}
+.leaderboard-table tr.top td:first-child b {
+  display: inline-grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(#ffe066, #ffc83d);
+  color: #6b4600;
+}
+.admin-ops summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: #6e43b9;
+}
+.admin-ops > div,
+.admin-ops > form {
+  margin-top: 10px;
+}
+.status-paid,
+.status-approved,
+.status-verified,
+.status-delivered {
+  background: #e4f8ec;
+  color: #1f6b47;
+}
+.status-issued,
+.status-pending,
+.status-waiting,
+.status-prepared,
+.status-pending_review {
+  background: #fff4d6;
+  color: #7a4e00;
+}
+.status-shipped {
+  background: #e5f0ff;
+  color: #1f4d8f;
+}
+.status-rejected,
+.status-cancelled,
+.status-refunded {
+  background: #ffe8ee;
+  color: #9b2641;
+}
+.season-picker {
+  align-items: flex-end;
+}
+.season-picker .field {
+  min-width: 220px;
+  margin: 0;
+}
+.season-list {
+  display: grid;
+  gap: 18px;
+}
+.season-card.active {
+  border: 2px solid #b5ecce;
+  box-shadow: 0 8px 0 #b5ecce66;
+}
+.season-card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.season-card-head > div {
+  flex: 1;
+  min-width: 200px;
+}
+.season-card-head h3 small {
+  color: #6382a2;
+  font-size: 13px;
+}
+.season-swatch {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  border: 3px solid #fff;
+  box-shadow: 0 6px 0 #0000001a;
+  font-size: 26px;
+}
+.season-dates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.season-dates-grid dt {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6382a2;
+  font-weight: 900;
+}
+.season-dates-grid dd {
+  margin: 4px 0 0;
+  font-weight: 800;
+}
+.danger-text {
+  color: #c2366b !important;
+}
+.season-form fieldset {
+  border: 1px solid #dbe6f3;
+  border-radius: 20px;
+  padding: 16px 18px 18px;
+  margin: 0;
+}
+.season-form legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  font-weight: 900;
+  color: #173a71;
+}
+.season-form legend svg {
+  width: 18px;
+  height: 18px;
+}
+.season-form .field small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+}
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.theme-option {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 14px 14px 16px;
+  border: 3px solid transparent;
+  border-radius: 20px;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 0 #0000001c;
+  transition: transform 0.15s;
+  overflow: hidden;
+}
+.theme-option:hover {
+  transform: translateY(-2px);
+}
+.theme-option.selected {
+  border-color: #173a71;
+  outline: 3px solid #fff;
+  outline-offset: -6px;
+}
+.theme-option input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+.theme-option-motifs {
+  font-size: 20px;
+  letter-spacing: 2px;
+  filter: drop-shadow(0 2px 0 #0003);
+}
+.theme-option b {
+  font-size: 15px;
+}
+.theme-option small {
+  font-size: 11px;
+  opacity: 0.92;
+  line-height: 1.35;
+}
+.theme-option-btn {
+  margin-top: 6px;
+  justify-self: start;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 0 3px 0 #0000002a;
+}
+.theme-option-accent {
+  position: absolute;
+  right: -14px;
+  top: -14px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  opacity: 0.95;
+}
+.theme-preview-note {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #4f6a86;
+}
+.theme-preview-note > span {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 6px;
+  vertical-align: -3px;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #0002;
+}
+
+/* Public: winner banner, participant journey tracker, result cards. */
+.winner-banner {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 20px;
+  border: 3px solid #fff;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #fff6d0, #ffe9a8);
+  box-shadow: 0 8px 0 #e6c05a66;
+}
+.winner-banner > svg {
+  width: 46px;
+  height: 46px;
+  color: #c98a00;
+  flex: none;
+}
+.winner-banner h3 {
+  margin: 2px 0 4px;
+}
+.winner-banner p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.journey-tracker {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+.journey-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 14px;
+  padding: 0 0 18px;
+}
+.journey-step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 19px;
+  top: 40px;
+  bottom: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: #e1ebf5;
+}
+.journey-step.done:not(:last-child)::before {
+  background: #8fe0b4;
+}
+.journey-step-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: #edf2f7;
+  color: #6382a2;
+  font-weight: 900;
+  box-shadow: 0 4px 0 #d9e4f0;
+}
+.journey-step-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.journey-step.done .journey-step-icon {
+  background: linear-gradient(#7fe3ac, #39c479);
+  color: #fff;
+  box-shadow: 0 4px 0 #2a9f60;
+}
+.journey-step.current .journey-step-icon {
+  background: linear-gradient(#ffe066, #ffc83d);
+  color: #6b4600;
+  box-shadow: 0 4px 0 #d9a21c;
+  animation: motif-float 2.4s ease-in-out infinite;
+}
+.journey-step.blocked .journey-step-icon {
+  background: #ffd9e2;
+  color: #9b2641;
+  box-shadow: 0 4px 0 #f0b5c4;
+}
+.journey-step b {
+  display: block;
+  margin-top: 8px;
+}
+.journey-step p {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: #59708a;
+  line-height: 1.55;
+}
+.journey-step.todo b {
+  color: #6382a2;
+}
+.result-group {
+  padding: 22px 0 10px;
+}
+.result-group-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.result-group-head > svg {
+  width: 44px;
+  height: 44px;
+  padding: 9px;
+  border-radius: 15px;
+  background: #fff2b0;
+  color: #8a5a00;
+}
+.result-group-head h2 {
+  margin: 2px 0 0;
+  font-size: 26px;
+}
+.result-card {
+  position: relative;
+}
+.result-rank {
+  position: absolute;
+  top: -12px;
+  right: 18px;
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  height: 48px;
+  padding: 0 10px;
+  border-radius: 16px;
+  border: 3px solid #fff;
+  background: linear-gradient(#f0f4fa, #d9e4f0);
+  color: #35506e;
+  font-family: "Fredoka Variable", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  box-shadow: 0 5px 0 #c1d0e0;
+}
+.result-card.rank-1 .result-rank {
+  background: linear-gradient(#ffe066, #ffc83d);
+  color: #6b4600;
+  box-shadow: 0 5px 0 #d9a21c;
+}
+.result-card.rank-2 .result-rank {
+  background: linear-gradient(#f2f5f9, #c9d3df);
+  color: #3a4a5c;
+}
+.result-card.rank-3 .result-rank {
+  background: linear-gradient(#ffd3b0, #e49a5c);
+  color: #5c3410;
+}
+.result-special {
+  border: 3px solid #fff;
+  background: linear-gradient(135deg, #f3ebff, #fff5d6);
 }

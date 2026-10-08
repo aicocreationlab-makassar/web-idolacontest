@@ -3,17 +3,22 @@ import Link from "next/link";
 import { categories, criteria, weights } from "@/lib/business-rules";
 import { Fees, PageHeading } from "@/components/shared";
 import { ToyArt } from "@/components/decorations";
+import { getActiveSeason } from "@/lib/data";
+import { formatDateTime } from "@/lib/season";
+export const dynamic = "force-dynamic";
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const season = await getActiveSeason();
+  const theme = season?.theme_title || "Cita Citaku";
   const coloring = slug === "mewarnai";
   const name = coloring ? "Mewarnai" : "Fotogenik";
   const description = coloring
-    ? "Lomba mewarnai online anak Indonesia untuk PAUD, TK, dan SD dengan worksheet personal bertema Cita Citaku."
-    : "Lomba fotogenik online anak Indonesia bertema Cita Citaku untuk Preschool, PAUD, TK, dan SD.";
+    ? `Lomba mewarnai online anak Indonesia untuk PAUD, TK, dan SD dengan worksheet personal bertema ${theme}.`
+    : `Lomba fotogenik online anak Indonesia bertema ${theme} untuk Preschool, PAUD, TK, dan SD.`;
   return {
     title: `Lomba ${name} Online Anak Indonesia`,
     description,
@@ -34,19 +39,22 @@ export default async function Page({
   const { slug } = await params;
   if (!["fotogenik", "mewarnai"].includes(slug)) notFound();
   const coloring = slug === "mewarnai";
+  const season = await getActiveSeason();
+  const theme = season?.theme_title || "Cita Citaku";
   return (
     <div className="wrap section">
       <PageHeading
-        eyebrow="Tema: Cita Citaku"
+        eyebrow={`Tema ${season?.name || ""}: ${theme}`}
         title={
           coloring
             ? "Warnakan mimpi si kecil."
             : "Biarkan percaya dirinya bersinar."
         }
         description={
-          coloring
-            ? "Worksheet personal berdasarkan foto anak dan profesi impiannya. Cetak A4, berkreasi, lalu kirim hasilnya."
-            : "Kostum profesi, atribut cita-cita, properti sederhana, dan latar bertema boleh digunakan."
+          season?.description ||
+          (coloring
+            ? "Worksheet personal berdasarkan foto anak dan tema season. Cetak A4, berkreasi, lalu kirim hasilnya."
+            : "Kostum, atribut, properti sederhana, dan latar bertema boleh digunakan.")
         }
       />
       <div className="grid2">
@@ -74,9 +82,11 @@ export default async function Page({
             </p>
           )}
           <p>
-            Karya dikirim maksimal 7 hari setelah registrasi atau 6 Oktober 2026
-            pukul 23.59 WIB, mana yang lebih awal. Gambar JPG, PNG, atau WebP
-            maksimum 2 MB.
+            Karya dikirim maksimal 7 hari setelah registrasi atau{" "}
+            {season
+              ? formatDateTime(season.submission_global_close_at)
+              : "batas global season"}
+            , mana yang lebih awal. Gambar JPG, PNG, atau WebP maksimum 2 MB.
           </p>
           <p>
             Unggahan bersifat privat sampai disetujui dan dipublikasikan admin.
@@ -98,7 +108,8 @@ export default async function Page({
               </div>
             ))}
             <p className="text-sm muted mt-5">
-              Dinilai oleh juri manusia. Tidak ada penilaian kecantikan atau
+              Dinilai oleh juri manusia. Peringkat dihitung otomatis per jenis
+              lomba dan kategori usia. Tidak ada penilaian kecantikan atau
               karakteristik wajah oleh AI.
             </p>
           </div>
