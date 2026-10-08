@@ -221,6 +221,17 @@ main {
 .field input[aria-invalid="true"] {
   border-color: #e15783;
 }
+.age-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(112px, 0.6fr);
+  gap: 10px;
+}
+.field-help {
+  color: #60718a;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+}
 .check {
   display: flex;
   gap: 12px;
@@ -2795,6 +2806,106 @@ th {
   background: #f8fbff;
   text-align: center;
 }
+.season-manager {
+  display: grid;
+  gap: 24px;
+}
+.season-manager-current {
+  border-color: #b8e5ff;
+  background:
+    radial-gradient(circle at 94% 8%, #fef3a844 0 72px, transparent 73px),
+    linear-gradient(135deg, #f7fcff, #fff);
+}
+.season-manager-create {
+  border-color: #f5c3dc;
+  background:
+    radial-gradient(circle at 92% 9%, #ffd5eb66 0 72px, transparent 73px),
+    linear-gradient(135deg, #fff8fc, #fff);
+}
+.season-manager-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+.season-manager-heading h2 {
+  font-size: clamp(1.45rem, 2vw, 2rem);
+  margin: 4px 0 7px;
+}
+.season-manager-heading p {
+  max-width: 670px;
+  margin: 0;
+}
+.season-manager-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  color: #146fb2;
+  background: #dff4ff;
+  box-shadow: 0 5px 0 #b4ddf4;
+}
+.season-manager-icon.pink {
+  color: #b43775;
+  background: #ffe0ef;
+  box-shadow: 0 5px 0 #f4b9d5;
+}
+.season-manager-icon.purple {
+  color: #7044ae;
+  background: #eee1ff;
+  box-shadow: 0 5px 0 #d8c4f7;
+}
+.season-date-form,
+.season-create-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+.season-date-form .btn,
+.season-create-form .btn {
+  justify-self: start;
+}
+.season-create-form .season-name-field {
+  grid-column: 1 / -1;
+}
+.season-archive-list {
+  display: grid;
+  gap: 11px;
+}
+.season-archive-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 14px 0;
+  border-top: 1px dashed #d4e2f0;
+}
+.season-archive-row b,
+.season-archive-row span {
+  display: block;
+}
+.season-archive-row span {
+  margin-top: 3px;
+  color: #687d94;
+  font-size: 13px;
+}
+.season-media-admin h2 {
+  margin: 5px 0 8px;
+  font-size: clamp(1.4rem, 2vw, 1.9rem);
+}
+.season-media-admin p {
+  margin: 0;
+}
+.season-media-card {
+  border: 1px dashed #d4e3f1;
+  border-radius: 18px;
+  padding: 18px;
+}
+.season-media-card h3 {
+  margin: 0 0 8px;
+}
 .admin-review-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
@@ -2955,6 +3066,30 @@ th {
   .admin-page .actions .btn {
     width: 100%;
     text-align: center;
+  }
+  .season-manager-heading {
+    gap: 12px;
+  }
+  .season-manager-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+  }
+  .season-date-form,
+  .season-create-form {
+    grid-template-columns: 1fr;
+  }
+  .season-create-form .season-name-field {
+    grid-column: auto;
+  }
+  .season-date-form .btn,
+  .season-create-form .btn,
+  .season-archive-row .btn {
+    width: 100%;
+  }
+  .season-archive-row {
+    align-items: stretch;
+    flex-direction: column;
   }
   .admin-responsive-table {
     padding: 0;

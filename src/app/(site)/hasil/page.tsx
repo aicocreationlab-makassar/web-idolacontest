@@ -1,26 +1,29 @@
 import Link from "next/link";
 import { Trophy, Medal, Star } from "lucide-react";
-import { getActiveSeason, publishedResults } from "@/lib/data";
+import { getActiveSeason, resultsPage, type PublicResult } from "@/lib/data";
 import { PageHeading, Fees } from "@/components/shared";
 import { categories, competitions } from "@/lib/business-rules";
 import { formatDate } from "@/lib/season";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Hasil & penghargaan" };
 
-type Row = {
-  award_code: string;
-  final_score: number;
-  rank_position: number | null;
-  public_name: string;
-  regency_name: string;
-  province_name: string;
+type Row = PublicResult & {
   competition_type: keyof typeof competitions;
   category: keyof typeof categories;
 };
 
-export default async function Page() {
-  const season = await getActiveSeason();
-  const rows = (await publishedResults(season?.id)) as Row[];
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ season?: string }>;
+}) {
+  const { season: requested } = await searchParams;
+  const [{ items, seasons, selectedSeasonId }, activeSeason] = await Promise.all([
+    resultsPage(requested),
+    getActiveSeason(),
+  ]);
+  const rows = items as Row[];
+  const selected = seasons.find((item) => item.id === selectedSeasonId);
   const groups = new Map<string, Row[]>();
   for (const row of rows) {
     const key = `${row.competition_type}|${row.category}`;
@@ -32,14 +35,32 @@ export default async function Page() {
   return (
     <div className="wrap section">
       <PageHeading
-        eyebrow={`Setiap usaha punya cerita · ${season?.name || "Idola Contest"}`}
+        eyebrow={selected ? `Pemenang ${selected.name}` : "Penghargaan Idola Contest"}
         title="Rayakan bintang kecil kita."
         description={
-          season
-            ? `Pengumuman ${season.name}: ${formatDate(season.announcement_at)}. Juara ditentukan dari penilaian juri dan peringkat otomatis per jenis lomba dan kategori usia.`
-            : "Hasil muncul setelah dipublikasikan oleh admin."
+          selected
+            ? "Pemenang yang telah diumumkan resmi. Juara ditentukan dari penilaian juri dan peringkat otomatis per jenis lomba dan kategori usia."
+            : activeSeason
+              ? `Pengumuman ${activeSeason.name}: ${formatDate(activeSeason.announcement_at)}. Hasil muncul setelah dipublikasikan oleh admin.`
+              : "Hasil muncul setelah dipublikasikan oleh admin."
         }
       />
+      {seasons.length > 1 && (
+        <nav
+          className="gallery-competition-tabs result-season-tabs"
+          aria-label="Pilih season pemenang"
+        >
+          {seasons.map((item) => (
+            <Link
+              className={item.id === selectedSeasonId ? "active" : ""}
+              href={`/hasil?season=${item.id}`}
+              key={item.id}
+            >
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+      )}
       {specials.length > 0 && (
         <div className="grid2 mb-8">
           {specials.map((r) => (
@@ -59,12 +80,12 @@ export default async function Page() {
       )}
       {groups.size ? (
         <div className="stack">
-          {[...groups.entries()].map(([key, items]) => {
+          {[...groups.entries()].map(([key, group]) => {
             const [competition, category] = key.split("|") as [
               keyof typeof competitions,
               keyof typeof categories,
             ];
-            const ranked = items
+            const ranked = group
               .filter((r) => !["Juara Umum", "Best Social Media"].includes(r.award_code))
               .sort(
                 (a, b) =>
@@ -105,8 +126,8 @@ export default async function Page() {
         </div>
       ) : (
         <p className="notice mb-8">
-          Hasil belum dipublikasikan. Pantau @idola.contest untuk pengumuman
-          resmi.
+          Belum ada pemenang yang dipublikasikan. Pantau @idola.contest untuk
+          pengumuman resmi.
         </p>
       )}
       <div className="max-w-2xl mt-8 stack">

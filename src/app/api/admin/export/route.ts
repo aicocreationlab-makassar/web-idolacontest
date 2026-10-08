@@ -1,6 +1,7 @@
 import { admin } from "@/lib/supabase/server";
 import { registrationQuery, type Filters } from "@/lib/admin-data";
 import { failure } from "@/lib/http";
+import { formatParticipantAge } from "@/lib/participant";
 function cell(v: unknown) {
   let s = String(v ?? "");
   if (/^[=+\-@\t\r\n]/.test(s)) s = `'${s}`;
@@ -29,6 +30,10 @@ export async function GET(req: Request) {
         const base = {
           kode: r.registration_code,
           nama: r.participants.full_name,
+          usia: formatParticipantAge(
+            r.participants.age,
+            r.participants.age_unit,
+          ),
           lomba: r.competition_type,
           kategori: r.category,
         };

@@ -1,9 +1,4 @@
-import {
-  galleryPage,
-  publicImage,
-  getActiveSeason,
-  type GalleryFilters,
-} from "@/lib/data";
+import { galleryPage, publicImage, type GalleryFilters } from "@/lib/data";
 import Link from "next/link";
 import { categories, competitions } from "@/lib/business-rules";
 import { PageHeading } from "@/components/shared";
@@ -16,22 +11,26 @@ export default async function Page({
   searchParams: Promise<GalleryFilters>;
 }) {
   const filters = await searchParams;
-  const [{ items, count, page, seasons }, activeSeason] = await Promise.all([
-    galleryPage(filters),
-    getActiveSeason(),
-  ]);
+  const { items, count, page, season } = await galleryPage(filters);
   const q = new URLSearchParams(
-    Object.entries(filters).filter(([k, v]) => k !== "page" && !!v),
+    Object.entries(filters).filter(
+      ([k, v]) => k !== "page" && k !== "season" && !!v,
+    ),
   );
   const activeFilterCount = Object.entries(filters).filter(
-    ([key, value]) => key !== "page" && key !== "highlight" && Boolean(value),
+    ([key, value]) =>
+      key !== "page" && key !== "highlight" && key !== "season" && Boolean(value),
   ).length;
   return (
     <div className="wrap section">
       <PageHeading
-        eyebrow="Panggung bintang kecil"
+        eyebrow={season ? `Panggung ${season.name} · Tema ${season.theme_title}` : "Panggung bintang kecil"}
         title="Mimpi mereka, inspirasi kita."
-        description="Jelajahi karya finalis yang sudah disetujui dan dipublikasikan."
+        description={
+          season
+            ? "Jelajahi karya finalis season aktif yang sudah disetujui dan dipublikasikan. Pemenang season sebelumnya tetap tampil di halaman Hasil."
+            : "Galeri season berikutnya sedang disiapkan."
+        }
       />
       <nav className="gallery-competition-tabs" aria-label="Pilih jenis lomba">
         <Link
@@ -91,23 +90,12 @@ export default async function Page({
               maxLength={120}
             />
           </label>
-          <label className="field">
-            Season
-            <select name="season" defaultValue={filters.season}>
-              <option value="">Semua season</option>
-              {seasons.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
           <button className="btn self-end">Terapkan filter</button>
         </form>
       </details>
       {items.length ? (
         <GalleryGrid
-          themeTitle={activeSeason?.theme_title || "Cita Citaku"}
+          themeTitle={season?.theme_title || "Cita Citaku"}
           highlighted={filters.highlight}
           items={items.map((item) => ({
             ...item,

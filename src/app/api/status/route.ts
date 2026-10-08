@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       .maybeSingle();
     if (error || !r) throw new Error("Kode registrasi tidak ditemukan.");
     const [p, e, s, w, c, h, x] = await Promise.all([
-      db.from("participants").select("public_name").eq("id", r.participant_id).single(),
+      db.from("participants").select("*").eq("id", r.participant_id).single(),
       db.from("seasons").select("*").eq("id", r.season_id).single(),
       db
         .from("submissions")
@@ -55,6 +55,8 @@ export async function POST(req: Request) {
       : null;
     return json({
       public_name: p.data?.public_name,
+      age: p.data?.age,
+      age_unit: p.data?.age_unit || "years",
       competition_type: r.competition_type,
       category: r.category,
       payment_status: r.payment_status,

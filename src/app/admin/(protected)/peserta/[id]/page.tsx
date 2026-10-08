@@ -8,6 +8,7 @@ import {
 } from "@/components/admin-controls";
 import { PageHeading } from "@/components/shared";
 import { categories, competitions } from "@/lib/business-rules";
+import { formatParticipantAge } from "@/lib/participant";
 
 const labels: Record<string, string> = {
   ...categories,
@@ -114,7 +115,10 @@ export default async function Page({
           <dl className="admin-detail-grid">
             <Detail label="Nama lengkap" value={participant.full_name} />
             <Detail label="Nama publik" value={participant.public_name} />
-            <Detail label="Usia" value={`${participant.age} tahun`} />
+            <Detail
+              label="Usia"
+              value={formatParticipantAge(participant.age, participant.age_unit)}
+            />
             <Detail label="Sekolah" value={participant.school_name} />
             <Detail label="Kelas" value={registration.class_label} />
             <Detail label="Cita-cita" value={registration.dream_job} />

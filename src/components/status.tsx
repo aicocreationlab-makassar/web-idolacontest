@@ -18,9 +18,12 @@ import {
   Clock3,
 } from "lucide-react";
 import { showSuccess } from "@/lib/success-event";
+import { formatParticipantAge } from "@/lib/participant";
 
 type Status = {
   public_name: string;
+  age?: number;
+  age_unit?: "years" | "months";
   competition_type: keyof typeof competitions;
   category: keyof typeof categories;
   payment_status: string;
@@ -295,6 +298,11 @@ export function Status() {
               {categories[data.category]}
               {data.season ? ` · ${data.season.name} · Tema ${data.season.theme_title}` : ""}
             </p>
+            {data.age !== undefined && data.age !== null && (
+              <p>
+                Usia peserta: <b>{formatParticipantAge(data.age, data.age_unit)}</b>
+              </p>
+            )}
             {data.result && (
               <div className="winner-banner">
                 <Trophy aria-hidden="true" />

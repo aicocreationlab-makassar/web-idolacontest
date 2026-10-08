@@ -7,10 +7,14 @@ import { Share } from "@/components/share";
 export const dynamic = "force-dynamic";
 const get = cache(async (slug: string) => {
   if (!configured() || !/^[a-f0-9]{24}$/.test(slug)) return null;
+  // Finalist pages belong to the active season; earlier seasons are shown through their winners.
+  const season = await getActiveSeason();
+  if (!season) return null;
   const { data, error } = await service()
     .from("public_gallery")
     .select("*")
     .eq("slug", slug)
+    .eq("season_id", season.id)
     .maybeSingle();
   if (error) throw new Error("Galeri tidak dapat dimuat.");
   return data;
