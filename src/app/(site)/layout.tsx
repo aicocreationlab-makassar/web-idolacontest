@@ -138,8 +138,8 @@ export default async function SiteLayout({
       <a className="skip" href="#main">
         Lewati ke konten
       </a>
-      <SiteChrome>{children}</SiteChrome>
-      <SuccessPopup />
+      <SiteChrome ambassadors={content.ambassadors}>{children}</SiteChrome>
+      <SuccessPopup mascots={content.ambassadors} />
       <BackgroundAudio />
       <NavigationEffects />
       <Pwa />

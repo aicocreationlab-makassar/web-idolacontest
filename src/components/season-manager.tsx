@@ -38,6 +38,7 @@ import {
 } from "@/lib/contest-modes";
 import { showSuccess } from "@/lib/success-event";
 import { PurgeSeasonMedia } from "./admin-controls";
+import { ToyIcon } from "./toy-icon";
 import { SeasonContentEditor } from "./season-content-editor";
 
 type Draft = {
@@ -240,7 +241,7 @@ export function SeasonManager({
                     background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryLight})`,
                   }}
                 >
-                  {theme.motifs[0]}
+                  <ToyIcon name={theme.motifs[0]} size={30} />
                 </span>
                 <div>
                   <h3>
@@ -250,7 +251,8 @@ export function SeasonManager({
                     Tema <b>{season.theme_title}</b> · tampilan {theme.name}
                   </p>
                   <p className="muted text-sm">
-                    {contestModeInfo[mode].emoji} {contestModeInfo[mode].label} · registrasi{" "}
+                    <ToyIcon name={contestModeInfo[mode].icon} size={20} />{" "}
+                    {contestModeInfo[mode].label} · registrasi{" "}
                     {rupiah(content.registration_fee)} ·{" "}
                     {content.claim_fee === 0 ? "hadiah gratis tanpa penebusan" : `klaim ${rupiah(content.claim_fee)}`}
                   </p>
@@ -493,9 +495,7 @@ function SeasonForm({
                 checked={draft.contest_mode === mode}
                 onChange={() => switchMode(mode)}
               />
-              <span className="mode-option-emoji" aria-hidden="true">
-                {contestModeInfo[mode].emoji}
-              </span>
+              <ToyIcon name={contestModeInfo[mode].icon} size={40} />
               <b>{contestModeInfo[mode].label}</b>
               <small>{contestModeInfo[mode].description}</small>
             </label>
@@ -549,8 +549,10 @@ function SeasonForm({
                   checked={draft.theme_key === key}
                   onChange={() => set("theme_key", key)}
                 />
-                <span className="theme-option-motifs" aria-hidden="true">
-                  {option.motifs.join(" ")}
+                <span className="theme-option-motifs toy-icon-row" aria-hidden="true">
+                  {option.motifs.map((motif, i) => (
+                    <ToyIcon name={motif} size={24} key={`${motif}-${i}`} />
+                  ))}
                 </span>
                 <b>{option.name}</b>
                 <small>{option.mood}</small>
@@ -568,7 +570,13 @@ function SeasonForm({
         <p className="theme-preview-note">
           Pratinjau: header <span style={{ background: theme.primary }} /> aksen{" "}
           <span style={{ background: theme.accent }} /> tombol{" "}
-          <span style={{ background: theme.accentTwo }} /> stiker {theme.motifs.join(" ")} ·{" "}
+          <span style={{ background: theme.accentTwo }} /> stiker{" "}
+          <span className="toy-icon-row">
+            {theme.motifs.map((motif, i) => (
+              <ToyIcon name={motif} size={18} key={`${motif}-${i}`} />
+            ))}
+          </span>{" "}
+          ·{" "}
           <i>“{theme.sticker}”</i>
         </p>
       </fieldset>

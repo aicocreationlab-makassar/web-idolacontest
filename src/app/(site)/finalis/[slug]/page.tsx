@@ -5,6 +5,7 @@ import { configured, service } from "@/lib/supabase/server";
 import { publicImage } from "@/lib/data";
 import { categoryLabel } from "@/lib/business-rules";
 import { Share } from "@/components/share";
+import { Sparkle } from "lucide-react";
 export const dynamic = "force-dynamic";
 const get = cache(async (slug: string) => {
   if (!configured() || !/^[a-f0-9]{24}$/.test(slug)) return null;
@@ -62,7 +63,8 @@ export default async function Page({
       />
       <div className="stack">
         <span className="pill">
-          ✦ FINALIS IDOLA CONTEST{d.season?.name ? ` · ${d.season.name.toUpperCase()}` : ""}
+          <Sparkle size={12} aria-hidden="true" /> FINALIS IDOLA CONTEST
+          {d.season?.name ? ` · ${d.season.name.toUpperCase()}` : ""}
         </span>
         <h1 className="text-5xl">{d.public_name}</h1>
         <p>

@@ -22,17 +22,24 @@
   gap: 10px;
   font-size: 26px;
 }
-.reg-step-title span {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 16px;
-  background: linear-gradient(145deg, #ffdf5c, #ffc72c);
-  font-size: 24px;
-  box-shadow: 0 4px 0 #dca320;
+.reg-step-title .toy-icon {
   transform: rotate(-6deg);
-  flex-shrink: 0;
+}
+.registration-panel .registration-progress li > span .toy-icon {
+  --ti-size: 40px;
+  border-width: 0;
+  box-shadow: none;
+}
+.registration-panel .registration-progress li > span:has(.toy-icon) {
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+}
+.wajib-mini .toy-icon {
+  vertical-align: -6px;
+}
+.age-category-hint .toy-icon {
+  --ti-size: 18px;
 }
 .registration-panel .field input,
 .registration-panel .field select {

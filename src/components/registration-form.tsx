@@ -27,6 +27,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { FaInstagram } from "react-icons/fa";
+import { ToyIcon } from "./toy-icon";
+import { MascotAvatars } from "./ambassadors";
 type Fields = Record<string, string | boolean>;
 type Region = { id: string; name: string };
 const groups = [
@@ -56,11 +58,11 @@ const groups = [
   ],
 ];
 const steps: Array<[string, string]> = [
-  ["🧒", "Data Anak"],
-  ["👨‍👩‍👧", "Orang Tua"],
-  ["🏠", "Alamat"],
-  ["📸", "Foto"],
-  ["✅", "Konfirmasi"],
+  ["kid", "Data Anak"],
+  ["family", "Orang Tua"],
+  ["home", "Alamat"],
+  ["camera", "Foto"],
+  ["check", "Konfirmasi"],
 ];
 const classicContent: ResolvedContent = {
   ...defaultContent.classic,
@@ -257,6 +259,9 @@ export function RegistrationForm({
     <div className="registration-panel card stack" ref={topRef}>
       {busy && (
         <div className="submit-loading" role="status" aria-live="polite">
+          {content.ambassadors.length > 0 && (
+            <MascotAvatars ambassadors={content.ambassadors} size={72} mood="bounce" />
+          )}
           <div className="loading-mascot">
             <Sparkles />
             <LoaderCircle />
@@ -266,14 +271,14 @@ export function RegistrationForm({
         </div>
       )}
       <ol className="registration-progress" aria-label="Langkah pendaftaran">
-        {steps.map(([emoji, s], i) => (
+        {steps.map(([icon, s], i) => (
           <li
             key={s}
             className={step === i ? "active" : step > i ? "done" : ""}
             aria-current={step === i ? "step" : undefined}
           >
             <span>
-              {step > i ? <Check size={17} /> : <em aria-hidden="true">{emoji}</em>}
+              {step > i ? <Check size={17} /> : <ToyIcon name={icon} size={40} />}
             </span>
             <b>{s}</b>
           </li>
@@ -295,11 +300,11 @@ export function RegistrationForm({
         </div>
         <div hidden={step !== 0} className="stack">
           <h2 className="reg-step-title">
-            <span aria-hidden="true">🧒</span>Kenalan dengan bintang kecil ✨
+            <ToyIcon name="kid" size={44} />Kenalan dengan bintang kecil
           </h2>
           <span className="wajib-mini">
-            💳 Biaya registrasi <b>{fee}</b> · wajib transfer &amp; kirim bukti
-            via DM @{instagram}
+            <ToyIcon name="card" size={22} /> Biaya registrasi <b>{fee}</b> · wajib transfer
+            &amp; kirim bukti via DM @{instagram}
           </span>
           <div className="grid2">
             {field("full_name", "Nama lengkap anak")}
@@ -342,7 +347,8 @@ export function RegistrationForm({
                 <span className="age-category-hint">
                   {content.categories.map((item) => (
                     <span key={item.key}>
-                      {item.emoji} {item.label} {categoryAgeText(item)}
+                      <ToyIcon name={item.icon || "star"} size={18} /> {item.label}{" "}
+                      {categoryAgeText(item)}
                     </span>
                   ))}
                 </span>
@@ -365,7 +371,7 @@ export function RegistrationForm({
         </div>
         <div hidden={step !== 1} className="stack">
           <h2 className="reg-step-title">
-            <span aria-hidden="true">👨‍👩‍👧</span>Data orang tua / wali
+            <ToyIcon name="family" size={44} />Data orang tua / wali
           </h2>
           <p className="muted">
             Data ini privat dan hanya digunakan untuk administrasi lomba.
@@ -378,7 +384,7 @@ export function RegistrationForm({
         </div>
         <div hidden={step !== 2} className="stack">
           <h2 className="reg-step-title">
-            <span aria-hidden="true">🏠</span>Alamat pengiriman
+            <ToyIcon name="home" size={44} />Alamat pengiriman
           </h2>
           <p className="muted">
             Alamat disimpan privat untuk kebutuhan administrasi dan pengiriman
@@ -459,7 +465,7 @@ export function RegistrationForm({
         </div>
         <div hidden={step !== 3} className="stack">
           <h2 className="reg-step-title">
-            <span aria-hidden="true">📸</span>Pilih lomba &amp; foto
+            <ToyIcon name="camera" size={44} />Pilih lomba &amp; foto
           </h2>
           <div className="grid2">
             <label className="field">
@@ -503,9 +509,7 @@ export function RegistrationForm({
                           validate: validateCategoryAge,
                         })}
                       />
-                      <span className="category-pick-emoji" aria-hidden="true">
-                        {item.emoji || "⭐"}
-                      </span>
+                      <ToyIcon name={item.icon || "star"} size={44} />
                       {item.label}
                       <small>{categoryAgeText(item)}</small>
                     </label>
@@ -534,7 +538,7 @@ export function RegistrationForm({
         </div>
         <div hidden={step !== 4} className="stack">
           <h2 className="reg-step-title">
-            <span aria-hidden="true">✅</span>Konfirmasi pendaftaran
+            <ToyIcon name="check" size={44} />Konfirmasi pendaftaran
           </h2>
           <div className="wajib-alert" role="alert">
             <span className="wajib-alert-badge">WAJIB</span>

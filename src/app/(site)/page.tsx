@@ -10,6 +10,7 @@ import {
 import { formatDate, seasonPhase, themeFor } from "@/lib/season";
 import { resolveContent, rupiah } from "@/lib/contest-modes";
 import { RecentTicker } from "@/components/recent-ticker";
+import { ToyIcon } from "@/components/toy-icon";
 import { Countdown } from "@/components/countdown";
 import { Faq, Fees } from "@/components/shared";
 import { NationalHome } from "@/components/national-home";
@@ -64,7 +65,7 @@ export default async function Home() {
         <div className="wrap hero-grid">
           <div className="hero-copy">
             <span className="pill season-pill">
-              <span aria-hidden>★</span> IDOLA CONTEST —{" "}
+              <ToyIcon name="star" size={22} /> IDOLA CONTEST —{" "}
               {season?.name.toUpperCase() || "SEASON BARU"}
             </span>
             <h1>
@@ -153,12 +154,14 @@ export default async function Home() {
             <div className="season-motifs" aria-hidden="true">
               {theme.motifs.map((motif, i) => (
                 <span className="season-motif" key={`${motif}-${i}`}>
-                  {motif}
+                  <ToyIcon name={motif} size={54} />
                 </span>
               ))}
             </div>
             <FloatingSticker className="hero-sticker">
-              <span className="sticker-star">★</span>
+              <span className="sticker-star">
+                <ToyIcon name="star" size={26} />
+              </span>
               <span>
                 {theme.sticker.split(",")[0]}
                 {theme.sticker.includes(",") ? "," : ""}

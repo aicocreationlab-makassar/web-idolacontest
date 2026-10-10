@@ -1,21 +1,46 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { FaInstagram } from "react-icons/fa";
-const links = [
-  ["/", "Beranda"],
-  ["/#lomba", "Lomba"],
-  ["/galeri", "Galeri"],
-  ["/timeline", "Timeline"],
-  ["/#hadiah", "Hadiah"],
-  ["/faq", "FAQ"],
+import { ToyIcon } from "./toy-icon";
+import { MascotAvatars, type Ambassador } from "./ambassadors";
+const links: Array<[string, string, string]> = [
+  ["/", "Beranda", "home"],
+  ["/#lomba", "Lomba", "palette"],
+  ["/galeri", "Galeri", "camera"],
+  ["/timeline", "Timeline", "clock"],
+  ["/#hadiah", "Hadiah", "trophy"],
+  ["/faq", "FAQ", "sparkle"],
+  ["/cek-status", "Cek status", "check"],
 ];
-export function BrandNavbar() {
+export function BrandNavbar({
+  ambassadors = [],
+}: {
+  ambassadors?: Ambassador[];
+}) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
+  // The drawer is portaled to <body> so the header's stacking context cannot trap it.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
   function followSection(
     event: React.MouseEvent<HTMLAnchorElement>,
     url: string,
@@ -46,7 +71,7 @@ export function BrandNavbar() {
           </span>
         </Link>
         <div className="desktop-nav">
-          {links.map(([url, label]) => (
+          {links.slice(0, 6).map(([url, label]) => (
             <Link
               key={url}
               className={path === url ? "active" : ""}
@@ -81,25 +106,75 @@ export function BrandNavbar() {
           </button>
         </div>
       </nav>
-      {open && (
-        <div className="mobile-menu wrap" id="mobile-menu">
-          <div className="mobile-menu-panel">
-            {[...links, ["/cek-status", "Cek status"]].map(([url, label]) => (
+      {mounted &&
+        createPortal(
+          <div
+            className={`mobile-drawer${open ? " open" : ""}`}
+            aria-hidden={!open}
+          >
+            <button
+              type="button"
+              className="mobile-drawer-backdrop"
+              aria-label="Tutup menu"
+              tabIndex={open ? 0 : -1}
+              onClick={() => setOpen(false)}
+            />
+            <nav
+              className="mobile-drawer-panel"
+              id="mobile-menu"
+              aria-label="Menu"
+            >
+              <div className="mobile-drawer-head">
+                <b>Menu</b>
+                <button
+                  type="button"
+                  className="mobile-drawer-close"
+                  aria-label="Tutup menu"
+                  tabIndex={open ? 0 : -1}
+                  onClick={() => setOpen(false)}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              {links.map(([url, label, icon], i) => (
+                <Link
+                  key={url}
+                  href={url}
+                  className={`mobile-drawer-link${path === url ? " active" : ""}`}
+                  style={{ "--i": i } as React.CSSProperties}
+                  tabIndex={open ? 0 : -1}
+                  onClick={(event) => followSection(event, url)}
+                >
+                  <ToyIcon name={icon} size={38} />
+                  {label}
+                  <ArrowRight size={18} />
+                </Link>
+              ))}
               <Link
-                key={url}
-                href={url}
-                onClick={(event) => followSection(event, url)}
+                className="btn"
+                href="/daftar"
+                tabIndex={open ? 0 : -1}
+                onClick={() => setOpen(false)}
               >
-                {label}
-                <ArrowRight size={18} />
+                Yuk, daftar sekarang!
               </Link>
-            ))}
-            <Link className="btn" href="/daftar" onClick={() => setOpen(false)}>
-              Yuk, daftar sekarang!
-            </Link>
-          </div>
-        </div>
-      )}
+              {ambassadors.length > 0 && (
+                <div className="mobile-drawer-mascots">
+                  <MascotAvatars
+                    ambassadors={ambassadors}
+                    size={40}
+                    mood="wave"
+                  />
+                  <span>
+                    {ambassadors.map((item) => item.name).join(" & ")} menunggu
+                    kamu di panggung!
+                  </span>
+                </div>
+              )}
+            </nav>
+          </div>,
+          document.body,
+        )}
     </header>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { Camera, Copy, Save } from "lucide-react";
 import { Fees } from "./shared";
+import { MascotAvatars } from "./ambassadors";
 import { showSuccess } from "@/lib/success-event";
 import {
   bankLine,
@@ -69,6 +70,15 @@ export function Success({
   const code = data.code;
   return (
     <div className="card stack">
+      {content.ambassadors.length > 0 && (
+        <div className="success-cheer">
+          <MascotAvatars ambassadors={content.ambassadors} size={56} mood="cheer" />
+          <p>
+            {content.ambassadors.map((item) => item.name).join(" & ")} ikut senang!
+            <small>Selamat datang di panggung, {data.public_name}.</small>
+          </p>
+        </div>
+      )}
       <p>
         Pendaftaran {data.public_name} telah tersimpan. Simpan kode ini secara
         pribadi untuk mengakses status dan mengirim karya.

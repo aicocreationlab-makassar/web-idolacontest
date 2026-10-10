@@ -1,3 +1,4 @@
+import { Sparkle } from "lucide-react";
 import { useId } from "react";
 export function WaveDivider({
   flip = false,
@@ -68,7 +69,7 @@ export function CloudDecoration({ className = "" }: { className?: string }) {
 export function SparkleDecoration({ className = "" }: { className?: string }) {
   return (
     <span className={`sparkle-decoration ${className}`} aria-hidden="true">
-      ✦
+      <Sparkle />
     </span>
   );
 }

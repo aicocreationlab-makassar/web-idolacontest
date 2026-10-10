@@ -2,6 +2,7 @@
 @import "./themes.css";
 @import "./national.css";
 @import "./registration-kids.css";
+@import "./kids-ui.css";
 @theme {
   --color-ink: #174578;
   --color-purple: #6e43b9;
@@ -5716,6 +5717,24 @@ form.card.is-revealed,
 .content-editor-row.types {
   grid-template-columns: auto 1fr 1.6fr;
 }
+.content-editor-row.ambassadors {
+  grid-template-columns: 1fr 1.4fr 1.6fr 1.2fr 1.2fr auto;
+}
+.icon-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.icon-select select {
+  flex: 1;
+}
+.mode-option .toy-icon {
+  margin-bottom: 4px;
+}
+.season-swatch .toy-icon {
+  border-width: 0;
+  box-shadow: none;
+}
 .content-editor-row .field {
   font-size: 12px;
 }
@@ -5725,7 +5744,8 @@ form.card.is-revealed,
 @media (max-width: 980px) {
   .content-editor-row.categories,
   .content-editor-row.prizes,
-  .content-editor-row.types {
+  .content-editor-row.types,
+  .content-editor-row.ambassadors {
     grid-template-columns: 1fr 1fr;
   }
 }
