@@ -7,8 +7,21 @@ import { AdminControl, PrivateMedia } from "./admin-controls";
 import { CopyMessage } from "./copy-message";
 import type { MessageContext } from "@/lib/messages";
 
-type BoardSeason = Pick<Season, "name" | "theme_title" | "shipping_at" | "announcement_at"> &
+type BoardSeason = Pick<Season, "id" | "name" | "theme_title" | "shipping_at" | "announcement_at"> &
   Partial<Pick<Season, "contest_mode" | "registration_fee" | "claim_fee" | "content" | "quota">>;
+
+/** The row's own season, so Season 1 rows keep Season 1 fees, dates and texts even in all-seasons mode. */
+function seasonFor(
+  row: { season_id: string },
+  seasons?: BoardSeason[],
+  fallback?: BoardSeason | null,
+) {
+  return seasons?.find((s) => s.id === row.season_id) ?? fallback ?? null;
+}
+
+function seasonNameFor(row: { season_id: string }, seasons?: BoardSeason[]) {
+  return seasons?.find((s) => s.id === row.season_id)?.name ?? "";
+}
 
 export function boardContext(row: BoardRow, season?: BoardSeason | null): MessageContext {
   const content = resolveContent(season);
@@ -104,23 +117,39 @@ const shippingLabel: Record<string, string> = {
   delivered: "Sudah diterima",
 };
 
-export function groupBy<T extends { competition_type: string; category: string }>(rows: T[]) {
+export function groupBy<
+  T extends { competition_type: string; category: string; season_id?: string },
+>(rows: T[]) {
   const groups = new Map<string, T[]>();
   for (const row of rows) {
-    const key = `${row.competition_type}|${row.category}`;
+    const key = `${row.season_id ?? ""}|${row.competition_type}|${row.category}`;
     groups.set(key, [...(groups.get(key) ?? []), row]);
   }
   return [...groups.entries()].map(([key, items]) => {
-    const [competition, category] = key.split("|") as [
+    const [seasonId, competition, category] = key.split("|") as [
+      string,
       keyof typeof competitions,
       string,
     ];
-    return { key, competition, category, items };
+    return { key, seasonId, competition, category, items };
   });
 }
 
+/** True when rows from more than one season are shown together. */
+function multiSeason(rows: { season_id: string }[]) {
+  return new Set(rows.map((row) => row.season_id)).size > 1;
+}
+
 /** Judging queue: every approved work, one scoring card each, grouped by competition + category. */
-export function JudgingBoard({ rows, judge }: { rows: QueueRow[]; judge: boolean }) {
+export function JudgingBoard({
+  rows,
+  judge,
+  seasons,
+}: {
+  rows: QueueRow[];
+  judge: boolean;
+  seasons?: BoardSeason[];
+}) {
   if (!rows.length)
     return (
       <p className="notice">
@@ -129,6 +158,7 @@ export function JudgingBoard({ rows, judge }: { rows: QueueRow[]; judge: boolean
       </p>
     );
   const groups = groupBy(rows);
+  const mixed = multiSeason(rows);
   const mine = rows.filter((row) => row.my_total !== null).length;
   return (
     <div className="stack">
@@ -151,7 +181,10 @@ export function JudgingBoard({ rows, judge }: { rows: QueueRow[]; judge: boolean
           <div className="admin-group-head">
             <Star aria-hidden="true" />
             <div>
-              <span className="eyebrow">{competitions[group.competition]}</span>
+              <span className="eyebrow">
+                {competitions[group.competition]}
+                {mixed ? ` · ${seasonNameFor(group.items[0], seasons) || "Season lain"}` : ""}
+              </span>
               <h2>Kategori {categoryLabel(group.category)}</h2>
             </div>
             <span className="admin-status">{group.items.length} karya</span>
@@ -207,10 +240,12 @@ export function ResultsBoard({
   rows,
   seasonId,
   season,
+  seasons,
 }: {
   rows: BoardRow[];
   seasonId: string | null;
   season?: BoardSeason | null;
+  seasons?: BoardSeason[];
 }) {
   if (!rows.length)
     return (
@@ -219,13 +254,16 @@ export function ResultsBoard({
         tiap kategori muncul otomatis di sini.
       </p>
     );
-  const content = resolveContent(season);
-  const awardOptions = awardsFor(content.mode);
-  const autoLimit = content.mode === "national" ? 4 : 9;
   const groups = groupBy(rows);
+  const mixed = multiSeason(rows);
   return (
     <div className="stack">
       {groups.map((group) => {
+        const groupSeason = seasonFor(group.items[0], seasons, season);
+        const content = resolveContent(groupSeason);
+        const awardOptions = awardsFor(content.mode);
+        const autoLimit = content.mode === "national" ? 4 : 9;
+        const groupSeasonId = group.seasonId || seasonId;
         const published = group.items.filter((row) => row.is_published).length;
         const withAward = group.items.filter((row) => row.award_code).length;
         return (
@@ -233,18 +271,21 @@ export function ResultsBoard({
             <div className="admin-group-head">
               <Trophy aria-hidden="true" />
               <div>
-                <span className="eyebrow">{competitions[group.competition]}</span>
+                <span className="eyebrow">
+                  {competitions[group.competition]}
+                  {mixed ? ` · ${groupSeason?.name ?? "Season lain"}` : ""}
+                </span>
                 <h2>Kategori {categoryLabel(group.category)}</h2>
                 <p className="muted text-sm">
                   {group.items.length} peserta dinilai · {withAward} penghargaan ·{" "}
                   {published ? `${published} sudah diumumkan` : "belum diumumkan"}
                 </p>
               </div>
-              {seasonId && withAward > 0 && (
+              {groupSeasonId && withAward > 0 && (
                 <div className="leaderboard-publish">
                   <AdminControl
                     action="publish_group"
-                    id={seasonId}
+                    id={groupSeasonId}
                     published={published === withAward}
                     compact
                     initial={{ competition: group.competition, category: group.category }}
@@ -327,7 +368,7 @@ export function ResultsBoard({
                             )}
                             <CopyMessage
                               compact
-                              context={boardContext(row, season)}
+                              context={boardContext(row, groupSeason)}
                               stage={row.is_published ? "winner_announced" : "thank_you"}
                             />
                           </div>
@@ -349,13 +390,18 @@ export function ResultsBoard({
 export function ClaimsBoard({
   rows,
   season,
+  seasons,
 }: {
   rows: BoardRow[];
   season?: BoardSeason | null;
+  seasons?: BoardSeason[];
 }) {
   const content = resolveContent(season);
-  const freeClaim = content.claim_fee === 0;
   const winners = rows.filter((row) => row.award_code && row.is_published);
+  const freeClaim = winners.length
+    ? winners.every((row) => row.claim_amount === 0)
+    : content.claim_fee === 0;
+  const mixed = multiSeason(winners);
   if (!winners.length)
     return (
       <p className="notice">
@@ -403,6 +449,9 @@ export function ClaimsBoard({
                   <p className="text-xs">{row.public_name} · {row.regency_name}</p>
                   <p className="text-xs break-all">{row.registration_code}</p>
                   <p className="text-xs muted">WA {row.whatsapp}</p>
+                  {mixed && (
+                    <span className="admin-status">{seasonNameFor(row, seasons) || "Season lain"}</span>
+                  )}
                 </td>
                 <td data-label="Penghargaan">
                   <Medal size={16} aria-hidden="true" /> <b>{row.award_code}</b>
@@ -474,11 +523,11 @@ export function ClaimsBoard({
                       />
                     )}
                     {row.claim_status === "paid" && (
-                      <Link className="btn secondary" href="/admin/pengiriman">
+                      <Link className="btn secondary" href={`/admin/pengiriman?season=${row.season_id}`}>
                         <Truck size={16} /> Atur pengiriman
                       </Link>
                     )}
-                    <CopyMessage compact context={boardContext(row, season)} />
+                    <CopyMessage compact context={boardContext(row, seasonFor(row, seasons, season))} />
                   </div>
                 </td>
               </tr>
@@ -494,11 +543,14 @@ export function ClaimsBoard({
 export function ShippingBoard({
   rows,
   season,
+  seasons,
 }: {
   rows: BoardRow[];
   season?: BoardSeason | null;
+  seasons?: BoardSeason[];
 }) {
   const ready = rows.filter((row) => row.claim_status === "paid");
+  const mixed = multiSeason(ready);
   const pendingClaims = rows.filter((row) => row.is_published && row.claim_status !== "paid").length;
   if (!ready.length)
     return (
@@ -549,6 +601,9 @@ export function ShippingBoard({
                   <p className="text-xs muted">
                     <Users size={12} aria-hidden="true" /> WA {row.whatsapp} · alamat lengkap di detail peserta
                   </p>
+                  {mixed && (
+                    <span className="admin-status">{seasonNameFor(row, seasons) || "Season lain"}</span>
+                  )}
                 </td>
                 <td data-label="Penghargaan">
                   <b>{row.award_code}</b>
@@ -587,7 +642,7 @@ export function ShippingBoard({
                         shipping_status: row.shipping_status || "prepared",
                       }}
                     />
-                    <CopyMessage compact context={boardContext(row, season)} />
+                    <CopyMessage compact context={boardContext(row, seasonFor(row, seasons, season))} />
                   </div>
                 </td>
               </tr>

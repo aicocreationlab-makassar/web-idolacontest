@@ -383,6 +383,20 @@ test("Migrations, RLS and full database lifecycle", async () => {
       .rows.length,
     2,
   );
+  // Season 1 winners stay manageable while Season 2 is the active season.
+  await mutate("claim_status", rid, { status: "issued" });
+  await mutate("claim_status", rid, { status: "paid" });
+  const seasonOneId = (
+    await db.query<{ id: string }>("select id from seasons where slug='S1'")
+  ).rows[0].id;
+  const allBoard = (
+    await db.query<{ season_id: string }>("select season_id from admin_leaderboard()")
+  ).rows;
+  assert.ok(allBoard.some((row) => row.season_id === seasonOneId));
+  assert.equal(
+    (await db.query("select * from admin_leaderboard($1)", [seasonTwo])).rows.length,
+    0,
+  );
   // National contest mode: season fee, Baby/Kids categories, mode-specific awards
   // and a free claim that the winner confirms from Cek Status.
   await db.query("select admin_save_season($1,$2::jsonb)", [

@@ -445,14 +445,11 @@ export function Status() {
                   <div>
                     <h3>Karyamu sudah dipublikasikan!</h3>
                     <p>
-                      Foto atau karya peserta sekarang sudah tampil di Galeri
-                      Idola Contest.
+                      Foto atau karya peserta sudah dipublikasikan di website
+                      Idola Contest dan punya halaman finalis sendiri.
                     </p>
-                    <Link
-                      className="btn"
-                      href={`/galeri?highlight=${data.submission.slug}#finalis-${data.submission.slug}`}
-                    >
-                      Lihat kartu peserta di galeri →
+                    <Link className="btn" href={`/finalis/${data.submission.slug}`}>
+                      Lihat kartu peserta →
                     </Link>
                   </div>
                 </div>

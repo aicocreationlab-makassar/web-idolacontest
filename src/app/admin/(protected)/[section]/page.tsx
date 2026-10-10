@@ -155,6 +155,7 @@ function SeasonPicker({
         Season
         <select name="season" defaultValue={value ?? ""}>
           <option value="">{activeId ? "Season aktif" : "Semua season"}</option>
+          {activeId && <option value="all">Semua season</option>}
           {seasons.map((s) => (
             <option value={s.id} key={s.id}>
               {s.name}
@@ -166,6 +167,54 @@ function SeasonPicker({
       <button className="btn secondary self-end">Terapkan</button>
     </form>
   );
+}
+
+/** Pending claims/shipments of seasons other than the one on screen, so Season 1 winners stay visible. */
+function OtherSeasonNotice({
+  rows,
+  seasons,
+  scopedSeason,
+  section,
+}: {
+  rows: BoardRow[];
+  seasons: Season[];
+  scopedSeason: string;
+  section: string;
+}) {
+  const counts = new Map<string, { claims: number; shipping: number }>();
+  for (const row of rows) {
+    if (row.season_id === scopedSeason || !row.is_published || !row.award_code) continue;
+    const entry = counts.get(row.season_id) ?? { claims: 0, shipping: 0 };
+    if (row.claim_status !== "paid") entry.claims += 1;
+    else if (!["shipped", "delivered"].includes(row.shipping_status ?? "")) entry.shipping += 1;
+    counts.set(row.season_id, entry);
+  }
+  const items = seasons
+    .map((season) => ({ season, ...(counts.get(season.id) ?? { claims: 0, shipping: 0 }) }))
+    .filter((item) => item.claims || item.shipping);
+  if (!items.length) return null;
+  return (
+    <div className="stack">
+      {items.map((item) => (
+        <p className="notice" key={item.season.id}>
+          <b>{item.season.name}</b>: {item.claims} juara menunggu klaim/konfirmasi hadiah ·{" "}
+          {item.shipping} belum dikirim.{" "}
+          <Link className="underline font-bold" href={`/admin/${section}?season=${item.season.id}`}>
+            Lihat {item.season.name}
+          </Link>{" "}
+          ·{" "}
+          <Link className="underline font-bold" href={`/admin/${section}?season=all`}>
+            Semua season
+          </Link>
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function withQuery(href: string, param: string) {
+  if (!param) return href;
+  return `${href}${href.includes("?") ? "&" : "?"}${param}`;
 }
 
 export default async function Page({
@@ -310,7 +359,11 @@ export default async function Page({
         {profile.role !== "judge" && (
           <SeasonPicker seasons={seasonRows} value={filters.season} activeId={activeSeason?.id ?? null} />
         )}
-        <JudgingBoard rows={(data ?? []) as QueueRow[]} judge={profile.role === "judge"} />
+        <JudgingBoard
+          rows={(data ?? []) as QueueRow[]}
+          judge={profile.role === "judge"}
+          seasons={seasonRows}
+        />
       </>
     );
   }
@@ -322,6 +375,12 @@ export default async function Page({
     const rows = (data ?? []) as BoardRow[];
     const boardSeason = seasonRows.find((s) => s.id === scopedSeason) ?? activeSeason;
     const boardContent = resolveContent(boardSeason);
+    // Winners of other seasons still need claims and shipments handled after a new season starts.
+    let otherRows: BoardRow[] = [];
+    if (scopedSeason && section !== "hasil" && seasonRows.length > 1) {
+      const { data: allData } = await db.rpc("admin_leaderboard", { p_season: null });
+      otherRows = (allData ?? []) as BoardRow[];
+    }
     let winnerRows: WinnerRow[] = [];
     if (section === "hasil") {
       // Winners announced before the artwork-copy step existed get their copy here.
@@ -347,6 +406,7 @@ export default async function Page({
     const query = new URLSearchParams(
       Object.entries(filters).filter(([k, v]) => k !== "page" && !!v),
     );
+    query.set("season", scopedSeason ?? "all");
     return (
       <>
         <PageHeading
@@ -369,9 +429,17 @@ export default async function Page({
             Ekspor CSV
           </a>
         </div>
+        {scopedSeason && otherRows.length > 0 && (
+          <OtherSeasonNotice
+            rows={otherRows}
+            seasons={seasonRows}
+            scopedSeason={scopedSeason}
+            section={section}
+          />
+        )}
         {section === "hasil" ? (
           <>
-            <ResultsBoard rows={rows} seasonId={scopedSeason} season={boardSeason} />
+            <ResultsBoard rows={rows} seasonId={scopedSeason} season={boardSeason} seasons={seasonRows} />
             <section className="stack mt-6">
               <div className="admin-section-title">
                 <div>
@@ -388,9 +456,9 @@ export default async function Page({
             </section>
           </>
         ) : section === "klaim-hadiah" ? (
-          <ClaimsBoard rows={rows} season={boardSeason} />
+          <ClaimsBoard rows={rows} season={boardSeason} seasons={seasonRows} />
         ) : (
-          <ShippingBoard rows={rows} season={boardSeason} />
+          <ShippingBoard rows={rows} season={boardSeason} seasons={seasonRows} />
         )}
       </>
     );
@@ -519,7 +587,7 @@ export default async function Page({
             <Link
               className="card"
               key={key}
-              href={
+              href={withQuery(
                 {
                   total_registrasi: "/admin/peserta",
                   review_pending: "/admin/pendaftaran?review=pending",
@@ -529,8 +597,9 @@ export default async function Page({
                   juara_diumumkan: "/admin/hasil",
                   klaim_dibayar: "/admin/klaim-hadiah",
                   terkirim: "/admin/pengiriman",
-                }[key] || "/admin/dashboard"
-              }
+                }[key] || "/admin/dashboard",
+                filters.season ? `season=${encodeURIComponent(filters.season)}` : "",
+              )}
             >
               <span className="muted">{label}</span>
               <h2 className="mt-3 text-purple">{String(totals[key] ?? 0)}</h2>
