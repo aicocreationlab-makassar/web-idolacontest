@@ -1,0 +1,160 @@
+/* Cheerful, simple registration flow (mobile first). Scoped to the form panel. */
+.registration-panel .registration-progress li > span {
+  width: 48px;
+  height: 48px;
+  border-radius: 18px;
+  font-size: 22px;
+  border: 3px solid #fff;
+}
+.registration-panel .registration-progress li.active > span {
+  transform: scale(1.08) rotate(-5deg);
+}
+.registration-panel .registration-progress li b {
+  font-size: 12px;
+  font-weight: 900;
+}
+.registration-panel .registration-progress li.active b {
+  color: #173a71;
+}
+.reg-step-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 26px;
+}
+.reg-step-title span {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #ffdf5c, #ffc72c);
+  font-size: 24px;
+  box-shadow: 0 4px 0 #dca320;
+  transform: rotate(-6deg);
+  flex-shrink: 0;
+}
+.registration-panel .field input,
+.registration-panel .field select {
+  min-height: 52px;
+  border-radius: 18px;
+  font-size: 16px;
+}
+.registration-panel .check {
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #f6faff;
+  border: 2px solid #e1edf7;
+}
+.registration-panel .check input {
+  min-width: 24px;
+  min-height: 24px;
+}
+.registration-panel .btn {
+  min-height: 52px;
+  font-size: 16px;
+}
+.age-category-hint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.age-category-hint span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: #e9f7ff;
+  border: 1px solid #c7e5f5;
+  color: #1f5b8f;
+  font-size: 12px;
+  font-weight: 800;
+}
+.category-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+.category-pick label {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  border-radius: 20px;
+  border: 3px solid #e1edf7;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  font-weight: 900;
+  color: #173a71;
+  box-shadow: 0 4px 0 #e1edf7;
+  transition: transform 0.15s;
+}
+.category-pick label:hover {
+  transform: translateY(-2px);
+}
+.category-pick label.selected {
+  border-color: #ff4fa3;
+  background: #fff0f7;
+  box-shadow: 0 4px 0 #ff9fcd;
+}
+.category-pick label input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+.category-pick .category-pick-emoji {
+  font-size: 34px;
+  line-height: 1;
+}
+.category-pick small {
+  font-size: 12px;
+  font-weight: 800;
+  color: #5a7189;
+}
+@media (max-width: 760px) {
+  .registration-panel.card {
+    padding: 18px 14px 24px;
+    border-radius: 26px;
+    overflow: visible;
+  }
+  .registration-panel .registration-progress li {
+    flex: 0 0 72px;
+  }
+  .registration-panel .registration-progress li > span {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+  .reg-step-title {
+    font-size: 22px;
+  }
+  .registration-panel form > .actions {
+    position: sticky;
+    bottom: 10px;
+    z-index: 6;
+    margin: 18px -4px 0;
+    padding: 10px;
+    border-radius: 22px;
+    background: #ffffffee;
+    backdrop-filter: blur(8px);
+    border: 2px solid #e1edf7;
+    box-shadow: 0 8px 24px #1d4f8a26;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+  }
+  .registration-panel form > .actions > .btn:only-child {
+    grid-column: 1 / -1;
+  }
+  .registration-panel form > .actions .btn {
+    width: 100%;
+  }
+}

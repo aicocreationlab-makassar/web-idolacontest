@@ -1,13 +1,22 @@
 import Link from "next/link";
 import { Trophy, Medal, Receipt, Truck, Star, Users } from "lucide-react";
-import { categories, competitions } from "@/lib/business-rules";
-import { formatDate, formatDateTime } from "@/lib/season";
+import { categoryLabel, competitions } from "@/lib/business-rules";
+import { formatDate, formatDateTime, type Season } from "@/lib/season";
+import { awardsFor, bankLine, resolveContent, rupiah } from "@/lib/contest-modes";
 import { AdminControl, PrivateMedia } from "./admin-controls";
 import { CopyMessage } from "./copy-message";
 import type { MessageContext } from "@/lib/messages";
 
-export function boardContext(row: BoardRow, season?: { name: string; theme_title: string; shipping_at: string; announcement_at: string } | null): MessageContext {
+type BoardSeason = Pick<Season, "name" | "theme_title" | "shipping_at" | "announcement_at"> &
+  Partial<Pick<Season, "contest_mode" | "registration_fee" | "claim_fee" | "content" | "quota">>;
+
+export function boardContext(row: BoardRow, season?: BoardSeason | null): MessageContext {
+  const content = resolveContent(season);
   return {
+    registration_fee: content.registration_fee,
+    claim_fee: content.claim_fee,
+    bank: bankLine(content),
+    instagram: content.instagram,
     public_name: row.public_name,
     registration_code: row.registration_code,
     competition_type: row.competition_type,
@@ -34,7 +43,7 @@ export type QueueRow = {
   registration_id: string;
   season_id: string;
   competition_type: keyof typeof competitions;
-  category: keyof typeof categories;
+  category: string;
   public_name: string;
   submitted_at: string;
   my_scores: number[] | null;
@@ -52,7 +61,7 @@ export type BoardRow = {
   registration_code: string;
   season_id: string;
   competition_type: keyof typeof competitions;
-  category: keyof typeof categories;
+  category: string;
   public_name: string;
   full_name: string;
   regency_name: string;
@@ -73,6 +82,13 @@ export type BoardRow = {
   courier: string | null;
   tracking_number: string | null;
   shipped_at: string | null;
+  claim_amount?: number | null;
+  claim_confirmation?: {
+    bank_name?: string;
+    bank_account?: string;
+    bank_holder?: string;
+    note?: string;
+  } | null;
 };
 
 const claimLabel: Record<string, string> = {
@@ -97,7 +113,7 @@ export function groupBy<T extends { competition_type: string; category: string }
   return [...groups.entries()].map(([key, items]) => {
     const [competition, category] = key.split("|") as [
       keyof typeof competitions,
-      keyof typeof categories,
+      string,
     ];
     return { key, competition, category, items };
   });
@@ -136,7 +152,7 @@ export function JudgingBoard({ rows, judge }: { rows: QueueRow[]; judge: boolean
             <Star aria-hidden="true" />
             <div>
               <span className="eyebrow">{competitions[group.competition]}</span>
-              <h2>Kategori {categories[group.category]}</h2>
+              <h2>Kategori {categoryLabel(group.category)}</h2>
             </div>
             <span className="admin-status">{group.items.length} karya</span>
           </div>
@@ -194,7 +210,7 @@ export function ResultsBoard({
 }: {
   rows: BoardRow[];
   seasonId: string | null;
-  season?: { name: string; theme_title: string; shipping_at: string; announcement_at: string } | null;
+  season?: BoardSeason | null;
 }) {
   if (!rows.length)
     return (
@@ -203,6 +219,9 @@ export function ResultsBoard({
         tiap kategori muncul otomatis di sini.
       </p>
     );
+  const content = resolveContent(season);
+  const awardOptions = awardsFor(content.mode);
+  const autoLimit = content.mode === "national" ? 4 : 9;
   const groups = groupBy(rows);
   return (
     <div className="stack">
@@ -215,7 +234,7 @@ export function ResultsBoard({
               <Trophy aria-hidden="true" />
               <div>
                 <span className="eyebrow">{competitions[group.competition]}</span>
-                <h2>Kategori {categories[group.category]}</h2>
+                <h2>Kategori {categoryLabel(group.category)}</h2>
                 <p className="muted text-sm">
                   {group.items.length} peserta dinilai · {withAward} penghargaan ·{" "}
                   {published ? `${published} sudah diumumkan` : "belum diumumkan"}
@@ -274,7 +293,7 @@ export function ResultsBoard({
                             </p>
                           </>
                         ) : (
-                          <span className="muted">Di luar 9 besar</span>
+                          <span className="muted">Di luar {autoLimit} besar</span>
                         )}
                       </td>
                       <td data-label="Status">
@@ -295,6 +314,7 @@ export function ResultsBoard({
                               action="award"
                               id={row.registration_id}
                               compact
+                              awardOptions={awardOptions}
                               initial={{ award: row.award_source === "manual" ? row.award_code : "auto" }}
                             />
                             {row.award_code && (
@@ -331,15 +351,18 @@ export function ClaimsBoard({
   season,
 }: {
   rows: BoardRow[];
-  season?: { name: string; theme_title: string; shipping_at: string; announcement_at: string } | null;
+  season?: BoardSeason | null;
 }) {
+  const content = resolveContent(season);
+  const freeClaim = content.claim_fee === 0;
   const winners = rows.filter((row) => row.award_code && row.is_published);
   if (!winners.length)
     return (
       <p className="notice">
         Belum ada juara yang diumumkan. Umumkan juara di menu Juara & Hasil;
-        invoice klaim Rp120.000 terbit otomatis dan langsung tampil di Cek
-        Status peserta.
+        {freeClaim
+          ? " juara lalu mengonfirmasi alamat dan rekening hadiah (gratis) lewat Cek Status dan konfirmasinya tampil di sini."
+          : ` invoice klaim ${rupiah(content.claim_fee)} terbit otomatis dan langsung tampil di Cek Status peserta.`}
       </p>
     );
   const paid = winners.filter((row) => row.claim_status === "paid").length;
@@ -352,11 +375,11 @@ export function ClaimsBoard({
           <h2 className="mt-3 text-purple">{winners.length}</h2>
         </div>
         <div className="card">
-          <span className="muted">Menunggu pembayaran klaim</span>
+          <span className="muted">{freeClaim ? "Menunggu konfirmasi hadiah" : "Menunggu pembayaran klaim"}</span>
           <h2 className="mt-3 text-purple">{waiting}</h2>
         </div>
         <div className="card">
-          <span className="muted">Klaim lunas</span>
+          <span className="muted">{freeClaim ? "Hadiah terkonfirmasi" : "Klaim lunas"}</span>
           <h2 className="mt-3 text-purple">{paid}</h2>
         </div>
       </div>
@@ -384,7 +407,7 @@ export function ClaimsBoard({
                 <td data-label="Penghargaan">
                   <Medal size={16} aria-hidden="true" /> <b>{row.award_code}</b>
                   <p className="text-xs muted">
-                    {competitions[row.competition_type]} · {categories[row.category]}
+                    {competitions[row.competition_type]} · {categoryLabel(row.category)}
                   </p>
                 </td>
                 <td data-label="Invoice">
@@ -394,10 +417,25 @@ export function ClaimsBoard({
                         <Receipt size={14} aria-hidden="true" /> {row.invoice_number}
                       </p>
                       <span className={`admin-status status-${row.claim_status}`}>
-                        {claimLabel[row.claim_status || ""] || row.claim_status}
+                        {row.claim_amount === 0
+                          ? row.claim_status === "paid"
+                            ? "Terkonfirmasi (gratis)"
+                            : row.claim_status === "issued"
+                              ? "Menunggu konfirmasi juara"
+                              : claimLabel[row.claim_status || ""] || row.claim_status
+                          : claimLabel[row.claim_status || ""] || row.claim_status}
                       </span>
                       {row.claim_paid_at && (
-                        <p className="text-xs muted">Lunas {formatDate(row.claim_paid_at)}</p>
+                        <p className="text-xs muted">
+                          {row.claim_amount === 0 ? "Dikonfirmasi" : "Lunas"} {formatDate(row.claim_paid_at)}
+                        </p>
+                      )}
+                      {row.claim_confirmation?.bank_account && (
+                        <p className="text-xs">
+                          Rekening hadiah: <b>{row.claim_confirmation.bank_name} {row.claim_confirmation.bank_account}</b>{" "}
+                          a.n. {row.claim_confirmation.bank_holder}
+                          {row.claim_confirmation.note ? ` · ${row.claim_confirmation.note}` : ""}
+                        </p>
                       )}
                     </>
                   ) : (
@@ -410,7 +448,13 @@ export function ClaimsBoard({
                       <AdminControl action="invoice" id={row.registration_id} compact />
                     ) : row.claim_status === "issued" ? (
                       <>
-                        <AdminControl action="claim_paid" id={row.registration_id} compact />
+                        <AdminControl
+                          action="claim_paid"
+                          id={row.registration_id}
+                          compact
+                          label={row.claim_amount === 0 ? "Tandai terkonfirmasi (tanpa biaya)" : undefined}
+                          successMessage={row.claim_amount === 0 ? "Hadiah ditandai terkonfirmasi." : undefined}
+                        />
                         <details className="admin-ops">
                           <summary>Ubah status lain</summary>
                           <AdminControl
@@ -452,7 +496,7 @@ export function ShippingBoard({
   season,
 }: {
   rows: BoardRow[];
-  season?: { name: string; theme_title: string; shipping_at: string; announcement_at: string } | null;
+  season?: BoardSeason | null;
 }) {
   const ready = rows.filter((row) => row.claim_status === "paid");
   const pendingClaims = rows.filter((row) => row.is_published && row.claim_status !== "paid").length;
@@ -509,8 +553,14 @@ export function ShippingBoard({
                 <td data-label="Penghargaan">
                   <b>{row.award_code}</b>
                   <p className="text-xs muted">
-                    {competitions[row.competition_type]} · {categories[row.category]}
+                    {competitions[row.competition_type]} · {categoryLabel(row.category)}
                   </p>
+                  {row.claim_confirmation?.bank_account && (
+                    <p className="text-xs">
+                      Transfer hadiah: <b>{row.claim_confirmation.bank_name} {row.claim_confirmation.bank_account}</b>{" "}
+                      a.n. {row.claim_confirmation.bank_holder}
+                    </p>
+                  )}
                 </td>
                 <td data-label="Pengiriman">
                   <span className={`admin-status status-${row.shipping_status || "waiting"}`}>

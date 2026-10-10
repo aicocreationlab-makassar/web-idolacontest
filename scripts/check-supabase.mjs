@@ -32,6 +32,13 @@ console.log(
   `SEASON_THEME_SCHEMA=${theme.error ? `MISSING_OR_ERROR:${theme.error.code} (apply 202610080001_season_themes_auto_rankings.sql)` : "OK"}`,
 );
 
+const modes = await db
+  .from("seasons")
+  .select("contest_mode,registration_fee,claim_fee,content", { count: "exact", head: true });
+console.log(
+  `CONTEST_MODE_SCHEMA=${modes.error ? `MISSING_OR_ERROR:${modes.error.code} (apply 202610100001_contest_modes.sql)` : "OK"}`,
+);
+
 const rankings = await db
   .from("results")
   .select("rank_position,award_source", { count: "exact", head: true });

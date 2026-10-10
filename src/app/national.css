@@ -1,0 +1,640 @@
+/* National contest mode ("Lomba Anak Nasional Online"): glossy 3D poster look.
+   Colors fall back to the sky palette when a season uses the default theme. */
+.national-hero .hero-copy {
+  padding-top: 26px;
+}
+.candy-ribbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  border-radius: 999px;
+  border: 3px solid #fff;
+  background: linear-gradient(135deg, var(--t-accent, #ff4fa3), #ff86c4);
+  color: #fff;
+  font-family: "Fredoka Variable", sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow:
+    0 5px 0 #b82f78,
+    0 10px 20px #0000001f;
+  transform: rotate(-2deg);
+  margin-top: 16px;
+}
+.candy-title {
+  font-family: "Fredoka Variable", sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.6rem, 6.2vw, 4.6rem);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  color: #fff;
+  margin: 18px 0 10px;
+  -webkit-text-stroke: 1.5px var(--t-primary-dark, #126bca);
+  paint-order: stroke fill;
+  text-shadow:
+    0 5px 0 var(--t-primary-dark, #126bca),
+    0 9px 0 #00000022,
+    0 16px 26px #00000033;
+  max-width: 560px;
+}
+.hero-copy h1.candy-title {
+  margin: 18px 0 10px;
+}
+.national-subtitle {
+  font-family: "Fredoka Variable", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+  color: var(--t-accent-two, #ffcf36);
+  -webkit-text-stroke: 1px #7a4a00;
+  paint-order: stroke fill;
+  text-shadow: 0 3px 0 #b5820a;
+  margin: 0 0 18px;
+  transform: rotate(-1.5deg);
+  display: inline-block;
+}
+.candy-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 6px 0 4px;
+}
+.candy-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 3px solid #fff;
+  background: #fff;
+  color: #173a71;
+  font-weight: 900;
+  font-size: 13px;
+  box-shadow:
+    0 4px 0 #cfe0f5,
+    0 8px 18px #0000001a;
+}
+.candy-pill b {
+  color: var(--t-accent, #ff4fa3);
+}
+.candy-pill[data-tone="yellow"] {
+  background: linear-gradient(#fff2b3, var(--t-accent-two, #ffcf36));
+  color: #6a4a00;
+  box-shadow:
+    0 4px 0 #d9a400,
+    0 8px 18px #0000001a;
+}
+.candy-pill[data-tone="pink"] {
+  background: linear-gradient(#ffd3ea, #ffb0d9);
+  color: #8c1f5e;
+  box-shadow:
+    0 4px 0 #e06aa8,
+    0 8px 18px #0000001a;
+}
+.hero-poster-frame {
+  position: absolute;
+  z-index: 2;
+  top: 4%;
+  left: 9%;
+  width: 78%;
+  padding: 8px;
+  border-radius: 30px;
+  background: #fff;
+  box-shadow:
+    0 12px 0 #cfe0f5,
+    0 22px 40px #1d4f8a3d;
+  transform: rotate(3deg);
+}
+.hero-poster-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 24px;
+}
+.national-hero .hero-artboard {
+  aspect-ratio: 0.92;
+  max-height: 640px;
+}
+
+/* Section banners in the poster style. */
+.candy-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  border-radius: 999px;
+  border: 4px solid #fff;
+  background: linear-gradient(135deg, var(--t-primary, #1299e4), var(--t-primary-light, #62cfff));
+  color: #fff;
+  font-family: "Fredoka Variable", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 3px 0 #00000033;
+  box-shadow:
+    0 7px 0 var(--t-primary-dark, #126bca),
+    0 14px 26px #0000001f;
+  transform: rotate(-1.5deg);
+}
+.candy-banner[data-tone="pink"] {
+  background: linear-gradient(135deg, var(--t-accent, #f55ca9), #ff8fc9);
+  box-shadow:
+    0 7px 0 #b82f78,
+    0 14px 26px #0000001f;
+}
+.candy-banner[data-tone="yellow"] {
+  background: linear-gradient(135deg, #ffdf6b, var(--t-accent-two, #ffcf36));
+  color: #6a4a00;
+  text-shadow: 0 2px 0 #ffffff80;
+  box-shadow:
+    0 7px 0 #d9a400,
+    0 14px 26px #0000001f;
+}
+.candy-banner[data-tone="purple"] {
+  background: linear-gradient(135deg, #8e4bff, #c3a2ff);
+  box-shadow:
+    0 7px 0 #6a2fd6,
+    0 14px 26px #0000001f;
+}
+.national-section-head {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+  margin-bottom: 30px;
+}
+.national-section-head p {
+  max-width: 620px;
+  color: #4f6a86;
+}
+
+/* Glossy 3D cards. */
+.candy-card {
+  --tone: var(--t-primary, #1299e4);
+  --tone-dark: var(--t-primary-dark, #126bca);
+  --tone-soft: #eaf3ff;
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 4px solid #fff;
+  background: linear-gradient(180deg, #fff 0%, var(--tone-soft) 100%);
+  box-shadow:
+    0 0 0 2px var(--tone),
+    0 9px 0 var(--tone-dark),
+    0 18px 30px #0000001c;
+  padding: 22px 20px 24px;
+  transition: transform 0.2s;
+}
+.candy-card:hover {
+  transform: translateY(-4px);
+}
+.candy-card:before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 6px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(#ffffffd9, #ffffff00);
+  pointer-events: none;
+}
+.candy-card[data-tone="pink"] {
+  --tone: #ff4fa3;
+  --tone-dark: #c92b7c;
+  --tone-soft: #ffe6f2;
+}
+.candy-card[data-tone="blue"] {
+  --tone: #2f8cff;
+  --tone-dark: #1b5fd1;
+  --tone-soft: #e6f1ff;
+}
+.candy-card[data-tone="green"] {
+  --tone: #2ec46e;
+  --tone-dark: #1f9a52;
+  --tone-soft: #e5f9ec;
+}
+.candy-card[data-tone="orange"] {
+  --tone: #ff8a3d;
+  --tone-dark: #d9631b;
+  --tone-soft: #fff0e4;
+}
+.candy-card[data-tone="yellow"] {
+  --tone: #ffd23f;
+  --tone-dark: #d9a400;
+  --tone-soft: #fff8dc;
+}
+.candy-card[data-tone="purple"] {
+  --tone: #8e4bff;
+  --tone-dark: #6a2fd6;
+  --tone-soft: #f1e9ff;
+}
+.candy-card .candy-card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--tone);
+  color: #fff;
+  font-family: "Fredoka Variable", sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 0 var(--tone-dark);
+}
+.candy-card[data-tone="yellow"] .candy-card-title {
+  color: #6a4a00;
+}
+.prize-cash {
+  display: block;
+  margin: 16px 0 6px;
+  font-family: "Fredoka Variable", sans-serif;
+  font-weight: 700;
+  font-size: clamp(2rem, 4vw, 2.7rem);
+  line-height: 1;
+  color: var(--tone-dark);
+  text-shadow: 0 3px 0 #ffffff;
+}
+.prize-extras {
+  margin: 0;
+  font-weight: 900;
+  font-size: 14px;
+  color: #3d5a7a;
+}
+.national-prize-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 20px;
+}
+.prize-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-top: 24px;
+}
+.voucher-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: 3px solid #fff;
+  background: linear-gradient(135deg, #8e4bff, #c3a2ff);
+  color: #fff;
+  font-weight: 900;
+  font-size: 15px;
+  box-shadow:
+    0 5px 0 #6a2fd6,
+    0 10px 20px #0000001f;
+}
+.prize-note-pill {
+  display: inline-flex;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid #e1edf7;
+  color: #4f6a86;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+/* Categories & contest types. */
+.category-cards,
+.contest-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+.category-card {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.category-emoji {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: #fff;
+  border: 4px solid var(--tone);
+  font-size: 50px;
+  line-height: 1;
+  box-shadow:
+    0 6px 0 var(--tone-dark),
+    inset 0 -8px 0 var(--tone-soft);
+  margin-bottom: 6px;
+}
+.category-card h3 {
+  font-size: 28px;
+  color: var(--tone-dark);
+  margin: 4px 0 0;
+}
+.category-age {
+  font-family: "Fredoka Variable", sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: #173a71;
+}
+.category-card small {
+  color: #5a7189;
+  font-weight: 700;
+}
+.contest-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+}
+.contest-card .toy-art {
+  width: 110px;
+  height: auto;
+}
+.contest-card h3 {
+  font-size: 22px;
+  color: var(--tone-dark);
+  margin: 0 0 6px;
+}
+.contest-card p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #4f6a86;
+}
+.contest-card .btn {
+  min-height: 42px;
+  padding: 9px 18px;
+  font-size: 13px;
+}
+
+/* Free-after-winning + fee. */
+.national-free-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 22px;
+  align-items: stretch;
+}
+.free-card ul {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.free-card li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 900;
+  font-size: 16px;
+  color: #173a71;
+}
+.free-card li span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--tone);
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 3px 0 var(--tone-dark);
+}
+.fee-card {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.fee-amount {
+  font-family: "Fredoka Variable", sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.6rem, 5vw, 3.6rem);
+  line-height: 1;
+  color: var(--tone-dark);
+  text-shadow: 0 4px 0 #fff;
+  margin: 10px 0 4px;
+}
+.fee-card .candy-pill {
+  margin-top: 8px;
+}
+.fee-card small {
+  color: #5a7189;
+  font-weight: 800;
+}
+
+/* Poster. */
+.poster-section {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) 1fr;
+  gap: 32px;
+  align-items: center;
+}
+.poster-figure {
+  margin: 0;
+  padding: 10px;
+  border-radius: 30px;
+  background: #fff;
+  box-shadow:
+    0 10px 0 #cfe0f5,
+    0 22px 40px #1d4f8a2b;
+  transform: rotate(-2deg);
+}
+.poster-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 22px;
+}
+.poster-figure figcaption {
+  padding: 12px 8px 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #5a7189;
+  text-align: center;
+}
+
+/* Mandatory transfer alert (registration + success). */
+.wajib-alert {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 22px 24px;
+  border-radius: 26px;
+  border: 4px solid #fff;
+  background: linear-gradient(135deg, #ffe1ef, #fff3c3);
+  box-shadow:
+    0 0 0 3px #ff4fa3,
+    0 8px 0 #c92b7c,
+    0 14px 26px #0000001a;
+  animation: wajib-pulse 2.4s ease-in-out infinite;
+}
+.wajib-alert-badge {
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #ff4fa3, #ff8a3d);
+  color: #fff;
+  font-family: "Fredoka Variable", sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  box-shadow: 0 5px 0 #c92b7c;
+  transform: rotate(-6deg);
+}
+.wajib-alert h3 {
+  font-size: 22px;
+  margin: 0 0 6px;
+  color: #8c1f5e;
+}
+.wajib-alert p {
+  margin: 0;
+  font-size: 14px;
+  color: #3d2a4f;
+  line-height: 1.55;
+}
+.wajib-alert .actions {
+  margin: 12px 0 0;
+  gap: 10px;
+}
+.wajib-alert .btn {
+  min-height: 42px;
+  padding: 9px 16px;
+  font-size: 13px;
+}
+.wajib-mini {
+  display: inline-block;
+  line-height: 1.5;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: #fff3c3;
+  border: 2px solid #ffd23f;
+  color: #6a4a00;
+  font-weight: 900;
+  font-size: 12px;
+}
+.wajib-mini b {
+  color: #c92b7c;
+}
+@keyframes wajib-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px #ff4fa3,
+      0 8px 0 #c92b7c,
+      0 14px 26px #0000001a;
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px #ff4fa366,
+      0 8px 0 #c92b7c,
+      0 14px 26px #0000001a;
+  }
+}
+
+@media (max-width: 980px) {
+  .national-free-grid,
+  .poster-section {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .national-hero .hero-copy {
+    padding: 22px 0 10px;
+    text-align: center;
+  }
+  .candy-title {
+    font-size: clamp(2.2rem, 10.5vw, 3rem);
+    margin: 14px auto 8px;
+  }
+  .candy-pill-row {
+    justify-content: center;
+  }
+  .candy-pill {
+    font-size: 12px;
+    padding: 9px 13px;
+  }
+  .hero-poster-frame {
+    left: 6%;
+    width: 88%;
+    top: 2%;
+    padding: 6px;
+    border-radius: 22px;
+  }
+  .national-hero .hero-artboard {
+    aspect-ratio: 0.86;
+  }
+  .candy-banner {
+    font-size: 1.25rem;
+    padding: 10px 20px;
+  }
+  .candy-card {
+    padding: 18px 16px 20px;
+  }
+  .national-prize-grid,
+  .category-cards,
+  .contest-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .contest-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+  }
+  .contest-card .toy-art {
+    width: 90px;
+  }
+  .category-emoji {
+    width: 78px;
+    height: 78px;
+    font-size: 40px;
+  }
+  .category-card h3 {
+    font-size: 22px;
+  }
+  .category-age {
+    font-size: 16px;
+  }
+  .prize-cash {
+    font-size: 1.7rem;
+  }
+  .prize-extras {
+    font-size: 12px;
+  }
+  .wajib-alert {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+    padding: 18px;
+  }
+  .wajib-alert .actions {
+    justify-content: center;
+  }
+  .poster-figure {
+    transform: none;
+  }
+}
+@media (max-width: 480px) {
+  .national-prize-grid,
+  .category-cards,
+  .contest-cards {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wajib-alert {
+    animation: none;
+  }
+}

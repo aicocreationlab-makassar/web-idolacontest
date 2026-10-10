@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { MapPin, Palette, Sparkles, X } from "lucide-react";
-import { categories, competitions } from "@/lib/business-rules";
+import { categoryLabel, competitions } from "@/lib/business-rules";
 import { Share } from "./share";
 
 type GalleryItem = {
@@ -11,7 +11,7 @@ type GalleryItem = {
   public_name: string;
   public_file_path: string;
   competition_type: keyof typeof competitions;
-  category: keyof typeof categories;
+  category: string;
   regency_name: string;
   province_name: string;
   imageUrl: string;
@@ -63,7 +63,7 @@ export function GalleryGrid({
             />
             <span className="eyebrow block mt-5">
               {competitions[item.competition_type]} ·{" "}
-              {categories[item.category]}
+              {categoryLabel(item.category)}
             </span>
             <h3 className="mt-2">{item.public_name}</h3>
             <p className="muted text-sm">
@@ -111,7 +111,7 @@ export function GalleryGrid({
               <h2 id="gallery-dialog-title">{selected.public_name}</h2>
               <p className="gallery-modal-competition">
                 <Palette /> {competitions[selected.competition_type]} ·{" "}
-                {categories[selected.category]}
+                {categoryLabel(selected.category)}
               </p>
               <p className="muted gallery-modal-location">
                 <MapPin /> {selected.regency_name}, {selected.province_name}

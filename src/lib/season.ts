@@ -4,7 +4,13 @@ export type ThemeKey =
   | "jungle"
   | "candy"
   | "ocean"
-  | "galaxy";
+  | "galaxy"
+  | "rainbow"
+  | "bubblegum"
+  | "balloon"
+  | "sunshine"
+  | "carnival"
+  | "unicorn";
 
 export type Season = {
   id: string;
@@ -24,6 +30,11 @@ export type Season = {
   prize_preparation_end: string | null;
   quota: number | null;
   is_active: boolean;
+  /** Contest mode and its editable content (migration 202610100001). */
+  contest_mode?: "classic" | "national" | string | null;
+  registration_fee?: number | null;
+  claim_fee?: number | null;
+  content?: Record<string, unknown> | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -125,6 +136,84 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     motifs: ["🚀", "🪐", "🌟", "👩‍🚀"],
     sticker: "Terbang setinggi bintang!",
   },
+  rainbow: {
+    key: "rainbow",
+    name: "Pelangi Ceria",
+    mood: "Biru cerah, pink permen, kuning glossy 3D (gaya poster)",
+    primary: "#2f8cff",
+    primaryDark: "#1b5fd1",
+    primaryLight: "#8ec5ff",
+    accent: "#ff4fa3",
+    accentTwo: "#ffd23f",
+    soft: "#eaf3ff",
+    motifs: ["🌈", "🎈", "⭐", "🎉"],
+    sticker: "Saatnya si kecil, menjadi idola!",
+  },
+  bubblegum: {
+    key: "bubblegum",
+    name: "Permen Karet",
+    mood: "Pink bubblegum, ungu lembut, kuning ceria",
+    primary: "#ff5fb0",
+    primaryDark: "#d6338a",
+    primaryLight: "#ffa3d2",
+    accent: "#8e4bff",
+    accentTwo: "#ffe066",
+    soft: "#fff0f7",
+    motifs: ["🍬", "🎀", "💖", "🫧"],
+    sticker: "Semanis senyum, seceria tawa!",
+  },
+  balloon: {
+    key: "balloon",
+    name: "Pesta Balon",
+    mood: "Ungu pesta, pink balon, kuning konfeti",
+    primary: "#8e4bff",
+    primaryDark: "#6a2fd6",
+    primaryLight: "#c3a2ff",
+    accent: "#ff4fa3",
+    accentTwo: "#ffd23f",
+    soft: "#f3ecff",
+    motifs: ["🎈", "🎊", "✨", "🎁"],
+    sticker: "Pestanya bintang kecil!",
+  },
+  sunshine: {
+    key: "sunshine",
+    name: "Matahari Ceria",
+    mood: "Kuning matahari, oranye hangat, biru langit",
+    primary: "#ffb020",
+    primaryDark: "#e08a00",
+    primaryLight: "#ffd56b",
+    accent: "#ff5fa8",
+    accentTwo: "#4fc3ff",
+    soft: "#fff7e0",
+    motifs: ["☀️", "🌻", "🐥", "🍭"],
+    sticker: "Bersinar seterang matahari!",
+  },
+  carnival: {
+    key: "carnival",
+    name: "Karnaval Seru",
+    mood: "Oranye karnaval, biru tenda, kuning lampu",
+    primary: "#ff6a3d",
+    primaryDark: "#d9431c",
+    primaryLight: "#ffa07a",
+    accent: "#2f8cff",
+    accentTwo: "#ffe14d",
+    soft: "#fff1ea",
+    motifs: ["🎪", "🎠", "🎡", "🍿"],
+    sticker: "Karnaval bakat si kecil!",
+  },
+  unicorn: {
+    key: "unicorn",
+    name: "Unicorn Pastel",
+    mood: "Lavender pastel, pink lembut, mint segar",
+    primary: "#a86cff",
+    primaryDark: "#7a3fe0",
+    primaryLight: "#d9bcff",
+    accent: "#ff7ad9",
+    accentTwo: "#7ff0d2",
+    soft: "#f6efff",
+    motifs: ["🦄", "🌈", "🧁", "⭐"],
+    sticker: "Ajaib seperti mimpi si kecil!",
+  },
 };
 
 export const themeKeys = Object.keys(themes) as ThemeKey[];
@@ -218,6 +307,8 @@ export type TimelineStop = {
 };
 
 export function seasonTimeline(season: Season | null): TimelineStop[] {
+  const freeClaim =
+    season?.contest_mode === "national" || (season?.claim_fee ?? 120000) === 0;
   if (!season)
     return [
       { key: "open", short: "—", date: "Segera", label: "Pendaftaran dibuka", detail: "Jadwal season baru akan diumumkan." },
@@ -263,7 +354,9 @@ export function seasonTimeline(season: Season | null): TimelineStop[] {
         : "—",
       date: prize,
       label: "Persiapan hadiah",
-      detail: "Konfirmasi klaim, pembayaran, dan alamat melalui Cek Status.",
+      detail: freeClaim
+        ? "Juara mengonfirmasi alamat dan rekening hadiah melalui Cek Status. Gratis, tanpa penebusan."
+        : "Konfirmasi klaim, pembayaran, dan alamat melalui Cek Status.",
     },
     {
       key: "shipping",
@@ -284,4 +377,12 @@ export function seasonPhase(season: Season | null, now = new Date()) {
   if (t < new Date(season.announcement_at).getTime()) return "judging";
   if (t < new Date(season.shipping_at).getTime()) return "announcement";
   return "shipping";
+}
+
+/** Whole days from now until the given moment (never negative). */
+export function daysUntil(value: string, now = new Date()) {
+  return Math.max(
+    0,
+    Math.ceil((new Date(value).getTime() - now.getTime()) / 86400000),
+  );
 }

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Trophy, ImageOff } from "lucide-react";
-import { categories, competitions } from "@/lib/business-rules";
+import { categoryLabel, competitions } from "@/lib/business-rules";
 import { formatDate } from "@/lib/season";
 import { showSuccess } from "@/lib/success-event";
 
@@ -66,7 +66,7 @@ export function WinnersAdmin({ winners }: { winners: WinnerRow[] }) {
               <h3>{w.public_name}</h3>
               <p className="text-xs muted">
                 {competitions[w.competition_type as keyof typeof competitions]} ·{" "}
-                {categories[w.category as keyof typeof categories]} · {w.regency_name}
+                {categoryLabel(w.category)} · {w.regency_name}
               </p>
               <p className="text-xs break-all">{w.registration_code}</p>
               <p className="text-xs muted">

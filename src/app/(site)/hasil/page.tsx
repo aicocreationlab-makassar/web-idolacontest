@@ -4,7 +4,8 @@ import { Trophy, Medal, Star } from "lucide-react";
 import { getActiveSeason, resultsPage, type PublicResult } from "@/lib/data";
 import { publicWinners, winnerImageUrl, type PublicWinner } from "@/lib/winners";
 import { PageHeading, Fees } from "@/components/shared";
-import { categories, competitions } from "@/lib/business-rules";
+import { categoryLabel, competitions } from "@/lib/business-rules";
+import { resolveContent } from "@/lib/contest-modes";
 import { formatDate } from "@/lib/season";
 import { configured, service } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
@@ -19,10 +20,12 @@ type Row = {
   regency_name: string | null;
   province_name: string | null;
   competition_type: keyof typeof competitions;
-  category: keyof typeof categories;
+  category: string;
   season_id: string;
   image: string | null;
 };
+
+type SeasonTab = { id: string; name: string; contest_mode?: string | null };
 
 const specialAwards = ["Juara Umum", "Best Social Media"];
 
@@ -38,7 +41,7 @@ async function loadRows(requested?: string) {
       regency_name: w.regency_name,
       province_name: w.province_name,
       competition_type: w.competition_type as keyof typeof competitions,
-      category: w.category as keyof typeof categories,
+      category: w.category,
       season_id: w.season_id,
       image: winnerImageUrl(w.image_path),
     }));
@@ -47,7 +50,7 @@ async function loadRows(requested?: string) {
       ? ((
           await service()
             .from("seasons")
-            .select("id,name,slug,created_at")
+            .select("id,name,slug,created_at,contest_mode")
             .in("id", seasonIds)
             .order("created_at", { ascending: false })
         ).data ?? [])
@@ -57,7 +60,7 @@ async function loadRows(requested?: string) {
       : seasons[0]?.id || null;
     return {
       rows: rows.filter((row) => row.season_id === selectedSeasonId),
-      seasons: seasons as { id: string; name: string }[],
+      seasons: seasons as SeasonTab[],
       selectedSeasonId,
     };
   }
@@ -73,11 +76,11 @@ async function loadRows(requested?: string) {
       regency_name: r.regency_name,
       province_name: r.province_name,
       competition_type: r.competition_type as keyof typeof competitions,
-      category: r.category as keyof typeof categories,
+      category: r.category,
       season_id: r.season_id,
       image: null,
     })),
-    seasons,
+    seasons: seasons as SeasonTab[],
     selectedSeasonId,
   };
 }
@@ -119,7 +122,7 @@ function WinnerCard({ row, special = false }: { row: Row; special?: boolean }) {
       </p>
       {special ? (
         <p>
-          {competitions[row.competition_type]} · {categories[row.category]}
+          {competitions[row.competition_type]} · {categoryLabel(row.category)}
         </p>
       ) : (
         row.final_score !== null && <p>Skor akhir: {Number(row.final_score)}</p>
@@ -139,13 +142,17 @@ export default async function Page({
     getActiveSeason(),
   ]);
   const selected = seasons.find((item) => item.id === selectedSeasonId);
+  // In the national mode "Juara Umum" is the rank-2 award of each category, not a special award.
+  const isSpecial = (row: Row) =>
+    specialAwards.includes(row.award_code) && selected?.contest_mode !== "national";
+  const content = resolveContent(activeSeason);
   const groups = new Map<string, Row[]>();
   for (const row of rows) {
-    if (specialAwards.includes(row.award_code)) continue;
+    if (isSpecial(row)) continue;
     const key = `${row.competition_type}|${row.category}`;
     groups.set(key, [...(groups.get(key) ?? []), row]);
   }
-  const specials = rows.filter((row) => specialAwards.includes(row.award_code));
+  const specials = rows.filter(isSpecial);
   return (
     <div className="wrap section">
       <PageHeading
@@ -187,7 +194,7 @@ export default async function Page({
           {[...groups.entries()].map(([key, group]) => {
             const [competition, category] = key.split("|") as [
               keyof typeof competitions,
-              keyof typeof categories,
+              string,
             ];
             const ranked = [...group].sort(
               (a, b) =>
@@ -200,7 +207,7 @@ export default async function Page({
                   <Trophy aria-hidden="true" />
                   <div>
                     <span className="eyebrow">{competitions[competition]}</span>
-                    <h2>Kategori {categories[category]}</h2>
+                    <h2>Kategori {categoryLabel(category)}</h2>
                   </div>
                 </div>
                 <div className="grid3">
@@ -219,14 +226,14 @@ export default async function Page({
         </p>
       )}
       <div className="max-w-2xl mt-8 stack">
-        <Fees />
+        <Fees content={content} />
         <p>
-          Invoice klaim terbit otomatis saat juara diumumkan. Periksa
-          penghargaan, invoice, status pembayaran, dan resi menggunakan kode
-          registrasi.
+          {content.claim_fee === 0
+            ? "Semua hadiah gratis tanpa penebusan. Juara mengonfirmasi alamat dan rekening hadiah, lalu memantau resi pengiriman menggunakan kode registrasi."
+            : "Invoice klaim terbit otomatis saat juara diumumkan. Periksa penghargaan, invoice, status pembayaran, dan resi menggunakan kode registrasi."}
         </p>
         <Link className="btn" href="/cek-status">
-          Lihat klaim & pengiriman →
+          {content.claim_fee === 0 ? "Konfirmasi hadiah & pengiriman →" : "Lihat klaim & pengiriman →"}
         </Link>
       </div>
     </div>

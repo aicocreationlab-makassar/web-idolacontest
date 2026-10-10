@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { categories } from "@/lib/business-rules";
+import { rupiah } from "@/lib/contest-modes";
 import { formatDateTime, seasonTimeline, type Season } from "@/lib/season";
 import {
   ToyArt,
@@ -98,8 +99,10 @@ export function FeatureStrip() {
 }
 export function CompetitionCards({
   themeTitle = "Cita Citaku",
+  fee = 20000,
 }: {
   themeTitle?: string;
+  fee?: number;
 }) {
   return (
     <section className="section wrap competition-section" id="lomba">
@@ -141,7 +144,7 @@ export function CompetitionCards({
               <ToyArt kind={c.kind} />
               <StarDecoration className="art-star" />
               <span className="competition-price">
-                Rp20.000<small>registrasi</small>
+                {rupiah(fee)}<small>registrasi</small>
               </span>
             </div>
             <div className="competition-copy">
@@ -251,7 +254,7 @@ export function PersonalizedWorksheetSection({
     </section>
   );
 }
-export function PrizeSection() {
+export function PrizeSection({ claimFee = 120000 }: { claimFee?: number }) {
   return (
     <section className="section wrap" id="hadiah">
       <SectionHeading
@@ -336,7 +339,7 @@ export function PrizeSection() {
             <Trophy size={25} />
           </span>
           <p>
-            <strong>Klaim paket penghargaan Rp120.000</strong>
+            <strong>Klaim paket penghargaan {rupiah(claimFee)}</strong>
             <br />
             <span>
               Setelah pengumuman · termasuk gratis ongkir seluruh Indonesia
@@ -385,7 +388,7 @@ export function CompetitionTimeline({ season }: { season: Season | null }) {
     </section>
   );
 }
-export function RegistrationSteps() {
+export function RegistrationSteps({ fee = 20000 }: { fee?: number }) {
   return (
     <section className="section wrap">
       <SectionHeading
@@ -399,7 +402,7 @@ export function RegistrationSteps() {
       <div className="registration-steps">
         {[
           ["Daftar", "Follow @idola.contest, lalu isi data si kecil."],
-          ["Bayar registrasi", "Transfer Rp20.000 dan konfirmasi ke admin."],
+          ["Bayar registrasi", `Transfer ${rupiah(fee)} dan konfirmasi ke admin.`],
           ["Kirim karya", "Gunakan kode registrasi untuk mengirim karya."],
           ["Jadi finalis", "Karya direview, dipublikasikan, lalu dinilai."],
         ].map(([title, text], i) => (

@@ -8,9 +8,11 @@ import {
   recentRegistrations,
 } from "@/lib/data";
 import { formatDate, seasonPhase, themeFor } from "@/lib/season";
+import { resolveContent, rupiah } from "@/lib/contest-modes";
 import { RecentTicker } from "@/components/recent-ticker";
 import { Countdown } from "@/components/countdown";
 import { Faq, Fees } from "@/components/shared";
+import { NationalHome } from "@/components/national-home";
 import {
   FeatureStrip,
   CompetitionCards,
@@ -36,12 +38,25 @@ export default async function Home() {
     gallery(),
     recentRegistrations(),
   ]);
+  const content = resolveContent(season);
+  const finalists = works
+    .slice(0, 3)
+    .map((w) => ({ ...w, image: publicImage(w.public_file_path) }));
+  if (content.mode === "national")
+    return (
+      <NationalHome
+        season={season}
+        content={content}
+        works={finalists}
+        recent={recent}
+      />
+    );
   const theme = themeFor(season?.theme_key);
   const themeTitle = season?.theme_title || "Cita Citaku";
   const phase = seasonPhase(season);
   return (
     <>
-      <RecentTicker items={recent} />
+      <RecentTicker items={recent} fee={content.registration_fee} />
       <section className="hero kids-hero">
         <div className="hero-white-shape" aria-hidden="true" />
         <CloudDecoration className="hero-cloud-one" />
@@ -111,7 +126,9 @@ export default async function Home() {
                           ? `Pengumuman juara ${formatDate(season.announcement_at)}`
                           : `Pendaftaran ${formatDate(season.registration_open_at)} – ${formatDate(season.registration_close_at)}`
                     : "Season baru segera dibuka"}
-                  <small>Registrasi Rp20.000 · Tema {themeTitle}</small>
+                  <small>
+                    Registrasi {rupiah(content.registration_fee)} · Tema {themeTitle}
+                  </small>
                 </span>
               </div>
             )}
@@ -161,17 +178,12 @@ export default async function Home() {
         </div>
       </section>
       <FeatureStrip />
-      <CompetitionCards themeTitle={themeTitle} />
+      <CompetitionCards themeTitle={themeTitle} fee={content.registration_fee} />
       <PersonalizedWorksheetSection themeTitle={themeTitle} />
-      <PrizeSection />
+      <PrizeSection claimFee={content.claim_fee} />
       <CompetitionTimeline season={season} />
-      <RegistrationSteps />
-      <HomeFinalists
-        seasonName={season?.name || "season ini"}
-        works={works
-          .slice(0, 3)
-          .map((w) => ({ ...w, image: publicImage(w.public_file_path) }))}
-      />
+      <RegistrationSteps fee={content.registration_fee} />
+      <HomeFinalists seasonName={season?.name || "season ini"} works={finalists} />
       <section className="section wrap info-section">
         <div className="grid2">
           <div className="info-card">
@@ -186,7 +198,7 @@ export default async function Home() {
               Lihat kriteria penilaian <ArrowRight size={17} />
             </Link>
           </div>
-          <Fees />
+          <Fees content={content} />
         </div>
       </section>
       <section className="section wrap faq-section">
@@ -200,7 +212,7 @@ export default async function Home() {
           description="Semua yang perlu Ayah dan Bunda ketahui sebelum mendaftar."
         />
         <div className="faq-panel">
-          <Faq season={season} />
+          <Faq season={season} content={content} />
         </div>
       </section>
       <FinalCallToAction />

@@ -1,13 +1,17 @@
 import { Palette, Camera, Sparkles } from "lucide-react";
+import { rupiah } from "@/lib/contest-modes";
 export function RecentTicker({
   items,
+  fee = 20000,
 }: {
   items: { public_name: string; competition_type: string }[];
+  fee?: number;
 }) {
   const source = items.length
     ? items
     : [{ public_name: "", competition_type: "info" }];
   const repeated = [...source, ...source];
+  const amount = rupiah(fee);
   return (
     <aside className="recent-ticker" aria-label="Registrasi terbaru">
       <span className="ticker-label">
@@ -20,7 +24,7 @@ export function RecentTicker({
               {item.competition_type === "info" ? (
                 <>
                   <Sparkles /> Pendaftaran Idola Contest sedang dibuka · biaya
-                  registrasi Rp20.000
+                  registrasi {amount}
                 </>
               ) : (
                 <>
@@ -29,7 +33,7 @@ export function RecentTicker({
                   ) : (
                     <Camera />
                   )}
-                  <b>{item.public_name}</b> telah registrasi Rp20.000 pada lomba{" "}
+                  <b>{item.public_name}</b> telah registrasi {amount} pada lomba{" "}
                   {item.competition_type === "coloring"
                     ? "mewarnai"
                     : "fotogenik"}

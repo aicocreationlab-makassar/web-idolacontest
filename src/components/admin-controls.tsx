@@ -47,6 +47,7 @@ export function AdminControl({
   compact = false,
   label,
   successMessage,
+  awardOptions = awards,
 }: {
   action: Control;
   id: string;
@@ -56,6 +57,7 @@ export function AdminControl({
   compact?: boolean;
   label?: string;
   successMessage?: string;
+  awardOptions?: string[];
 }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -99,10 +101,10 @@ export function AdminControl({
                 award: "Penghargaan ditetapkan.",
                 result_publish: published
                   ? "Hasil disembunyikan dari publik."
-                  : "Juara diumumkan dan invoice klaim diterbitkan otomatis.",
+                  : "Juara diumumkan; langkah klaim/konfirmasi hadiah terbuka di Cek Status.",
                 publish_group: published
                   ? "Seluruh hasil kategori disembunyikan."
-                  : "Seluruh juara kategori diumumkan dan invoice klaim diterbitkan.",
+                  : "Seluruh juara kategori diumumkan; klaim/konfirmasi hadiah terbuka di Cek Status.",
                 invoice: "Invoice klaim diterbitkan.",
                 claim_paid: "Klaim hadiah ditandai lunas.",
                 claim_status: "Status klaim diperbarui.",
@@ -241,7 +243,7 @@ export function AdminControl({
           Penghargaan
           <select name="award" defaultValue={String(initial.award ?? "auto")}>
             <option value="auto">Otomatis (sesuai peringkat)</option>
-            {awards.map((a) => (
+            {awardOptions.map((a) => (
               <option key={a} value={a}>
                 {a}
               </option>
@@ -314,7 +316,7 @@ export function AdminControl({
             {
               publish: "Publikasikan karya",
               unpublish: "Tarik publikasi",
-              invoice: "Terbitkan invoice Rp120.000",
+              invoice: "Terbitkan invoice klaim",
               claim_paid: "Tandai klaim lunas",
               claim_status: "Simpan status klaim",
               result_publish: published ? "Sembunyikan hasil" : "Umumkan juara",

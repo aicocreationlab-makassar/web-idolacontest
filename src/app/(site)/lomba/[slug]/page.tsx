@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { categories, criteria, weights } from "@/lib/business-rules";
+import { categoryAgeText, resolveContent } from "@/lib/contest-modes";
 import { Fees, PageHeading } from "@/components/shared";
 import { ToyArt } from "@/components/decorations";
 import { getActiveSeason } from "@/lib/data";
@@ -13,12 +14,19 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const season = await getActiveSeason();
+  const content = resolveContent(season);
   const theme = season?.theme_title || "Cita Citaku";
   const coloring = slug === "mewarnai";
   const name = coloring ? "Mewarnai" : "Fotogenik";
-  const description = coloring
-    ? `Lomba mewarnai online anak Indonesia untuk PAUD, TK, dan SD dengan worksheet personal bertema ${theme}.`
-    : `Lomba fotogenik online anak Indonesia bertema ${theme} untuk Preschool, PAUD, TK, dan SD.`;
+  const nationalCategories = content.categories
+    .map((c) => `${c.label} (${categoryAgeText(c)})`)
+    .join(" dan ");
+  const description =
+    content.mode === "national"
+      ? `Lomba ${name.toLowerCase()} online anak Indonesia bertema ${theme} untuk kategori ${nationalCategories}. Hadiah uang tunai, piala, dan sertifikat.`
+      : coloring
+        ? `Lomba mewarnai online anak Indonesia untuk PAUD, TK, dan SD dengan worksheet personal bertema ${theme}.`
+        : `Lomba fotogenik online anak Indonesia bertema ${theme} untuk Preschool, PAUD, TK, dan SD.`;
   return {
     title: `Lomba ${name} Online Anak Indonesia`,
     description,
@@ -40,6 +48,7 @@ export default async function Page({
   if (!["fotogenik", "mewarnai"].includes(slug)) notFound();
   const coloring = slug === "mewarnai";
   const season = await getActiveSeason();
+  const content = resolveContent(season);
   const theme = season?.theme_title || "Cita Citaku";
   return (
     <div className="wrap section">
@@ -68,10 +77,14 @@ export default async function Page({
           </h2>
           <p>
             Kategori:{" "}
-            {Object.entries(categories)
-              .filter(([key]) => !coloring || key !== "preschool")
-              .map(([, v]) => v)
-              .join(", ")}
+            {content.mode === "national"
+              ? content.categories
+                  .map((c) => `${c.label} (${categoryAgeText(c)})`)
+                  .join(", ")
+              : Object.entries(categories)
+                  .filter(([key]) => !coloring || key !== "preschool")
+                  .map(([, v]) => v)
+                  .join(", ")}
             .
           </p>
           {coloring && (
@@ -113,7 +126,7 @@ export default async function Page({
               karakteristik wajah oleh AI.
             </p>
           </div>
-          <Fees />
+          <Fees content={content} />
         </div>
       </div>
     </div>

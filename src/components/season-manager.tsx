@@ -2,7 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Palette, Plus, Power, Trash2, Pencil, X, EyeOff, Flag } from "lucide-react";
+import {
+  CalendarDays,
+  Palette,
+  Plus,
+  Power,
+  Trash2,
+  Pencil,
+  X,
+  EyeOff,
+  Flag,
+  LayoutTemplate,
+  SlidersHorizontal,
+} from "lucide-react";
 import {
   themes,
   themeKeys,
@@ -13,8 +25,20 @@ import {
   seasonPhase,
   type Season,
 } from "@/lib/season";
+import {
+  contestModeInfo,
+  contestModes,
+  defaultContent,
+  defaultFees,
+  modeOf,
+  resolveContent,
+  rupiah,
+  type ContestMode,
+  type SeasonContent,
+} from "@/lib/contest-modes";
 import { showSuccess } from "@/lib/success-event";
 import { PurgeSeasonMedia } from "./admin-controls";
+import { SeasonContentEditor } from "./season-content-editor";
 
 type Draft = {
   name: string;
@@ -32,14 +56,29 @@ type Draft = {
   prize_preparation_start: string;
   prize_preparation_end: string;
   quota: string;
+  contest_mode: ContestMode;
+  registration_fee: string;
+  claim_fee: string;
+  content: SeasonContent;
 };
+
+type TextKey = Exclude<keyof Draft, "content" | "contest_mode">;
+
+function stripResolved(content: ReturnType<typeof resolveContent>): SeasonContent {
+  const { mode: _mode, registration_fee: _fee, claim_fee: _claim, quota: _quota, ...rest } = content;
+  void _mode;
+  void _fee;
+  void _claim;
+  void _quota;
+  return rest;
+}
 
 function draftFrom(season?: Season | null, nextSlug = "S2"): Draft {
   if (!season)
     return {
       name: `Season ${nextSlug.replace(/\D/g, "") || "baru"}`,
       slug: nextSlug,
-      theme_key: "sunset",
+      theme_key: "rainbow",
       theme_title: "",
       tagline: "",
       description: "",
@@ -52,7 +91,12 @@ function draftFrom(season?: Season | null, nextSlug = "S2"): Draft {
       prize_preparation_start: "",
       prize_preparation_end: "",
       quota: "",
+      contest_mode: "national",
+      registration_fee: String(defaultFees.national.registration),
+      claim_fee: String(defaultFees.national.claim),
+      content: defaultContent.national,
     };
+  const resolved = resolveContent(season);
   return {
     name: season.name,
     slug: season.slug,
@@ -69,6 +113,10 @@ function draftFrom(season?: Season | null, nextSlug = "S2"): Draft {
     prize_preparation_start: season.prize_preparation_start || "",
     prize_preparation_end: season.prize_preparation_end || "",
     quota: season.quota ? String(season.quota) : "",
+    contest_mode: resolved.mode,
+    registration_fee: String(resolved.registration_fee),
+    claim_fee: String(resolved.claim_fee),
+    content: stripResolved(resolved),
   };
 }
 
@@ -83,7 +131,7 @@ async function call(body: Record<string, unknown>) {
   return result;
 }
 
-const dateFields: Array<[keyof Draft, string, string]> = [
+const dateFields: Array<[TextKey, string, string]> = [
   ["registration_open_at", "Pendaftaran dibuka", "Form daftar terbuka mulai waktu ini."],
   ["registration_close_at", "Pendaftaran ditutup", "Setelah ini form daftar tertutup."],
   ["submission_global_close_at", "Batas akhir kirim karya", "Batas global; tiap peserta juga punya batas 7 hari."],
@@ -157,6 +205,8 @@ export function SeasonManager({
                 id: editingSeason?.id ?? null,
                 data: {
                   ...draft,
+                  registration_fee: Number(draft.registration_fee) || 0,
+                  claim_fee: Number(draft.claim_fee) || 0,
                   registration_open_at: fromWibInput(draft.registration_open_at),
                   registration_close_at: fromWibInput(draft.registration_close_at),
                   submission_global_close_at: fromWibInput(draft.submission_global_close_at),
@@ -166,7 +216,7 @@ export function SeasonManager({
                 },
               },
               editingSeason
-                ? "Season, tema, dan timeline tersimpan."
+                ? "Season, mode kontes, tema, konten, dan timeline tersimpan."
                 : "Season baru dibuat. Aktifkan saat siap dimulai.",
             )
           }
@@ -175,6 +225,8 @@ export function SeasonManager({
       <div className="season-list">
         {seasons.map((season) => {
           const theme = themeFor(season.theme_key);
+          const content = resolveContent(season);
+          const mode = modeOf(season);
           return (
             <article
               className={`card stack season-card${season.is_active ? " active" : ""}`}
@@ -196,6 +248,11 @@ export function SeasonManager({
                   </h3>
                   <p className="muted">
                     Tema <b>{season.theme_title}</b> · tampilan {theme.name}
+                  </p>
+                  <p className="muted text-sm">
+                    {contestModeInfo[mode].emoji} {contestModeInfo[mode].label} · registrasi{" "}
+                    {rupiah(content.registration_fee)} ·{" "}
+                    {content.claim_fee === 0 ? "hadiah gratis tanpa penebusan" : `klaim ${rupiah(content.claim_fee)}`}
                   </p>
                 </div>
                 <span className={`admin-status ${season.is_active ? "status-approved" : ""}`}>
@@ -240,7 +297,7 @@ export function SeasonManager({
                     setMessage("");
                   }}
                 >
-                  <Pencil /> Ubah tema & timeline
+                  <Pencil /> Ubah mode, tema, konten & timeline
                 </button>
                 {!season.is_active && (
                   <button
@@ -250,13 +307,13 @@ export function SeasonManager({
                     onClick={() => {
                       if (
                         window.confirm(
-                          `Aktifkan ${season.name}? Website publik akan berganti tema ke "${theme.name}" dan jadwal baru. Season sebelumnya dinonaktifkan.`,
+                          `Aktifkan ${season.name}? Website publik akan berganti ke ${contestModeInfo[mode].label}, tema "${theme.name}", biaya registrasi ${rupiah(content.registration_fee)}, dan jadwal baru. Season sebelumnya dinonaktifkan.`,
                         )
                       )
                         run(
                           season.id,
                           { action: "activate", id: season.id },
-                          `${season.name} aktif. Website kini memakai tema ${theme.name}.`,
+                          `${season.name} aktif. Website kini memakai ${contestModeInfo[mode].label} dengan tema ${theme.name}.`,
                         );
                     }}
                   >
@@ -342,9 +399,25 @@ function SeasonForm({
   onSubmit: (draft: Draft) => void;
 }) {
   const [draft, setDraft] = useState<Draft>(initial);
-  const set = (key: keyof Draft, value: string) =>
+  const set = (key: TextKey, value: string) =>
     setDraft((old) => ({ ...old, [key]: value }));
   const theme = themeFor(draft.theme_key);
+  function switchMode(mode: ContestMode) {
+    if (mode === draft.contest_mode) return;
+    if (
+      !window.confirm(
+        `Ganti ke ${contestModeInfo[mode].label}? Konten website dan biaya akan diisi ulang dengan bawaan mode ini (bisa diedit lagi di bawah).`,
+      )
+    )
+      return;
+    setDraft((old) => ({
+      ...old,
+      contest_mode: mode,
+      registration_fee: String(defaultFees[mode].registration),
+      claim_fee: String(defaultFees[mode].claim),
+      content: defaultContent[mode],
+    }));
+  }
   return (
     <form
       className="card stack season-form"
@@ -385,12 +458,12 @@ function SeasonForm({
             maxLength={80}
             value={draft.theme_title}
             onChange={(e) => set("theme_title", e.target.value)}
-            placeholder="Contoh: Pahlawanku, Alam Indonesia"
+            placeholder="Contoh: Bebas, Pahlawanku, Alam Indonesia"
           />
         </label>
         <label className="field">
           Tagline (opsional)
-          <input maxLength={160} value={draft.tagline} onChange={(e) => set("tagline", e.target.value)} placeholder="Jadi pahlawan kecil hari ini" />
+          <input maxLength={160} value={draft.tagline} onChange={(e) => set("tagline", e.target.value)} placeholder="Lomba Anak Nasional Online" />
         </label>
       </div>
       <label className="field">
@@ -398,13 +471,65 @@ function SeasonForm({
         <textarea maxLength={600} value={draft.description} onChange={(e) => set("description", e.target.value)} />
       </label>
 
+      <fieldset className="mode-picker">
+        <legend>
+          <LayoutTemplate /> Mode kontes
+        </legend>
+        <p className="muted text-sm">
+          Mode menentukan kategori peserta, biaya, nama juara otomatis, dan tata letak
+          website publik. Mode 1 adalah tampilan Season 1; Mode 2 mengikuti poster
+          Lomba Anak Nasional Online.
+        </p>
+        <div className="mode-options">
+          {contestModes.map((mode) => (
+            <label
+              key={mode}
+              className={`mode-option${draft.contest_mode === mode ? " selected" : ""}`}
+            >
+              <input
+                type="radio"
+                name="contest_mode"
+                value={mode}
+                checked={draft.contest_mode === mode}
+                onChange={() => switchMode(mode)}
+              />
+              <span className="mode-option-emoji" aria-hidden="true">
+                {contestModeInfo[mode].emoji}
+              </span>
+              <b>{contestModeInfo[mode].label}</b>
+              <small>{contestModeInfo[mode].description}</small>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset className="content-fields">
+        <legend>
+          <SlidersHorizontal /> Konten website mode ini
+        </legend>
+        <p className="muted text-sm">
+          Semua teks, kategori, hadiah, biaya, dan rekening di bawah tampil di website
+          publik saat season ini aktif. Ubah sesuai kebutuhan, lalu simpan.
+        </p>
+        <SeasonContentEditor
+          mode={draft.contest_mode}
+          content={draft.content}
+          registrationFee={draft.registration_fee}
+          claimFee={draft.claim_fee}
+          onContent={(content) => setDraft((old) => ({ ...old, content }))}
+          onFee={(key, value) => setDraft((old) => ({ ...old, [key]: value }))}
+        />
+      </fieldset>
+
       <fieldset className="theme-picker">
         <legend>
           <Palette /> Tampilan website season ini
         </legend>
         <p className="muted text-sm">
           Setiap season wajib tampil berbeda. Pilih gaya warna; header, hero, tombol,
-          dan dekorasi website publik akan mengikuti saat season diaktifkan.
+          dan dekorasi website publik akan mengikuti saat season diaktifkan. Tema
+          Pelangi Ceria, Permen Karet, Pesta Balon, Matahari Ceria, Karnaval, dan
+          Unicorn mengikuti gaya 3D ceria poster.
         </p>
         <div className="theme-options">
           {themeKeys.map((key) => {

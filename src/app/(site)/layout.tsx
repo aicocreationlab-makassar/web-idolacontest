@@ -6,13 +6,18 @@ import { BackgroundAudio } from "@/components/background-audio";
 import { NavigationEffects } from "@/components/navigation-effects";
 import { getActiveSeason } from "@/lib/data";
 import { themeFor } from "@/lib/season";
+import { categoryAgeText, resolveContent } from "@/lib/contest-modes";
 
 const site = process.env.NEXT_PUBLIC_SITE_URL || "https://idolacontest.my.id";
 
 export async function generateMetadata(): Promise<Metadata> {
   const season = await getActiveSeason();
+  const content = resolveContent(season);
   const theme = season?.theme_title || "Cita Citaku";
-  const description = `Lomba online anak Indonesia untuk fotogenik dan mewarnai. Ikuti Idola Contest ${season?.name || ""} bertema ${theme}, tampilkan kreativitas dan kepercayaan diri si kecil.`;
+  const description =
+    content.mode === "national"
+      ? `${content.hero_title}: lomba fotogenik dan mewarnai online untuk anak Indonesia kategori ${content.categories.map((c) => `${c.label} ${categoryAgeText(c)}`).join(" dan ")}. Ikuti Idola Contest ${season?.name || ""} bertema ${theme}, hadiah uang tunai, piala, dan sertifikat.`
+      : `Lomba online anak Indonesia untuk fotogenik dan mewarnai. Ikuti Idola Contest ${season?.name || ""} bertema ${theme}, tampilkan kreativitas dan kepercayaan diri si kecil.`;
   return {
     title: {
       default: "Idola Contest — Saatnya Si Kecil Menjadi Idola!",
@@ -28,6 +33,8 @@ export async function generateMetadata(): Promise<Metadata> {
       `kompetisi anak ${new Date().getFullYear()}`,
       "Idola Contest",
       "lomba PAUD TK SD",
+      "lomba anak nasional online",
+      "lomba bayi dan anak",
     ],
     alternates: { canonical: site },
     robots: {
@@ -78,6 +85,7 @@ export default async function SiteLayout({
   children: React.ReactNode;
 }) {
   const season = await getActiveSeason();
+  const content = resolveContent(season);
   const theme = season?.theme_title || "Cita Citaku";
   return (
     <>
@@ -117,7 +125,7 @@ export default async function SiteLayout({
                 organizer: { "@id": `${site}/#organization` },
                 offers: {
                   "@type": "Offer",
-                  price: "20000",
+                  price: String(content.registration_fee),
                   priceCurrency: "IDR",
                   availability: "https://schema.org/InStock",
                   url: `${site}/daftar`,

@@ -7,7 +7,9 @@ test("Homepage, mobile fit, navigation and manifest", async ({
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: /Saatnya.*Si Kecil.*Menjadi.*Idola!/ }),
+    page.getByRole("heading", {
+      name: /Saatnya.*Si Kecil.*Menjadi.*Idola!|Lomba Anak Nasional Online/,
+    }),
   ).toBeVisible();
   expect(
     await page.evaluate(
@@ -27,7 +29,7 @@ test("Homepage, mobile fit, navigation and manifest", async ({
   await expect(
     page.getByRole("button", { name: /Matikan musik|Nyalakan musik/ }),
   ).toBeVisible();
-  await expect(page.getByText("Rp120.000").first()).toBeVisible();
+  await expect(page.getByText(/Rp\d{2,3}\.000/).first()).toBeVisible();
   await page.getByRole("link", { name: "Lihat Finalis" }).click();
   await expect(
     page.getByRole("heading", { name: "Mimpi mereka, inspirasi kita." }),
@@ -338,8 +340,8 @@ test("Five-step registration confirms payment before sending", async ({
   await page.goto("/daftar");
   await page.getByLabel("Nama lengkap anak").fill("Anak Uji");
   await page.getByLabel("Nama publik / nama panggilan").fill("Bintang Uji");
-  await page.getByLabel("Usia (tahun)").fill("7");
-  await page.getByLabel("Nama sekolah / belum sekolah").fill("SD Uji");
+  await page.locator('input[name="age"]').fill("7");
+  await page.locator('input[name="school_name"]').fill("SD Uji");
   await page.getByLabel("Cita-cita anak").fill("Dokter");
   await page.getByRole("button", { name: /Lanjutkan/ }).click();
   await expect(

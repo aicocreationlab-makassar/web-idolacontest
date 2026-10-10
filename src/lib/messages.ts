@@ -1,5 +1,6 @@
-import { categories, competitions } from "./business-rules";
+import { categoryLabel, competitions } from "./business-rules";
 import { formatDate, formatDateTime } from "./season";
+import { rupiah } from "./contest-modes";
 
 /** Everything a personal DM needs. Private fields (address, WhatsApp) are never included. */
 export type MessageContext = {
@@ -25,6 +26,11 @@ export type MessageContext = {
   shipping_status?: string | null;
   announcement_at?: string | null;
   shipping_at?: string | null;
+  /** Season fees and payout details; defaults reproduce the Season 1 texts. */
+  registration_fee?: number | null;
+  claim_fee?: number | null;
+  bank?: string | null;
+  instagram?: string | null;
 };
 
 export type MessageStage =
@@ -64,7 +70,11 @@ export const stageLabels: Record<MessageStage, string> = {
 
 const SITE = "https://idolacontest.my.id";
 const STATUS_URL = `${SITE}/cek-status`;
-const BANK = "BSI 7341301558 a.n. Riswan Ramadhan";
+const DEFAULT_BANK = "BSI 7341301558 a.n. Riswan Ramadhan";
+const bankOf = (c: MessageContext) => c.bank || DEFAULT_BANK;
+const feeOf = (c: MessageContext) => rupiah(c.registration_fee ?? 20000);
+const claimOf = (c: MessageContext) => rupiah(c.claim_fee ?? 120000);
+const freeClaim = (c: MessageContext) => (c.claim_fee ?? 120000) === 0;
 
 /** Picks the most advanced stage that applies to the participant right now. */
 export function currentStage(c: MessageContext): MessageStage {
@@ -113,7 +123,7 @@ function greeting(c: MessageContext) {
 function competition(c: MessageContext) {
   const type =
     competitions[c.competition_type as keyof typeof competitions] || c.competition_type;
-  const level = categories[c.category as keyof typeof categories] || c.category;
+  const level = categoryLabel(c.category);
   return `Lomba ${type} · kategori ${level}`;
 }
 
@@ -130,9 +140,9 @@ export function composeMessage(stage: MessageStage, c: MessageContext): string {
   const deadline = c.deadline ? formatDateTime(c.deadline) : "sesuai jadwal season";
   switch (stage) {
     case "registered":
-      return `${greeting(c)}\n\nTerima kasih, pendaftaran ${c.public_name} di Idola Contest${season}${theme} sudah kami terima untuk ${competition(c)}. Selamat datang di panggung si kecil!\n\n${codeBlock(c)}\n\nLangkah selanjutnya:\n1. Transfer biaya registrasi Rp20.000 ke ${BANK}.\n2. Kirim bukti transfer ke DM ini.\n3. Setelah kami verifikasi, status di Cek Status berubah menjadi "Sudah dibayar" dan ${c.public_name} resmi menjadi peserta.\n\nSimpan kode ini baik-baik ya, Mommy, dan jangan dibagikan ke orang lain.\n\n${closing}`;
+      return `${greeting(c)}\n\nTerima kasih, pendaftaran ${c.public_name} di Idola Contest${season}${theme} sudah kami terima untuk ${competition(c)}. Selamat datang di panggung si kecil!\n\n${codeBlock(c)}\n\nLangkah selanjutnya:\n1. Transfer biaya registrasi ${feeOf(c)} ke ${bankOf(c)}.\n2. Kirim bukti transfer ke DM ini.\n3. Setelah kami verifikasi, status di Cek Status berubah menjadi "Sudah dibayar" dan ${c.public_name} resmi menjadi peserta.\n\nSimpan kode ini baik-baik ya, Mommy, dan jangan dibagikan ke orang lain.\n\n${closing}`;
     case "payment_reminder":
-      return `${greeting(c)}\n\nKami ingin mengingatkan dengan lembut bahwa pendaftaran ${c.public_name} untuk ${competition(c)} masih menunggu pembayaran registrasi Rp20.000.\n\nTransfer ke ${BANK}, lalu kirim bukti transfernya ke DM ini agar kami bisa segera memverifikasi.\n\nKode registrasi: ${c.registration_code}\nCek status: ${STATUS_URL}\n\nKami tidak sabar melihat karya si kecil bersinar 💛\n\n${closing}`;
+      return `${greeting(c)}\n\nKami ingin mengingatkan dengan lembut bahwa pendaftaran ${c.public_name} untuk ${competition(c)} masih menunggu pembayaran registrasi ${feeOf(c)}.\n\nTransfer ke ${bankOf(c)}, lalu kirim bukti transfernya ke DM ini agar kami bisa segera memverifikasi.\n\nKode registrasi: ${c.registration_code}\nCek status: ${STATUS_URL}\n\nKami tidak sabar melihat karya si kecil bersinar 💛\n\n${closing}`;
     case "payment_verified":
       return `${greeting(c)}\n\nKabar baik! Pembayaran registrasi ${c.public_name} sudah kami verifikasi. ${c.public_name} kini resmi menjadi peserta ${competition(c)} di Idola Contest${season} 🎉\n\nKode registrasi: ${c.registration_code}\nCek status: ${STATUS_URL}\n\nLangkah selanjutnya: ${c.competition_type === "coloring" ? `tim kami sedang menyiapkan worksheet personal ${c.public_name} dari foto dan cita-citanya. Begitu siap, Mommy bisa mengunduhnya lewat Cek Status, cetak di kertas A4, lalu si kecil mewarnai.` : `siapkan foto terbaik ${c.public_name}${theme}, lalu unggah lewat halaman Cek Status.`}\n\nBatas kirim karya: ${deadline}.\n\n${closing}`;
     case "worksheet_ready":
@@ -148,10 +158,14 @@ export function composeMessage(stage: MessageStage, c: MessageContext): string {
     case "work_published":
       return `${greeting(c)}\n\nSelamat! Karya ${c.public_name} sudah lolos pemeriksaan dan kini tampil di Galeri Finalis Idola Contest${season} ✨\n\nLihat kartu finalisnya di ${SITE}/galeri dan boleh dibagikan ke keluarga. Tahap berikutnya adalah penilaian dewan juri${c.announcement_at ? `, dengan pengumuman juara pada ${formatDate(c.announcement_at)}` : ""}.\n\nKode registrasi: ${c.registration_code}\nCek status: ${STATUS_URL}\n\n${closing}`;
     case "winner_announced":
-      return `${greeting(c)}\n\nSELAMAT! 🏆 ${c.public_name} meraih ${c.award_code || "penghargaan"} pada ${competition(c)} Idola Contest${season}${c.rank_position ? ` (peringkat ${c.rank_position} di kategorinya)` : ""}.\n\nKami bangga sekali dengan keberanian dan kreativitas si kecil. Nama ${c.public_name} kini tampil di halaman pemenang: ${SITE}/hasil\n\nLangkah selanjutnya: klaim paket penghargaan (piala, medali, piagam, dan plakat) dengan biaya Rp120.000 sudah termasuk ongkir ke seluruh Indonesia. Invoice klaim bisa dilihat di ${STATUS_URL} dengan kode ${c.registration_code}.\n\n${closing}`;
+      return `${greeting(c)}\n\nSELAMAT! 🏆 ${c.public_name} meraih ${c.award_code || "penghargaan"} pada ${competition(c)} Idola Contest${season}${c.rank_position ? ` (peringkat ${c.rank_position} di kategorinya)` : ""}.\n\nKami bangga sekali dengan keberanian dan kreativitas si kecil. Nama ${c.public_name} kini tampil di halaman pemenang: ${SITE}/hasil\n\nLangkah selanjutnya: ${freeClaim(c) ? `semua hadiah GRATIS tanpa penebusan. Mohon buka ${STATUS_URL} dengan kode ${c.registration_code}, lalu isi konfirmasi alamat pengiriman dan rekening untuk transfer hadiah uang tunai agar hadiah bisa segera kami siapkan.` : `klaim paket penghargaan (piala, medali, piagam, dan plakat) dengan biaya ${claimOf(c)} sudah termasuk ongkir ke seluruh Indonesia. Invoice klaim bisa dilihat di ${STATUS_URL} dengan kode ${c.registration_code}.`}\n\n${closing}`;
     case "claim_invoice":
-      return `${greeting(c)}\n\nInvoice klaim paket penghargaan ${c.public_name} (${c.award_code || "juara"}) sudah terbit:\n\nNomor invoice: ${c.invoice_number || "-"}\nJumlah: Rp120.000 (sudah termasuk ongkir seluruh Indonesia)\nTransfer ke: ${BANK}\n\nSetelah transfer, kirim bukti pembayaran ke DM ini. Begitu kami verifikasi, paket penghargaan langsung kami siapkan${c.shipping_at ? ` dan dikirim mulai ${formatDate(c.shipping_at)}` : ""}.\n\nCek status: ${STATUS_URL} (kode ${c.registration_code})\n\n${closing}`;
+      if (freeClaim(c))
+        return `${greeting(c)}\n\nHadiah ${c.award_code || "juara"} untuk ${c.public_name} sudah siap dikonfirmasi, dan semuanya GRATIS tanpa penebusan 🎁\n\nMohon bantuannya, Mommy:\n1. Buka ${STATUS_URL} dan masukkan kode ${c.registration_code}.\n2. Pada bagian "Konfirmasi hadiah", pastikan alamat pengiriman sudah benar.\n3. Isi nama bank, nomor rekening, dan nama pemilik rekening untuk transfer hadiah uang tunai.\n\nBegitu konfirmasi kami terima, piala dan sertifikat langsung kami siapkan${c.shipping_at ? ` dan dikirim mulai ${formatDate(c.shipping_at)}` : ""}.\n\n${closing}`;
+      return `${greeting(c)}\n\nInvoice klaim paket penghargaan ${c.public_name} (${c.award_code || "juara"}) sudah terbit:\n\nNomor invoice: ${c.invoice_number || "-"}\nJumlah: ${claimOf(c)} (sudah termasuk ongkir seluruh Indonesia)\nTransfer ke: ${bankOf(c)}\n\nSetelah transfer, kirim bukti pembayaran ke DM ini. Begitu kami verifikasi, paket penghargaan langsung kami siapkan${c.shipping_at ? ` dan dikirim mulai ${formatDate(c.shipping_at)}` : ""}.\n\nCek status: ${STATUS_URL} (kode ${c.registration_code})\n\n${closing}`;
     case "claim_paid":
+      if (freeClaim(c))
+        return `${greeting(c)}\n\nTerima kasih, konfirmasi alamat dan rekening hadiah ${c.public_name} sudah kami terima ✅\n\nHadiah ${c.award_code || "juara"} (uang tunai, piala, dan sertifikat) sedang kami siapkan dengan penuh kehati-hatian. Uang tunai ditransfer ke rekening yang Mommy konfirmasi, dan nomor resi paket akan muncul di ${STATUS_URL} (kode ${c.registration_code}) begitu dikirim.\n\n${closing}`;
       return `${greeting(c)}\n\nTerima kasih, pembayaran klaim paket penghargaan ${c.public_name} sudah kami terima dan terverifikasi ✅\n\nPaket ${c.award_code || "penghargaan"} sedang kami siapkan dengan penuh kehati-hatian. Nomor resi akan muncul di ${STATUS_URL} (kode ${c.registration_code}) begitu paket dikirim, dan kami juga akan mengabari Mommy di sini.\n\n${closing}`;
     case "shipped":
       return `${greeting(c)}\n\nPaket penghargaan ${c.public_name} sudah dikirim 📦\n\nKurir: ${c.courier || "-"}\nNomor resi: ${c.tracking_number || "-"}\n\nMommy bisa melacak paket melalui situs/aplikasi kurir dengan nomor resi di atas, atau lewat ${STATUS_URL} (kode ${c.registration_code}). Mohon pastikan ada yang menerima paket di alamat pengiriman ya.\n\n${closing}`;
