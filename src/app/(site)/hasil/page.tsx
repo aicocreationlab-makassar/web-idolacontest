@@ -25,7 +25,14 @@ type Row = {
   image: string | null;
 };
 
-type SeasonTab = { id: string; name: string; contest_mode?: string | null };
+type SeasonTab = {
+  id: string;
+  name: string;
+  contest_mode?: string | null;
+  registration_fee?: number | null;
+  claim_fee?: number | null;
+  content?: Record<string, unknown> | null;
+};
 
 const specialAwards = ["Juara Umum", "Best Social Media"];
 
@@ -50,7 +57,7 @@ async function loadRows(requested?: string) {
       ? ((
           await service()
             .from("seasons")
-            .select("id,name,slug,created_at,contest_mode")
+            .select("id,name,slug,created_at,contest_mode,registration_fee,claim_fee,content")
             .in("id", seasonIds)
             .order("created_at", { ascending: false })
         ).data ?? [])
@@ -145,7 +152,8 @@ export default async function Page({
   // In the national mode "Juara Umum" is the rank-2 award of each category, not a special award.
   const isSpecial = (row: Row) =>
     specialAwards.includes(row.award_code) && selected?.contest_mode !== "national";
-  const content = resolveContent(activeSeason);
+  // Fees and claim wording follow the season whose winners are on screen.
+  const content = resolveContent(selected ?? activeSeason);
   const groups = new Map<string, Row[]>();
   for (const row of rows) {
     if (isSpecial(row)) continue;
