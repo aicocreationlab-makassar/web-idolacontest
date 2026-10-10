@@ -49,6 +49,7 @@ export type ThemePreset = {
   accent: string;
   accentTwo: string;
   soft: string;
+  /** Names of 3D icons (see components/toy-icon.tsx). */
   motifs: string[];
   sticker: string;
 };
@@ -68,7 +69,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#f55ca9",
     accentTwo: "#ffcf36",
     soft: "#e9f7ff",
-    motifs: ["☁️", "⭐", "🌈", "🎈"],
+    motifs: ["cloud", "star", "rainbow", "balloon"],
     sticker: "Mimpi kecil, potensi besar!",
   },
   sunset: {
@@ -81,7 +82,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#e5438f",
     accentTwo: "#ffd166",
     soft: "#fff1e6",
-    motifs: ["🌅", "🌻", "🦋", "🪁"],
+    motifs: ["sun", "flower", "butterfly", "kite"],
     sticker: "Bersinar seperti senja!",
   },
   jungle: {
@@ -94,7 +95,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#ff8a3d",
     accentTwo: "#ffe34d",
     soft: "#e9f9ef",
-    motifs: ["🌿", "🦁", "🐒", "🌺"],
+    motifs: ["leaf", "lion", "monkey", "hibiscus"],
     sticker: "Berani jelajahi mimpi!",
   },
   candy: {
@@ -107,7 +108,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#ff5fa8",
     accentTwo: "#8af0c8",
     soft: "#f4ecff",
-    motifs: ["🍭", "🍬", "🧁", "🦄"],
+    motifs: ["lollipop", "candy", "cupcake", "unicorn"],
     sticker: "Semanis senyum si kecil!",
   },
   ocean: {
@@ -120,7 +121,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#ff7b54",
     accentTwo: "#ffd66b",
     soft: "#e6fafb",
-    motifs: ["🐠", "🌊", "🐚", "⛵"],
+    motifs: ["fish", "wave", "shell", "boat"],
     sticker: "Selami lautan kreativitas!",
   },
   galaxy: {
@@ -133,7 +134,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#ff6ad5",
     accentTwo: "#ffe066",
     soft: "#eeedff",
-    motifs: ["🚀", "🪐", "🌟", "👩‍🚀"],
+    motifs: ["rocket", "planet", "sparkle", "moon"],
     sticker: "Terbang setinggi bintang!",
   },
   rainbow: {
@@ -146,7 +147,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#ff4fa3",
     accentTwo: "#ffd23f",
     soft: "#eaf3ff",
-    motifs: ["🌈", "🎈", "⭐", "🎉"],
+    motifs: ["rainbow", "balloon", "star", "party"],
     sticker: "Saatnya si kecil, menjadi idola!",
   },
   bubblegum: {
@@ -159,7 +160,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#8e4bff",
     accentTwo: "#ffe066",
     soft: "#fff0f7",
-    motifs: ["🍬", "🎀", "💖", "🫧"],
+    motifs: ["candy", "ribbon", "heart", "bubbles"],
     sticker: "Semanis senyum, seceria tawa!",
   },
   balloon: {
@@ -172,7 +173,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#ff4fa3",
     accentTwo: "#ffd23f",
     soft: "#f3ecff",
-    motifs: ["🎈", "🎊", "✨", "🎁"],
+    motifs: ["balloon", "party", "sparkles", "gift"],
     sticker: "Pestanya bintang kecil!",
   },
   sunshine: {
@@ -185,7 +186,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#ff5fa8",
     accentTwo: "#4fc3ff",
     soft: "#fff7e0",
-    motifs: ["☀️", "🌻", "🐥", "🍭"],
+    motifs: ["sun", "flower", "chick", "lollipop"],
     sticker: "Bersinar seterang matahari!",
   },
   carnival: {
@@ -198,7 +199,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#2f8cff",
     accentTwo: "#ffe14d",
     soft: "#fff1ea",
-    motifs: ["🎪", "🎠", "🎡", "🍿"],
+    motifs: ["tent", "ferris", "popcorn", "icecream"],
     sticker: "Karnaval bakat si kecil!",
   },
   unicorn: {
@@ -211,7 +212,7 @@ export const themes: Record<ThemeKey, ThemePreset> = {
     accent: "#ff7ad9",
     accentTwo: "#7ff0d2",
     soft: "#f6efff",
-    motifs: ["🦄", "🌈", "🧁", "⭐"],
+    motifs: ["unicorn", "rainbow", "cupcake", "star"],
     sticker: "Ajaib seperti mimpi si kecil!",
   },
 };

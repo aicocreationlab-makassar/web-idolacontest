@@ -9,6 +9,7 @@ import {
   type SeasonContent,
 } from "@/lib/contest-modes";
 import { allCategoryLabels } from "@/lib/business-rules";
+import { ToyIcon, toyIconNames } from "./toy-icon";
 
 const toneLabels: Record<(typeof prizeTones)[number], string> = {
   pink: "Pink",
@@ -142,8 +143,17 @@ export function SeasonContentEditor({
                 <input maxLength={60} value={category.label} onChange={(e) => set("categories", content.categories.map((item, j) => (j === i ? { ...item, label: e.target.value } : item)))} />
               </label>
               <label className="field">
-                Emoji
-                <input maxLength={8} value={category.emoji} onChange={(e) => set("categories", content.categories.map((item, j) => (j === i ? { ...item, emoji: e.target.value } : item)))} />
+                Ikon
+                <span className="icon-select">
+                  <ToyIcon name={category.icon || "star"} size={30} />
+                  <select value={category.icon || "star"} onChange={(e) => set("categories", content.categories.map((item, j) => (j === i ? { ...item, icon: e.target.value } : item)))}>
+                    {toyIconNames.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </span>
               </label>
               <label className="field">
                 Usia min (th)
@@ -179,7 +189,7 @@ export function SeasonContentEditor({
             onClick={() =>
               set("categories", [
                 ...content.categories,
-                { key: "kids", label: "Kategori baru", emoji: "⭐", age_min: 5, age_max: 13, months_allowed: false, note: "" },
+                { key: "kids", label: "Kategori baru", icon: "star", age_min: 5, age_max: 13, months_allowed: false, note: "" },
               ])
             }
           >
@@ -311,6 +321,53 @@ export function SeasonContentEditor({
               }
             />
           </label>
+        </div>
+      </details>
+
+      <details open={national}>
+        <summary>
+          <b>Brand ambassador / maskot</b>
+          <small>Foto, gelar, dan kalimat sapaan. Tampil di strip atas tiap halaman, bagian spotlight beranda, maskot pojok, loading, dan notifikasi.</small>
+        </summary>
+        <div className="stack">
+          {content.ambassadors.map((person, i) => (
+            <div className="content-editor-row ambassadors" key={i}>
+              <label className="field">
+                Nama
+                <input maxLength={60} value={person.name} onChange={(e) => set("ambassadors", content.ambassadors.map((item, j) => (j === i ? { ...item, name: e.target.value } : item)))} />
+              </label>
+              <label className="field">
+                Gelar / prestasi
+                <input maxLength={80} value={person.award} onChange={(e) => set("ambassadors", content.ambassadors.map((item, j) => (j === i ? { ...item, award: e.target.value } : item)))} />
+              </label>
+              <label className="field">
+                Kalimat sapaan
+                <input maxLength={140} value={person.tagline} onChange={(e) => set("ambassadors", content.ambassadors.map((item, j) => (j === i ? { ...item, tagline: e.target.value } : item)))} />
+              </label>
+              <label className="field">
+                Foto badan penuh (URL)
+                <input maxLength={200} value={person.image} onChange={(e) => set("ambassadors", content.ambassadors.map((item, j) => (j === i ? { ...item, image: e.target.value } : item)))} placeholder="/ambassadors/nama.webp" />
+              </label>
+              <label className="field">
+                Foto wajah / avatar (URL)
+                <input maxLength={200} value={person.avatar} onChange={(e) => set("ambassadors", content.ambassadors.map((item, j) => (j === i ? { ...item, avatar: e.target.value } : item)))} placeholder="/ambassadors/nama-avatar.webp" />
+              </label>
+              <button type="button" className="btn secondary danger-text" aria-label="Hapus ambassador" onClick={() => set("ambassadors", content.ambassadors.filter((_, j) => j !== i))}>
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="btn secondary self-start"
+            disabled={content.ambassadors.length >= 4}
+            onClick={() => set("ambassadors", [...content.ambassadors, { name: "Nama", award: "Juara Season 1", tagline: "Yuk ikut bareng aku!", image: "", avatar: "" }])}
+          >
+            <Plus size={16} /> Tambah ambassador
+          </button>
+          <p className="muted text-sm">
+            Kosongkan daftar ini jika season tidak memakai brand ambassador. Foto diunggah ke folder <code>public/ambassadors</code> (PNG/WebP transparan).
+          </p>
         </div>
       </details>
 

@@ -31,6 +31,9 @@ import {
   type ResolvedContent,
 } from "@/lib/contest-modes";
 import { RecentTicker } from "./recent-ticker";
+import { ToyIcon } from "./toy-icon";
+import { CashStack } from "./cash-stack";
+import { AmbassadorSpotlight } from "./ambassadors";
 import { Countdown } from "./countdown";
 import { Faq, Fees } from "./shared";
 import {
@@ -86,7 +89,7 @@ export function NationalHome({
         <div className="wrap hero-grid">
           <div className="hero-copy">
             <span className="pill season-pill">
-              <span aria-hidden>★</span> IDOLA CONTEST —{" "}
+              <ToyIcon name="star" size={22} /> IDOLA CONTEST —{" "}
               {season?.name.toUpperCase() || "SEASON BARU"}
             </span>
             <br />
@@ -121,7 +124,7 @@ export function NationalHome({
               )}
               {phase === "registration" && (
                 <span className="candy-pill" data-tone="yellow">
-                  ⏰{" "}
+                  <ToyIcon name="clock" size={22} />{" "}
                   {daysLeft <= 1
                     ? "Hari terakhir pendaftaran!"
                     : `Hanya ${daysLeft} hari lagi!`}
@@ -129,7 +132,7 @@ export function NationalHome({
               )}
               {(phase === "submission" || phase === "judging") && season && (
                 <span className="candy-pill" data-tone="yellow">
-                  🏆 Pengumuman {formatDate(season.announcement_at)}
+                  <ToyIcon name="trophy" size={22} /> Pengumuman {formatDate(season.announcement_at)}
                 </span>
               )}
             </div>
@@ -202,7 +205,7 @@ export function NationalHome({
             <div className="season-motifs" aria-hidden="true">
               {theme.motifs.map((motif, i) => (
                 <span className="season-motif" key={`${motif}-${i}`}>
-                  {motif}
+                  <ToyIcon name={motif} size={54} />
                 </span>
               ))}
             </div>
@@ -252,6 +255,12 @@ export function NationalHome({
         </div>
       </section>
 
+      <AmbassadorSpotlight
+        ambassadors={content.ambassadors}
+        seasonName={season?.name || "season ini"}
+        registrationOpen={phase === "registration" || phase === "idle"}
+      />
+
       <section className="section wrap" id="lomba">
         <div className="national-section-head">
           <span className="candy-banner" data-tone="purple">
@@ -269,9 +278,7 @@ export function NationalHome({
               data-tone={tones[i % tones.length]}
               key={category.key}
             >
-              <span className="category-emoji" aria-hidden="true">
-                {category.emoji || "⭐"}
-              </span>
+              <ToyIcon name={category.icon || "star"} size={84} className="category-icon" />
               <h3>{category.label}</h3>
               <span className="category-age">{categoryAgeText(category)}</span>
               {category.note && <small>{category.note}</small>}
@@ -328,9 +335,13 @@ export function NationalHome({
               key={`${prize.title}-${i}`}
             >
               <span className="candy-card-title">
-                {i === 0 ? "👑" : i === 1 ? "⭐" : i === 2 ? "🏆" : "💖"}{" "}
+                <ToyIcon
+                  name={i === 0 ? "crown" : i === 1 ? "star" : i === 2 ? "trophy" : "heart"}
+                  size={26}
+                />{" "}
                 {prize.title}
               </span>
+              <CashStack amount={prize.cash} />
               <span className="prize-cash">{rupiah(prize.cash)}</span>
               {prize.extras && <p className="prize-extras">{prize.extras}</p>}
             </article>

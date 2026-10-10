@@ -19,19 +19,19 @@ export const contestModes: ContestMode[] = ["classic", "national"];
 
 export const contestModeInfo: Record<
   ContestMode,
-  { label: string; short: string; description: string; emoji: string }
+  { label: string; short: string; description: string; icon: string }
 > = {
   classic: {
     label: "Mode 1 · Klasik",
     short: "Klasik",
-    emoji: "🎒",
+    icon: "backpack",
     description:
       "Kategori sekolah (Preschool–SD), registrasi Rp20.000, klaim paket penghargaan berbayar setelah pengumuman. Tampilan Season 1.",
   },
   national: {
     label: "Mode 2 · Nasional",
     short: "Nasional",
-    emoji: "🏆",
+    icon: "trophy",
     description:
       "Lomba Anak Nasional Online: kategori Baby & Kids, hadiah uang tunai + piala + sertifikat, semua gratis setelah menang. Tampilan poster ceria.",
   },
@@ -63,7 +63,8 @@ const short = (max: number) => z.string().trim().max(max);
 export const categoryContentSchema = z.object({
   key: z.enum(categoryKeys),
   label: short(60),
-  emoji: short(8),
+  /** Name of a 3D icon (components/toy-icon.tsx). */
+  icon: short(24),
   age_min: z.coerce.number().int().min(0).max(18),
   age_max: z.coerce.number().int().min(0).max(18),
   months_allowed: z.boolean(),
@@ -86,6 +87,15 @@ export const contestTypeContentSchema = z.object({
 });
 export type ContestTypeContent = z.infer<typeof contestTypeContentSchema>;
 
+export const ambassadorContentSchema = z.object({
+  name: short(60),
+  award: short(80),
+  tagline: short(140),
+  image: short(200),
+  avatar: short(200),
+});
+export type AmbassadorContent = z.infer<typeof ambassadorContentSchema>;
+
 export const contentSchema = z
   .object({
     hero_title: short(80),
@@ -107,6 +117,7 @@ export const contentSchema = z
     poster_src: short(200),
     poster_caption: short(160),
     dm_alert: short(220),
+    ambassadors: z.array(ambassadorContentSchema).max(4),
   })
   .partial();
 
@@ -130,7 +141,7 @@ export const defaultContent: Record<ContestMode, SeasonContent> = {
     ).map(([key, label], i) => ({
       key,
       label,
-      emoji: ["⭐", "🧩", "🎨", "📘", "✏️", "🏆"][i] ?? "⭐",
+      icon: ["star", "puzzle", "palette", "book", "pencil", "trophy"][i] ?? "star",
       age_min: 1,
       age_max: 18,
       months_allowed: true,
@@ -160,6 +171,7 @@ export const defaultContent: Record<ContestMode, SeasonContent> = {
     poster_caption: "",
     dm_alert:
       "Simpan bukti pendaftaran dan kirim bukti pembayaran melalui DM Instagram.",
+    ambassadors: [],
   },
   national: {
     hero_title: "Lomba Anak Nasional Online",
@@ -169,7 +181,7 @@ export const defaultContent: Record<ContestMode, SeasonContent> = {
       {
         key: "baby",
         label: "Baby",
-        emoji: "👶",
+        icon: "baby",
         age_min: 0,
         age_max: 4,
         months_allowed: true,
@@ -178,7 +190,7 @@ export const defaultContent: Record<ContestMode, SeasonContent> = {
       {
         key: "kids",
         label: "Kids",
-        emoji: "🧒",
+        icon: "kid",
         age_min: 5,
         age_max: 13,
         months_allowed: false,
@@ -218,6 +230,22 @@ export const defaultContent: Record<ContestMode, SeasonContent> = {
     poster_caption: "Poster resmi Idola Contest Season 2 · Lomba Anak Nasional Online",
     dm_alert:
       "Transfer biaya registrasi, lalu kirim bukti transfer dan nama peserta melalui DM Instagram. Pendaftaran baru diproses setelah bukti diterima.",
+    ambassadors: [
+      {
+        name: "Firas",
+        award: "Juara Utama 1 Lomba Mewarnai · Season 1",
+        tagline: "Aku sudah membuktikan, sekarang giliranmu!",
+        image: "/ambassadors/firas.webp",
+        avatar: "/ambassadors/firas-avatar.webp",
+      },
+      {
+        name: "Faqihah",
+        award: "Juara Harapan 1 Lomba Mewarnai · Season 1",
+        tagline: "Yuk, berkarya bareng aku di Season 2!",
+        image: "/ambassadors/faqihah.webp",
+        avatar: "/ambassadors/faqihah-avatar.webp",
+      },
+    ],
   },
 };
 

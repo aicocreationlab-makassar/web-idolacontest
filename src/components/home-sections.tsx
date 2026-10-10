@@ -13,7 +13,9 @@ import {
   Star,
   Truck,
   CheckCircle2,
+  Sparkle,
 } from "lucide-react";
+import { ToyIcon } from "./toy-icon";
 import { categories } from "@/lib/business-rules";
 import { rupiah } from "@/lib/contest-modes";
 import { formatDateTime, seasonTimeline, type Season } from "@/lib/season";
@@ -39,11 +41,11 @@ export function SectionHeading({
       <span className="eyebrow">{eyebrow}</span>
       <h2>
         <span className="heading-star" aria-hidden>
-          ✦
+          <Sparkle size={18} />
         </span>
         {title}
         <span className="heading-star" aria-hidden>
-          ✦
+          <Sparkle size={18} />
         </span>
       </h2>
       {description && <p className="muted">{description}</p>}
@@ -224,7 +226,7 @@ export function PersonalizedWorksheetSection({
         </div>
         <div className="worksheet-copy">
           <span className="pill glass-pill">
-            ✦ LEBIH PERSONAL, LEBIH ISTIMEWA
+            <Sparkle size={14} aria-hidden="true" /> LEBIH PERSONAL, LEBIH ISTIMEWA
           </span>
           <h2>
             Wajah si kecil.
@@ -301,7 +303,7 @@ export function PrizeSection({ claimFee = 120000 }: { claimFee?: number }) {
         ].map((r, i) => (
           <article key={r.name} className={`prize-card tone-${r.tone}`}>
             <span className="reward-shine" aria-hidden>
-              ✦
+              <Sparkle size={16} />
             </span>
             {r.kind === "trophy" || r.kind === "palette" ? (
               <ToyArt kind={r.kind} />
@@ -310,7 +312,9 @@ export function PrizeSection({ claimFee = 120000 }: { claimFee?: number }) {
                 {r.kind === "medal" ? (
                   <>
                     <span className="ribbon" />
-                    <span className="medal-face">★</span>
+                    <span className="medal-face">
+                      <ToyIcon name="star" size={22} />
+                    </span>
                   </>
                 ) : r.kind === "certificate" ? (
                   <>
@@ -459,7 +463,9 @@ export function HomeFinalists({
                     width={380}
                     height={380}
                   />
-                  <span className="pill">★ FINALIS</span>
+                  <span className="pill">
+                    <Sparkle size={12} aria-hidden="true" /> FINALIS
+                  </span>
                 </div>
                 <h3>{w.public_name}</h3>
                 <p>{w.regency_name}</p>

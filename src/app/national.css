@@ -78,6 +78,18 @@
 .candy-pill b {
   color: var(--t-accent, #ff4fa3);
 }
+.candy-pill .toy-icon,
+.candy-card-title .toy-icon,
+.season-pill .toy-icon {
+  margin-right: 2px;
+}
+.candy-banner .toy-icon {
+  --ti-size: 36px;
+}
+.category-icon {
+  margin-bottom: 6px;
+  transform: rotate(-6deg);
+}
 .candy-pill[data-tone="yellow"] {
   background: linear-gradient(#fff2b3, var(--t-accent-two, #ffcf36));
   color: #6a4a00;

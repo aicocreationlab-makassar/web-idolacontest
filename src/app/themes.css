@@ -285,14 +285,6 @@ html[data-season-theme="candy"] .kids-hero:after {
   place-items: center;
   width: 54px;
   height: 54px;
-  border-radius: 18px;
-  background: white;
-  border: 3px solid white;
-  font-size: 28px;
-  line-height: 1;
-  box-shadow:
-    0 7px 0 #0000001a,
-    0 12px 22px #0000001c;
   transform: rotate(var(--tilt, -6deg));
   animation: motif-float 5.5s ease-in-out infinite;
   animation-delay: var(--delay, 0s);
@@ -333,8 +325,9 @@ html[data-season-theme="candy"] .kids-hero:after {
   .season-motif {
     width: 42px;
     height: 42px;
-    font-size: 22px;
-    border-radius: 14px;
+  }
+  .season-motif .toy-icon {
+    --ti-size: 42px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

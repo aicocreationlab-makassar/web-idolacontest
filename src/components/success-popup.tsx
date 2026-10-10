@@ -22,6 +22,7 @@ import {
   type SuccessPayload,
   type SuccessVariant,
 } from "@/lib/success-event";
+import { MascotAvatars, type Ambassador } from "./ambassadors";
 
 const titles: Record<SuccessVariant, string> = {
   celebrate: "Yeay, berhasil!",
@@ -47,7 +48,7 @@ function PopupIcon({ variant }: { variant: SuccessVariant }) {
   return <Check />;
 }
 
-export function SuccessPopup() {
+export function SuccessPopup({ mascots = [] }: { mascots?: Ambassador[] }) {
   const [payload, setPayload] = useState<SuccessPayload | null>(null);
   const pathname = usePathname();
 
@@ -104,6 +105,11 @@ export function SuccessPopup() {
         >
           <X />
         </button>
+        {mascots.length > 0 && !pathname.startsWith("/admin") && (
+          <div className="success-mascots">
+            <MascotAvatars ambassadors={mascots} size={58} mood="cheer" />
+          </div>
+        )}
         <div className="success-popup-art" aria-hidden="true">
           <span className="success-orb">
             <PopupIcon variant={payload.variant} />

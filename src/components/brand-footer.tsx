@@ -1,3 +1,4 @@
+import { Sparkle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { FaInstagram, FaWhatsapp } from "react-icons/fa";
@@ -59,7 +60,7 @@ export function BrandFooter() {
             </a>
           )}
           <span className="footer-note">
-            ★ Dari Indonesia,
+            <Sparkle size={13} aria-hidden="true" /> Dari Indonesia,
             <br />
             untuk mimpi anak Indonesia.
           </span>
@@ -67,7 +68,9 @@ export function BrandFooter() {
       </div>
       <div className="wrap footer-bottom">
         © 2026 Idola Contest. Setiap anak punya sinarnya sendiri.{" "}
-        <span>Dengan warna, karya, dan keberanian. ✦</span>
+        <span>
+          Dengan warna, karya, dan keberanian. <Sparkle size={12} aria-hidden="true" />
+        </span>
       </div>
     </footer>
   );
