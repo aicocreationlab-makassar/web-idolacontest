@@ -4,6 +4,7 @@ import { failure, json, sameOrigin, VisibleError } from "@/lib/http";
 import { readJson } from "@/lib/request-body";
 import { describeDatabaseError } from "@/lib/admin-errors";
 import { themeKeys } from "@/lib/season";
+import { contentSchema, contestModes } from "@/lib/contest-modes";
 
 const iso = z.string().min(10).max(40);
 const seasonSchema = z.object({
@@ -26,6 +27,10 @@ const seasonSchema = z.object({
   prize_preparation_start: z.string().max(10).default(""),
   prize_preparation_end: z.string().max(10).default(""),
   quota: z.union([z.literal(""), z.coerce.number().int().min(1).max(1000000)]).default(""),
+  contest_mode: z.enum(contestModes).default("classic"),
+  registration_fee: z.coerce.number().int().min(0).max(10_000_000).default(20000),
+  claim_fee: z.coerce.number().int().min(0).max(10_000_000).default(120000),
+  content: contentSchema.default({}),
 });
 
 const schema = z.discriminatedUnion("action", [

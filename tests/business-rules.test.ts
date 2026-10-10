@@ -9,7 +9,12 @@ import {
   validateCompetitionCategory,
   weightedScore,
 } from "../src/lib/business-rules";
-import { registrationSchema, codeSchema } from "../src/lib/validation";
+import {
+  registrationSchema,
+  registrationSchemaFor,
+  codeSchema,
+} from "../src/lib/validation";
+import { resolveContent, ageRuleFor } from "../src/lib/contest-modes";
 test("Preschool coloring is rejected, photogenic allowed", () => {
   assert.equal(validateCompetitionCategory("coloring", "preschool"), false);
   assert.equal(validateCompetitionCategory("photogenic", "preschool"), true);
@@ -83,6 +88,66 @@ test("Registration codes are short, name-based, random and validate", () => {
     true,
   );
   assert.equal(codeSchema.safeParse("IDC-S1-000001").success, false);
+});
+test("National mode validates Baby/Kids ages and makes the school optional", () => {
+  const content = resolveContent({
+    contest_mode: "national",
+    registration_fee: 35000,
+    claim_fee: 0,
+    content: {},
+    quota: 200,
+  });
+  assert.equal(content.registration_fee, 35000);
+  assert.equal(content.categories.map((c) => c.key).join(","), "baby,kids");
+  const schema = registrationSchemaFor(content);
+  const base = {
+    full_name: "Anak Uji",
+    public_name: "Bintang",
+    age: 7,
+    age_unit: "years",
+    school_name: "",
+    parent_name: "Orang Tua",
+    whatsapp: "081234567890",
+    instagram_username: "ortu",
+    address_line: "Jalan Uji Nomor 1",
+    province_code: "73",
+    province_name: "Sulawesi Selatan",
+    regency_code: "7371",
+    regency_name: "Makassar",
+    district_code: "7371010",
+    district_name: "Kecamatan",
+    village_code: "7371010001",
+    village_name: "Kelurahan",
+    postal_code: "",
+    competition_type: "coloring",
+    category: "kids",
+    dream_job: "Dokter",
+    consent_parent_guardian: true,
+    consent_publication: true,
+    consent_terms: true,
+    consent_fee: true,
+  };
+  assert.equal(schema.safeParse(base).success, true);
+  assert.equal(
+    schema.safeParse({ ...base, category: "baby", age: 18, age_unit: "months" }).success,
+    true,
+  );
+  assert.equal(schema.safeParse({ ...base, category: "baby", age: 6 }).success, false);
+  assert.equal(
+    schema.safeParse({ ...base, category: "kids", age: 30, age_unit: "months" }).success,
+    false,
+  );
+  assert.equal(schema.safeParse({ ...base, category: "tk" }).success, false);
+  assert.equal(schema.safeParse({ ...base, age: 14 }).success, false);
+  assert.equal(ageRuleFor(content, "baby", "months").allowed, true);
+  assert.equal(ageRuleFor(content, "kids", "months").allowed, false);
+  assert.equal(validateCompetitionCategory("coloring", "baby"), true);
+  // Classic rules stay untouched.
+  assert.equal(registrationSchema.safeParse({ ...base, school_name: "" }).success, false);
+  assert.equal(
+    registrationSchema.safeParse({ ...base, school_name: "TK Uji", category: "tk" }).success,
+    true,
+  );
 });
 test("Registration refuses omitted consent and malformed address", () => {
   assert.equal(

@@ -1,4 +1,4 @@
-import { categories, competitions } from "@/lib/business-rules";
+import { allCategoryLabels, competitions } from "@/lib/business-rules";
 import type { Filters } from "@/lib/admin-data";
 export function AdminFilters({
   filters,
@@ -39,7 +39,7 @@ export function AdminFilters({
         Kategori
         <select name="category" defaultValue={filters.category}>
           <option value="">Semua</option>
-          {Object.entries(categories).map(([k, v]) => (
+          {Object.entries(allCategoryLabels).map(([k, v]) => (
             <option value={k} key={k}>
               {v}
             </option>

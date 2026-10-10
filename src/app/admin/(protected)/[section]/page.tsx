@@ -17,12 +17,13 @@ import { SeasonManager } from "@/components/season-manager";
 import { LoadError } from "@/components/load-error";
 import { RegistrationForm } from "@/components/registration-form";
 import { PageHeading } from "@/components/shared";
-import { categories, competitions } from "@/lib/business-rules";
+import { allCategoryLabels, competitions } from "@/lib/business-rules";
+import { bankLine, resolveContent, rupiah } from "@/lib/contest-modes";
 import type { Season } from "@/lib/season";
 import { asList, firstOf } from "@/lib/embed";
 import { CopyMessage } from "@/components/copy-message";
 import { WinnersAdmin, type WinnerRow } from "@/components/winners-admin";
-import { winnerImageUrl } from "@/lib/winners";
+import { backfillWinnerImages, winnerImageUrl } from "@/lib/winners";
 import { calculateSubmissionDeadline } from "@/lib/business-rules";
 import type { MessageContext } from "@/lib/messages";
 
@@ -47,7 +48,12 @@ function rowContext(r: ParticipantRow, season: Season | null): MessageContext {
   const result = firstOf(r.results);
   const claim = firstOf(r.claim_invoices);
   const shipment = firstOf(r.shipments);
+  const content = resolveContent(season);
   return {
+    registration_fee: content.registration_fee,
+    claim_fee: content.claim_fee,
+    bank: bankLine(content),
+    instagram: content.instagram,
     public_name: r.participants.public_name,
     registration_code: r.registration_code,
     competition_type: r.competition_type,
@@ -89,7 +95,7 @@ const dashboardSections: Record<string, string> = {
   sumber_registrasi: "Asal pendaftaran",
 };
 const friendlyLabels: Record<string, string> = {
-  ...categories,
+  ...allCategoryLabels,
   ...competitions,
   website: "Website",
   instagram_dm: "Instagram",
@@ -184,13 +190,19 @@ export default async function Page({
   const page = Math.max(1, Math.min(10000, Number(filters.page) || 1));
   const offset = (page - 1) * 25;
 
-  if (section === "tambah-peserta")
+  if (section === "tambah-peserta") {
+    const { data: activeRow } = await db
+      .from("seasons")
+      .select("*")
+      .eq("is_active", true)
+      .maybeSingle();
     return (
       <>
         <PageHeading title={titles[section]} />
-        <RegistrationForm manual />
+        <RegistrationForm manual content={resolveContent(activeRow as Season | null)} />
       </>
     );
+  }
 
   const seasons =
     profile.role === "judge"
@@ -309,8 +321,11 @@ export default async function Page({
       return <LoadError message={describeDatabaseError(error, "Papan hasil tidak dapat dimuat.")} />;
     const rows = (data ?? []) as BoardRow[];
     const boardSeason = seasonRows.find((s) => s.id === scopedSeason) ?? activeSeason;
+    const boardContent = resolveContent(boardSeason);
     let winnerRows: WinnerRow[] = [];
     if (section === "hasil") {
+      // Winners announced before the artwork-copy step existed get their copy here.
+      await backfillWinnerImages(24);
       let winnersQuery = db.from("winners").select("*").order("published_at", { ascending: false });
       if (scopedSeason) winnersQuery = winnersQuery.eq("season_id", scopedSeason);
       const { data: winnerData } = await winnersQuery;
@@ -338,9 +353,13 @@ export default async function Page({
           title={titles[section]}
           description={
             section === "hasil"
-              ? "Peringkat diperbarui otomatis setiap nilai juri disimpan. Juara Utama 1–3, Harapan 1–3, dan Favorit 1–3 ditetapkan otomatis dari peringkat; Juara Umum dan Best Social Media diatur manual. Mengumumkan juara otomatis menerbitkan invoice klaim dan memperbarui Cek Status peserta."
+              ? boardContent.mode === "national"
+                ? "Peringkat diperbarui otomatis setiap nilai juri disimpan. Mode Nasional: peringkat 1–4 tiap kategori otomatis menjadi Best of the Best, Juara Umum, Juara Harapan, dan Juara Favorit. Mengumumkan juara membuka langkah konfirmasi hadiah (gratis) di Cek Status peserta."
+                : "Peringkat diperbarui otomatis setiap nilai juri disimpan. Juara Utama 1–3, Harapan 1–3, dan Favorit 1–3 ditetapkan otomatis dari peringkat; Juara Umum dan Best Social Media diatur manual. Mengumumkan juara otomatis menerbitkan invoice klaim dan memperbarui Cek Status peserta."
               : section === "klaim-hadiah"
-                ? "Invoice Rp120.000 terbit otomatis saat juara diumumkan. Tandai lunas setelah transfer diterima; peserta melihat statusnya lewat kode registrasi."
+                ? boardContent.claim_fee === 0
+                  ? "Hadiah season ini gratis (tanpa penebusan). Saat juara diumumkan, peserta mengonfirmasi alamat dan rekening hadiah lewat Cek Status; konfirmasi tampil di sini dan membuka menu pengiriman."
+                  : `Invoice ${rupiah(boardContent.claim_fee)} terbit otomatis saat juara diumumkan. Tandai lunas setelah transfer diterima; peserta melihat statusnya lewat kode registrasi.`
                 : "Isi kurir, nomor resi, dan status. Peserta langsung melihat resi di Cek Status."
           }
         />

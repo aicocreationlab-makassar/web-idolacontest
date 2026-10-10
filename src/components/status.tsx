@@ -2,13 +2,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { categories, competitions } from "@/lib/business-rules";
+import { categoryLabel, competitions } from "@/lib/business-rules";
 import { formatDate, formatDateTime } from "@/lib/season";
+import {
+  defaultContent,
+  defaultFees,
+  rupiah,
+  type ResolvedContent,
+} from "@/lib/contest-modes";
 import { ImageInput } from "./image-input";
 import { Fees } from "./shared";
 import {
   Check,
   Download,
+  Gift,
   Paintbrush,
   PartyPopper,
   Printer,
@@ -25,7 +32,7 @@ type Status = {
   age?: number;
   age_unit?: "years" | "months";
   competition_type: keyof typeof competitions;
-  category: keyof typeof categories;
+  category: string;
   payment_status: string;
   registration_status: string;
   review_status: string;
@@ -37,6 +44,7 @@ type Status = {
     theme_title: string;
     announcement_at: string;
     shipping_at: string;
+    content?: ResolvedContent;
   } | null;
   submission: {
     status: string;
@@ -57,6 +65,7 @@ type Status = {
     amount: number;
     status: string;
     paid_at: string | null;
+    confirmed_at?: string | null;
   } | null;
   shipment: {
     courier: string;
@@ -65,6 +74,14 @@ type Status = {
     shipped_at: string | null;
     delivered_at: string | null;
   } | null;
+};
+
+const classicContent: ResolvedContent = {
+  ...defaultContent.classic,
+  mode: "classic",
+  registration_fee: defaultFees.classic.registration,
+  claim_fee: defaultFees.classic.claim,
+  quota: null,
 };
 
 const statusLabel: Record<string, string> = {
@@ -88,6 +105,12 @@ const statusLabel: Record<string, string> = {
 };
 const friendlyStatus = (value: string) =>
   statusLabel[value] || value.replaceAll("_", " ");
+const freeClaimStatus = (value: string) =>
+  value === "issued"
+    ? "Menunggu konfirmasi"
+    : value === "paid"
+      ? "Terkonfirmasi"
+      : friendlyStatus(value);
 
 type Step = {
   key: string;
@@ -96,12 +119,13 @@ type Step = {
   detail: string;
 };
 
-function buildSteps(d: Status): Step[] {
+function buildSteps(d: Status, c: ResolvedContent): Step[] {
   const paid = d.payment_status === "paid";
   const rejected = d.review_status === "rejected" || d.registration_status === "cancelled";
   const submission = d.submission?.status;
   const hasWork = submission === "pending_review" || submission === "approved";
   const claimPaid = d.claim?.status === "paid";
+  const freeClaim = d.claim ? d.claim.amount === 0 : c.claim_fee === 0;
   const shipped =
     d.shipment?.shipping_status === "shipped" || d.shipment?.shipping_status === "delivered";
   const delivered = d.shipment?.shipping_status === "delivered";
@@ -111,7 +135,7 @@ function buildSteps(d: Status): Step[] {
       label: "Pendaftaran",
       state: rejected ? "blocked" : "done",
       detail: rejected
-        ? "Pendaftaran ditolak admin. Hubungi @idola.contest untuk informasi."
+        ? `Pendaftaran ditolak admin. Hubungi @${c.instagram.replace(/^@/, "")} untuk informasi.`
         : `Terdaftar ${formatDateTime(d.registered_at)}.`,
     },
     {
@@ -121,7 +145,7 @@ function buildSteps(d: Status): Step[] {
       detail: paid
         ? "Pembayaran terverifikasi."
         : d.payment_status === "pending"
-          ? "Transfer Rp20.000 lalu konfirmasi ke admin."
+          ? `Transfer ${rupiah(c.registration_fee)} lalu konfirmasi ke admin.`
           : `Status: ${friendlyStatus(d.payment_status)}.`,
     },
     {
@@ -168,15 +192,21 @@ function buildSteps(d: Status): Step[] {
     },
     {
       key: "claim",
-      label: "Klaim paket penghargaan",
+      label: freeClaim ? "Konfirmasi hadiah" : "Klaim paket penghargaan",
       state: claimPaid ? "done" : d.claim ? "current" : "todo",
       detail: claimPaid
-        ? `Klaim lunas ${formatDate(d.claim?.paid_at)}.`
+        ? freeClaim
+          ? `Hadiah terkonfirmasi ${formatDate(d.claim?.paid_at)}. Gratis, tanpa penebusan.`
+          : `Klaim lunas ${formatDate(d.claim?.paid_at)}.`
         : d.claim
           ? d.claim.status === "cancelled"
             ? "Klaim dibatalkan."
-            : `Invoice ${d.claim.invoice_number} · Rp120.000 menunggu pembayaran.`
-          : "Invoice terbit otomatis setelah juara diumumkan.",
+            : freeClaim
+              ? "Konfirmasi alamat dan rekening hadiah di bawah ini. Gratis!"
+              : `Invoice ${d.claim.invoice_number} · ${rupiah(d.claim.amount)} menunggu pembayaran.`
+          : freeClaim
+            ? "Setelah juara diumumkan, konfirmasi alamat dan rekening hadiah di sini."
+            : "Invoice terbit otomatis setelah juara diumumkan.",
     },
     {
       key: "shipping",
@@ -204,6 +234,13 @@ export function Status() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
+  const [claimForm, setClaimForm] = useState({
+    bank_name: "",
+    bank_account: "",
+    bank_holder: "",
+    note: "",
+    address_ok: false,
+  });
   const [worksheet, setWorksheet] = useState<{
     url: string;
     downloadUrl: string;
@@ -255,7 +292,33 @@ export function Status() {
       setBusy(false);
     }
   }
-  const steps = data ? buildSteps(data) : [];
+  async function confirmClaim() {
+    setBusy(true);
+    setError("");
+    try {
+      const r = await fetch("/api/claim-confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: verifiedCode, ...claimForm }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      setMessage(d.message);
+      showSuccess(
+        "Konfirmasi hadiah tersimpan. Admin segera menyiapkan hadiah si kecil.",
+        "celebrate",
+        "Hadiah dikonfirmasi!",
+      );
+      await lookup(true);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const content = data?.season?.content ?? classicContent;
+  const steps = data ? buildSteps(data, content) : [];
+  const freeClaim = data?.claim ? data.claim.amount === 0 : content.claim_fee === 0;
   return (
     <div className="stack">
       <form
@@ -297,7 +360,7 @@ export function Status() {
             <h2 className="text-2xl">Halo, {data.public_name}!</h2>
             <p>
               {competitions[data.competition_type]} ·{" "}
-              {categories[data.category]}
+              {categoryLabel(data.category)}
               {data.season ? ` · ${data.season.name} · Tema ${data.season.theme_title}` : ""}
             </p>
             {data.age !== undefined && data.age !== null && (
@@ -325,7 +388,7 @@ export function Status() {
                   <h3>{data.result.award_code}</h3>
                   <p>
                     {data.result.rank_position
-                      ? `Peringkat ${data.result.rank_position} kategori ${categories[data.category]} · `
+                      ? `Peringkat ${data.result.rank_position} kategori ${categoryLabel(data.category)} · `
                       : ""}
                     {data.result.final_score !== null && data.result.final_score !== undefined
                       ? `skor akhir ${Number(data.result.final_score)} · `
@@ -370,7 +433,7 @@ export function Status() {
                   sudah tersimpan. Jika belum transfer, ikuti petunjuk berikut.
                   Jika sudah, konfirmasikan ke admin dan tunggu verifikasi.
                 </p>
-                <Fees />
+                <Fees content={content} />
               </>
             )}
               </>
@@ -497,7 +560,99 @@ export function Status() {
                 </button>
               </form>
             )}
-          {data.claim && (
+          {data.claim && freeClaim && (
+            <div className="card stack">
+              <h3 className="flex items-center gap-2">
+                <Gift aria-hidden="true" /> Konfirmasi hadiah (gratis)
+              </h3>
+              <p>
+                Semua hadiah <b>gratis</b>, tidak ada penebusan. Status:{" "}
+                <b>{freeClaimStatus(data.claim.status)}</b>
+                {data.claim.paid_at
+                  ? ` · dikonfirmasi ${formatDate(data.claim.paid_at)}`
+                  : ""}
+                .
+              </p>
+              {data.claim.status === "issued" ? (
+                <form
+                  className="stack"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void confirmClaim();
+                  }}
+                >
+                  <p className="muted">
+                    Isi rekening untuk transfer hadiah uang tunai dan pastikan
+                    alamat pengiriman piala &amp; sertifikat yang didaftarkan
+                    sudah benar. Jika alamat berubah, tulis di catatan.
+                  </p>
+                  <div className="grid2">
+                    <label className="field">
+                      Nama bank / e-wallet
+                      <input
+                        required
+                        maxLength={60}
+                        value={claimForm.bank_name}
+                        onChange={(e) => setClaimForm({ ...claimForm, bank_name: e.target.value })}
+                        placeholder="Contoh: BSI, BRI, DANA"
+                      />
+                    </label>
+                    <label className="field">
+                      Nomor rekening
+                      <input
+                        required
+                        inputMode="numeric"
+                        pattern="[0-9 -]{4,40}"
+                        maxLength={40}
+                        value={claimForm.bank_account}
+                        onChange={(e) => setClaimForm({ ...claimForm, bank_account: e.target.value })}
+                      />
+                    </label>
+                    <label className="field">
+                      Nama pemilik rekening
+                      <input
+                        required
+                        maxLength={120}
+                        value={claimForm.bank_holder}
+                        onChange={(e) => setClaimForm({ ...claimForm, bank_holder: e.target.value })}
+                      />
+                    </label>
+                    <label className="field">
+                      Catatan (opsional)
+                      <input
+                        maxLength={300}
+                        value={claimForm.note}
+                        onChange={(e) => setClaimForm({ ...claimForm, note: e.target.value })}
+                        placeholder="Perubahan alamat, nomor WA penerima, dll."
+                      />
+                    </label>
+                  </div>
+                  <label className="check">
+                    <input
+                      type="checkbox"
+                      required
+                      checked={claimForm.address_ok}
+                      onChange={(e) => setClaimForm({ ...claimForm, address_ok: e.target.checked })}
+                    />
+                    <span>
+                      Alamat pengiriman yang saya daftarkan sudah benar dan siap
+                      menerima paket hadiah.
+                    </span>
+                  </label>
+                  <button className="btn" disabled={busy || !claimForm.address_ok}>
+                    {busy ? "Menyimpan…" : "Konfirmasi hadiah →"}
+                  </button>
+                </form>
+              ) : data.claim.status === "paid" ? (
+                <p className="notice success">
+                  Terima kasih! Hadiah sedang disiapkan admin. Uang tunai
+                  ditransfer ke rekening yang dikonfirmasi; resi paket tampil di
+                  sini begitu dikirim.
+                </p>
+              ) : null}
+            </div>
+          )}
+          {data.claim && !freeClaim && (
             <div className="card stack">
               <h3 className="flex items-center gap-2">
                 <Receipt aria-hidden="true" /> Klaim paket penghargaan
@@ -506,15 +661,15 @@ export function Status() {
                 Invoice <b>{data.claim.invoice_number}</b>
               </p>
               <p>
-                Rp120.000 · termasuk ongkir seluruh Indonesia ·{" "}
+                {rupiah(data.claim.amount)} · termasuk ongkir seluruh Indonesia ·{" "}
                 <b>{friendlyStatus(data.claim.status)}</b>
                 {data.claim.paid_at ? ` · lunas ${formatDate(data.claim.paid_at)}` : ""}
               </p>
               {data.claim.status === "issued" && (
                 <p>
-                  Transfer ke BSI <b>7341301558</b> a.n. <b>Riswan Ramadhan</b>, lalu
-                  konfirmasi pembayaran kepada admin. Setelah lunas, paket disiapkan
-                  dan dikirim.
+                  Transfer ke {content.bank_name} <b>{content.bank_account}</b> a.n.{" "}
+                  <b>{content.bank_holder}</b>, lalu konfirmasi pembayaran kepada
+                  admin. Setelah lunas, paket disiapkan dan dikirim.
                 </p>
               )}
             </div>

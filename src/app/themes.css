@@ -342,3 +342,212 @@ html[data-season-theme="candy"] .kids-hero:after {
     animation: none;
   }
 }
+
+/* Poster-style cheerful themes (Season 2 onward). */
+html[data-season-theme="rainbow"] {
+  --t-primary: #2f8cff;
+  --t-primary-dark: #1b5fd1;
+  --t-primary-light: #8ec5ff;
+  --t-primary-soft: #eaf3ff;
+  --t-primary-soft-border: #bfdcff;
+  --t-accent: #ff4fa3;
+  --t-accent-two: #ffd23f;
+  --t-accent-two-dark: #d9a400;
+  --t-btn-top: #ffdf6b;
+  --t-btn-bottom: #ffc83a;
+  --t-btn-border: #fff0b3;
+  --t-btn-shadow: #c98f00;
+  --t-btn-text: #173a71;
+  --t-section-soft: #eef6ff;
+  --t-section-soft-2: #fff0f8;
+  --t-sky-1: #bfe0ff;
+  --t-sky-2: #eaf6ff;
+  --t-sky-3: #ffd6ec;
+  --t-ground-1: #ffe8a3;
+  --t-ground-2: #ffc85c;
+  --t-ticker-text: #173a71;
+  --color-pink: #ff4fa3;
+  --color-purple: #1b5fd1;
+}
+html[data-season-theme="bubblegum"] {
+  --t-primary: #ff5fb0;
+  --t-primary-dark: #d6338a;
+  --t-primary-light: #ffa3d2;
+  --t-primary-soft: #fff0f7;
+  --t-primary-soft-border: #ffc4e1;
+  --t-accent: #8e4bff;
+  --t-accent-two: #ffe066;
+  --t-accent-two-dark: #d4b000;
+  --t-btn-top: #ffe97a;
+  --t-btn-bottom: #ffd21f;
+  --t-btn-border: #fff2a6;
+  --t-btn-shadow: #b58f00;
+  --t-btn-text: #5a1b45;
+  --t-section-soft: #fff3f9;
+  --t-section-soft-2: #f5efff;
+  --t-sky-1: #ffc9e6;
+  --t-sky-2: #fff0f8;
+  --t-sky-3: #ffb0d9;
+  --t-ground-1: #ffe6a8;
+  --t-ground-2: #f7c35a;
+  --t-ticker-text: #5a1b45;
+  --color-pink: #ff5fb0;
+  --color-purple: #8e4bff;
+}
+html[data-season-theme="balloon"] {
+  --t-primary: #8e4bff;
+  --t-primary-dark: #6a2fd6;
+  --t-primary-light: #c3a2ff;
+  --t-primary-soft: #f3ecff;
+  --t-primary-soft-border: #d9c7ff;
+  --t-accent: #ff4fa3;
+  --t-accent-two: #ffd23f;
+  --t-accent-two-dark: #d9a400;
+  --t-btn-top: #ffdf6b;
+  --t-btn-bottom: #ffc83a;
+  --t-btn-border: #fff0b3;
+  --t-btn-shadow: #c98f00;
+  --t-btn-text: #2d1a6b;
+  --t-section-soft: #f6f1ff;
+  --t-section-soft-2: #fff0f8;
+  --t-sky-1: #d9c7ff;
+  --t-sky-2: #f1eaff;
+  --t-sky-3: #ffc9e6;
+  --t-ground-1: #ffe6a8;
+  --t-ground-2: #f7c35a;
+  --t-ticker-text: #2d1a6b;
+  --color-pink: #ff4fa3;
+  --color-purple: #6a2fd6;
+}
+html[data-season-theme="sunshine"] {
+  --t-primary: #ffb020;
+  --t-primary-dark: #e08a00;
+  --t-primary-light: #ffd56b;
+  --t-primary-soft: #fff7e0;
+  --t-primary-soft-border: #ffe3a3;
+  --t-accent: #ff5fa8;
+  --t-accent-two: #4fc3ff;
+  --t-accent-two-dark: #1d8fd1;
+  --t-btn-top: #74d0ff;
+  --t-btn-bottom: #3fb4ff;
+  --t-btn-border: #bfe8ff;
+  --t-btn-shadow: #1c7fbf;
+  --t-btn-text: #0f3a5a;
+  --t-section-soft: #fff9ea;
+  --t-section-soft-2: #eaf7ff;
+  --t-sky-1: #ffe9b3;
+  --t-sky-2: #fff7e0;
+  --t-sky-3: #ffd58a;
+  --t-ground-1: #b9ecff;
+  --t-ground-2: #7fd3ff;
+  --t-ticker-text: #0f3a5a;
+  --color-pink: #ff5fa8;
+  --color-purple: #e08a00;
+}
+html[data-season-theme="carnival"] {
+  --t-primary: #ff6a3d;
+  --t-primary-dark: #d9431c;
+  --t-primary-light: #ffa07a;
+  --t-primary-soft: #fff1ea;
+  --t-primary-soft-border: #ffcdb8;
+  --t-accent: #2f8cff;
+  --t-accent-two: #ffe14d;
+  --t-accent-two-dark: #d6b000;
+  --t-btn-top: #fff07a;
+  --t-btn-bottom: #ffdd2b;
+  --t-btn-border: #fff7b3;
+  --t-btn-shadow: #b89500;
+  --t-btn-text: #5a2a12;
+  --t-section-soft: #fff4ee;
+  --t-section-soft-2: #eef5ff;
+  --t-sky-1: #ffd0bf;
+  --t-sky-2: #fff1ea;
+  --t-sky-3: #ffb79e;
+  --t-ground-1: #ffe9a3;
+  --t-ground-2: #ffd14d;
+  --t-ticker-text: #5a2a12;
+  --color-pink: #2f8cff;
+  --color-purple: #d9431c;
+}
+html[data-season-theme="unicorn"] {
+  --t-primary: #a86cff;
+  --t-primary-dark: #7a3fe0;
+  --t-primary-light: #d9bcff;
+  --t-primary-soft: #f6efff;
+  --t-primary-soft-border: #e2d0ff;
+  --t-accent: #ff7ad9;
+  --t-accent-two: #7ff0d2;
+  --t-accent-two-dark: #1ea888;
+  --t-btn-top: #ffa6e4;
+  --t-btn-bottom: #ff7ad9;
+  --t-btn-border: #ffd3f1;
+  --t-btn-shadow: #c2459f;
+  --t-btn-text: #fff6fc;
+  --t-section-soft: #f8f3ff;
+  --t-section-soft-2: #effcf8;
+  --t-sky-1: #e3d2ff;
+  --t-sky-2: #f7f0ff;
+  --t-sky-3: #ffd3f1;
+  --t-ground-1: #c5f7e9;
+  --t-ground-2: #86e5cb;
+  --t-ticker-text: #2a1458;
+  --color-pink: #ff7ad9;
+  --color-purple: #7a3fe0;
+}
+html[data-season-theme="rainbow"] .kids-hero {
+  background:
+    radial-gradient(circle at 86% 12%, #ffd23f66 0 7%, transparent 8%),
+    radial-gradient(circle at 10% 88%, #ff4fa355 0 6%, transparent 7%),
+    radial-gradient(circle at 70% 80%, #ffffff33 0 5%, transparent 6%),
+    linear-gradient(160deg, #ff7ac3 0%, #2f8cff 52%, #8e4bff 100%);
+}
+html[data-season-theme="bubblegum"] .kids-hero {
+  background:
+    radial-gradient(circle at 85% 15%, #ffe06666 0 7%, transparent 8%),
+    linear-gradient(160deg, #ff8fc9 0%, #ff5fb0 55%, #a86cff 100%);
+}
+html[data-season-theme="balloon"] .kids-hero {
+  background:
+    radial-gradient(circle at 15% 85%, #ff4fa355 0 6%, transparent 7%),
+    radial-gradient(circle at 85% 12%, #ffd23f66 0 7%, transparent 8%),
+    linear-gradient(160deg, #6a2fd6 0%, #8e4bff 55%, #ff8fc9 100%);
+}
+html[data-season-theme="sunshine"] .kids-hero {
+  background:
+    radial-gradient(circle at 85% 15%, #ffffff55 0 8%, transparent 9%),
+    linear-gradient(160deg, #ffd56b 0%, #ffb020 50%, #ff8a5c 100%);
+}
+html[data-season-theme="carnival"] .kids-hero {
+  background:
+    repeating-linear-gradient(115deg, #ffffff14 0 22px, transparent 22px 44px),
+    linear-gradient(160deg, #ff8a5c 0%, #ff6a3d 50%, #2f8cff 100%);
+}
+html[data-season-theme="unicorn"] .kids-hero {
+  background:
+    radial-gradient(circle at 80% 15%, #7ff0d255 0 8%, transparent 9%),
+    linear-gradient(160deg, #ffb3e6 0%, #a86cff 55%, #7fd3ff 100%);
+}
+html[data-season-theme="rainbow"] .hero-white-shape,
+html[data-season-theme="rainbow"] .kids-hero:after {
+  background: #f3f8ff;
+}
+html[data-season-theme="bubblegum"] .hero-white-shape,
+html[data-season-theme="bubblegum"] .kids-hero:after {
+  background: #fff5fa;
+}
+html[data-season-theme="balloon"] .hero-white-shape,
+html[data-season-theme="balloon"] .kids-hero:after {
+  background: #f8f4ff;
+}
+html[data-season-theme="sunshine"] .hero-white-shape,
+html[data-season-theme="sunshine"] .kids-hero:after {
+  background: #fffaf0;
+}
+html[data-season-theme="carnival"] .hero-white-shape,
+html[data-season-theme="carnival"] .kids-hero:after {
+  background: #fff6f1;
+}
+html[data-season-theme="unicorn"] .hero-white-shape,
+html[data-season-theme="unicorn"] .kids-hero:after {
+  background: #faf6ff;
+}

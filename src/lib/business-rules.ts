@@ -6,6 +6,16 @@ export const categories = {
   sd_3_4: "SD Kelas 3–4",
   sd_5_6: "SD Kelas 5–6",
 } as const;
+/** Categories of the national contest mode (Lomba Anak Nasional Online). */
+export const nationalCategories = {
+  baby: "Baby (0–4 tahun)",
+  kids: "Kids (5–13 tahun)",
+} as const;
+export const allCategoryLabels: Record<string, string> = {
+  ...categories,
+  ...nationalCategories,
+};
+export const categoryLabel = (key: string) => allCategoryLabels[key] || key;
 export const competitions = {
   photogenic: "Fotogenik",
   coloring: "Mewarnai",
@@ -40,6 +50,13 @@ export const awards = [
   "Juara Umum",
   "Best Social Media",
 ];
+/** Automatic awards of the national mode: one per rank 1–4 inside each group. */
+export const nationalAwards = [
+  "Best of the Best",
+  "Juara Umum",
+  "Juara Harapan",
+  "Juara Favorit",
+];
 export const feeConsent =
   "Saya memahami bahwa biaya registrasi lomba adalah Rp20.000 dan terdapat biaya klaim paket penghargaan Rp120.000 setelah pengumuman, termasuk ongkir ke seluruh Indonesia.";
 export const formatRupiah = (n: number) =>
@@ -60,7 +77,7 @@ export const validateCompetitionCategory = (
   category: string,
 ) =>
   competition in competitions &&
-  category in categories &&
+  category in allCategoryLabels &&
   !(competition === "coloring" && category === "preschool");
 export const canAcceptRegistration = (
   open: string,

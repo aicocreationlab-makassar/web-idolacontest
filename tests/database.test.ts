@@ -383,6 +383,139 @@ test("Migrations, RLS and full database lifecycle", async () => {
       .rows.length,
     2,
   );
+  // National contest mode: season fee, Baby/Kids categories, mode-specific awards
+  // and a free claim that the winner confirms from Cek Status.
+  await db.query("select admin_save_season($1,$2::jsonb)", [
+    seasonTwo,
+    JSON.stringify({
+      ...seasonPayload,
+      name: "Season 2 Nasional",
+      contest_mode: "national",
+      registration_fee: 35000,
+      claim_fee: 0,
+      content: { hero_title: "Lomba Anak Nasional Online" },
+    }),
+  ]);
+  await assert.rejects(() =>
+    db.query("select admin_save_season($1,$2::jsonb)", [
+      seasonTwo,
+      JSON.stringify({ ...seasonPayload, contest_mode: "weird" }),
+    ]),
+  );
+  assert.deepEqual(
+    (
+      await db.query<{ contest_mode: string; registration_fee: number; claim_fee: number }>(
+        "select contest_mode,registration_fee,claim_fee from seasons where id=$1",
+        [seasonTwo],
+      )
+    ).rows[0],
+    { contest_mode: "national", registration_fee: 35000, claim_fee: 0 },
+  );
+  await db.exec(
+    `reset role;update seasons set registration_open_at=now()-interval '1 day',registration_close_at=now()+interval '1 day',submission_global_close_at=now()+interval '1 day',judging_at=now()+interval '2 days',announcement_at=now()+interval '3 days',shipping_at=now()+interval '4 days' where slug='S2';`,
+  );
+  const nationalCode = generateRegistrationCode("Baby");
+  const nationalRid = await register(
+    {
+      ...data,
+      full_name: "Baby Star",
+      public_name: "Baby Star",
+      age: 18,
+      age_unit: "months",
+      school_name: "",
+      category: "baby",
+    },
+    nationalCode,
+  );
+  await assert.rejects(() => register({ ...data, category: "nope" }));
+  assert.equal(
+    (
+      await db.query<{ amount: number }>(
+        "select amount from payments where registration_id=$1",
+        [nationalRid],
+      )
+    ).rows[0].amount,
+    35000,
+  );
+  assert.equal(
+    (
+      await db.query<{ school_name: string }>(
+        "select p.school_name from participants p join registrations r on r.participant_id=p.id where r.id=$1",
+        [nationalRid],
+      )
+    ).rows[0].school_name,
+    "Belum sekolah",
+  );
+  await asUser(admin);
+  await db.query(`select admin_review_registration($1,'approved','ok')`, [nationalRid]);
+  await mutate("payment", nationalRid, { status: "paid" });
+  await db.exec("reset role");
+  const nationalSid = (
+    await db.query<{ id: string }>(`select create_submission($1,'baby.webp') id`, [nationalCode])
+  ).rows[0].id;
+  await asUser(admin);
+  await mutate("review", nationalSid, { status: "approved" });
+  await asUser(judge);
+  await mutate("score", nationalSid, { scores: [90, 90, 90, 90, 90] });
+  await asUser(admin);
+  assert.equal(
+    (
+      await db.query<{ award_code: string }>(
+        "select award_code from results where registration_id=$1",
+        [nationalRid],
+      )
+    ).rows[0].award_code,
+    "Best of the Best",
+  );
+  await mutate("result_publish", nationalRid, { published: true });
+  assert.deepEqual(
+    (
+      await db.query<{ amount: number; status: string }>(
+        "select amount,status from claim_invoices where registration_id=$1",
+        [nationalRid],
+      )
+    ).rows[0],
+    { amount: 0, status: "issued" },
+  );
+  await assert.rejects(() =>
+    mutate("shipment", nationalRid, { courier: "J&T", tracking: "N1", status: "shipped" }),
+  );
+  await db.exec("reset role");
+  await assert.rejects(() =>
+    db.query("select confirm_free_claim($1,$2::jsonb)", [
+      nationalCode,
+      JSON.stringify({ address_ok: true }),
+    ]),
+  );
+  await db.query("select confirm_free_claim($1,$2::jsonb)", [
+    nationalCode,
+    JSON.stringify({
+      address_ok: true,
+      bank_name: "BSI",
+      bank_account: "1234567890",
+      bank_holder: "Mommy Star",
+    }),
+  ]);
+  const confirmed = (
+    await db.query<{ status: string; confirmation: { bank_account: string } }>(
+      "select status,confirmation from claim_invoices where registration_id=$1",
+      [nationalRid],
+    )
+  ).rows[0];
+  assert.equal(confirmed.status, "paid");
+  assert.equal(confirmed.confirmation.bank_account, "1234567890");
+  await asUser(admin);
+  const nationalBoard = (
+    await db.query<{ claim_amount: number; claim_confirmation: { bank_holder: string } }>(
+      "select claim_amount,claim_confirmation from admin_leaderboard($1)",
+      [seasonTwo],
+    )
+  ).rows;
+  assert.equal(nationalBoard.length, 1);
+  assert.equal(nationalBoard[0].claim_amount, 0);
+  assert.equal(nationalBoard[0].claim_confirmation.bank_holder, "Mommy Star");
+  await mutate("shipment", nationalRid, { courier: "J&T", tracking: "N1", status: "shipped" });
+  await db.query("select admin_delete_registration($1)", [nationalRid]);
   await assert.rejects(() =>
     db.query("select admin_delete_season($1)", [seasonTwo]),
   );

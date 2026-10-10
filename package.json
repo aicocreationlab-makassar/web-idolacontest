@@ -12,7 +12,8 @@
     "test:browser": "playwright test",
     "format": "prettier --write src tests e2e scripts *.ts *.mjs package.json tsconfig.json",
     "setup:admin": "node --env-file=.env scripts/create-admin.mjs",
-    "check:supabase": "node --env-file=.env scripts/check-supabase.mjs"
+    "check:supabase": "node --env-file=.env scripts/check-supabase.mjs",
+    "winners:sync": "node --env-file=.env scripts/sync-winner-images.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fredoka": "^5.3.0",

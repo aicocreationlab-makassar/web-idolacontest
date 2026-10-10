@@ -1,6 +1,7 @@
 import { galleryPage, publicImage, type GalleryFilters } from "@/lib/data";
 import Link from "next/link";
-import { categories, competitions } from "@/lib/business-rules";
+import { competitions } from "@/lib/business-rules";
+import { resolveContent } from "@/lib/contest-modes";
 import { PageHeading } from "@/components/shared";
 import { GalleryGrid } from "@/components/gallery-grid";
 export const dynamic = "force-dynamic";
@@ -12,6 +13,7 @@ export default async function Page({
 }) {
   const filters = await searchParams;
   const { items, count, page, season } = await galleryPage(filters);
+  const content = resolveContent(season);
   const q = new URLSearchParams(
     Object.entries(filters).filter(
       ([k, v]) => k !== "page" && k !== "season" && !!v,
@@ -75,9 +77,9 @@ export default async function Page({
             Kategori
             <select name="category" defaultValue={filters.category}>
               <option value="">Semua kategori</option>
-              {Object.entries(categories).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v}
+              {content.categories.map((category) => (
+                <option key={category.key} value={category.key}>
+                  {category.label}
                 </option>
               ))}
             </select>

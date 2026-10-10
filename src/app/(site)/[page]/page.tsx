@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Faq, Fees, PageHeading } from "@/components/shared";
 import { getActiveSeason } from "@/lib/data";
 import { formatDate, seasonTimeline } from "@/lib/season";
+import { resolveContent } from "@/lib/contest-modes";
 export const dynamic = "force-dynamic";
 const titles: Record<string, string> = {
   timeline: "Catat setiap momennya.",
@@ -24,6 +25,7 @@ export default async function Page({
   const { page } = await params;
   if (!titles[page]) notFound();
   const season = await getActiveSeason();
+  const content = resolveContent(season);
   const themeTitle = season?.theme_title || "Cita Citaku";
   return (
     <div className="wrap section max-w-4xl">
@@ -32,7 +34,7 @@ export default async function Page({
         eyebrow={`Idola Contest · ${season?.name || "Season baru"}${season ? ` · Tema ${season.theme_title}` : ""}`}
       />
       {page === "faq" ? (
-        <Faq season={season} />
+        <Faq season={season} content={content} />
       ) : page === "timeline" ? (
         <div className="stack">
           {seasonTimeline(season).map((stop, i) => (
@@ -50,8 +52,11 @@ export default async function Page({
           <h2 className="text-2xl">Keikutsertaan & karya</h2>
           <p>
             Orang tua/wali mendaftarkan anak dengan identitas yang benar dan
-            persetujuan publikasi. Preschool hanya mengikuti fotogenik. Tema
-            kedua lomba pada {season?.name || "season ini"} adalah {themeTitle}.
+            persetujuan publikasi.{" "}
+            {content.mode === "national"
+              ? `Kategori mengikuti usia anak: ${content.categories.map((c) => `${c.label} ${c.age_min}–${c.age_max} tahun`).join(", ")}.`
+              : "Preschool hanya mengikuti fotogenik."}{" "}
+            Tema kedua lomba pada {season?.name || "season ini"} adalah {themeTitle}.
             Karya harus milik peserta dan tidak melanggar hak pihak lain.
           </p>
           <p>
@@ -59,7 +64,7 @@ export default async function Page({
             registrasi bersifat rahasia. Peserta bertanggung jawab menyimpan
             kode dan mengirim karya sebelum tenggat pribadi.
           </p>
-          <Fees />
+          <Fees content={content} />
           <h3>Review dan penilaian</h3>
           <p>
             Admin dapat meminta revisi atau menolak karya yang tidak sesuai.
@@ -79,8 +84,10 @@ export default async function Page({
             Simpan bukti transfer dan hubungi admin untuk verifikasi, koreksi
             pembayaran, atau permintaan pengembalian dana. Keputusan
             pengembalian dikonfirmasi penyelenggara sesuai kondisi transaksi.
-            Klaim penghargaan dilakukan setelah hasil dipublikasikan. Pengiriman
-            mulai {season ? formatDate(season.shipping_at) : "tanggal yang diumumkan"}{" "}
+            {content.claim_fee === 0
+              ? "Hadiah tidak dipungut biaya penebusan; juara mengonfirmasi alamat dan rekening hadiah melalui Cek Status setelah hasil dipublikasikan."
+              : "Klaim penghargaan dilakukan setelah hasil dipublikasikan."}{" "}
+            Pengiriman mulai {season ? formatDate(season.shipping_at) : "tanggal yang diumumkan"}{" "}
             dengan kurir pilihan admin.
           </p>
           <p>

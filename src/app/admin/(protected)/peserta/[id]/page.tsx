@@ -7,14 +7,15 @@ import {
   DeleteRegistration,
 } from "@/components/admin-controls";
 import { PageHeading } from "@/components/shared";
-import { categories, competitions } from "@/lib/business-rules";
+import { allCategoryLabels, competitions } from "@/lib/business-rules";
+import { bankLine, resolveContent } from "@/lib/contest-modes";
 import { formatParticipantAge } from "@/lib/participant";
 import { CopyMessage } from "@/components/copy-message";
 import { asList, firstOf } from "@/lib/embed";
 import { calculateSubmissionDeadline } from "@/lib/business-rules";
 
 const labels: Record<string, string> = {
-  ...categories,
+  ...allCategoryLabels,
   ...competitions,
   website: "Website",
   instagram_dm: "Instagram",
@@ -82,7 +83,12 @@ export default async function Page({
   const result = firstOf(registration.results as { award_code: string; rank_position: number | null; is_published: boolean }[] | null);
   const claim = firstOf(registration.claim_invoices as { invoice_number: string; status: string }[] | null);
   const shipment = firstOf(registration.shipments as { courier: string; tracking_number: string | null; shipping_status: string }[] | null);
+  const content = resolveContent(season);
   const messageContext = {
+    registration_fee: content.registration_fee,
+    claim_fee: content.claim_fee,
+    bank: bankLine(content),
+    instagram: content.instagram,
     public_name: participant.public_name,
     registration_code: registration.registration_code,
     competition_type: registration.competition_type,

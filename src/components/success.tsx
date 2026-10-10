@@ -2,9 +2,17 @@
 import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { FaInstagram, FaWhatsapp } from "react-icons/fa";
-import { Camera, Save } from "lucide-react";
+import { Camera, Copy, Save } from "lucide-react";
 import { Fees } from "./shared";
 import { showSuccess } from "@/lib/success-event";
+import {
+  bankLine,
+  defaultContent,
+  defaultFees,
+  instagramUrl,
+  rupiah,
+  type ResolvedContent,
+} from "@/lib/contest-modes";
 const subscribe = () => () => {};
 function snapshot() {
   try {
@@ -13,9 +21,23 @@ function snapshot() {
     return null;
   }
 }
-export function Success() {
+const classicContent: ResolvedContent = {
+  ...defaultContent.classic,
+  mode: "classic",
+  registration_fee: defaultFees.classic.registration,
+  claim_fee: defaultFees.classic.claim,
+  quota: null,
+};
+export function Success({
+  content = classicContent,
+}: {
+  content?: ResolvedContent;
+}) {
   const stored = useSyncExternalStore(subscribe, snapshot, () => null);
   const [copied, setCopied] = useState("");
+  const [accountCopied, setAccountCopied] = useState(false);
+  const instagram = content.instagram.replace(/^@/, "");
+  const fee = rupiah(content.registration_fee);
   let data: {
     code: string;
     public_name: string;
@@ -81,24 +103,51 @@ export function Success() {
       >
         {copied || "Salin kode"}
       </button>
-      <Fees />
+      <div className="wajib-alert" role="alert">
+        <span className="wajib-alert-badge">WAJIB</span>
+        <div>
+          <h3>Transfer {fee} &amp; kirim buktinya ke DM</h3>
+          <p>
+            {content.dm_alert} Transfer ke <b>{bankLine(content)}</b>.
+            Pendaftaran diproses setelah bukti transfer diterima admin.
+          </p>
+          <div className="actions">
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(content.bank_account);
+                  setAccountCopied(true);
+                  showSuccess("Nomor rekening berhasil disalin.", "copy");
+                } catch {
+                  setAccountCopied(false);
+                }
+              }}
+            >
+              <Copy size={16} /> {accountCopied ? "Rekening tersalin" : "Salin rekening"}
+            </button>
+          </div>
+        </div>
+      </div>
+      <Fees content={content} />
       <div className="screenshot-important">
         <Camera aria-hidden="true" />
         <div>
           <span>WAJIB DILAKUKAN</span>
           <h2>Screenshot halaman ini</h2>
           <p>
-            Kirim <b>nama peserta dan screenshot halaman ini</b> melalui DM
-            Instagram <b>@idola.contest</b> agar pendaftaran segera diproses
-            admin.
+            Kirim <b>nama peserta, bukti transfer {fee}, dan screenshot halaman ini</b>{" "}
+            melalui DM Instagram <b>@{instagram}</b> agar pendaftaran segera
+            diproses admin.
           </p>
           <a
             className="btn instagram-button"
-            href="https://instagram.com/idola.contest"
+            href={instagramUrl(instagram)}
             target="_blank"
             rel="noreferrer"
           >
-            <FaInstagram /> Kirim ke DM @idola.contest
+            <FaInstagram /> Kirim ke DM @{instagram}
           </a>
         </div>
       </div>
@@ -113,7 +162,7 @@ export function Success() {
         </a>
       ) : (
         <p className="notice">
-          Hubungi @idola.contest untuk konfirmasi pembayaran. Nomor WhatsApp
+          Hubungi @{instagram} untuk konfirmasi pembayaran. Nomor WhatsApp
           admin belum dikonfigurasi.
         </p>
       )}

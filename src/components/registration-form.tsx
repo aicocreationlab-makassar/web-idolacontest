@@ -3,7 +3,20 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { categories, competitions, feeConsent } from "@/lib/business-rules";
+import { competitions } from "@/lib/business-rules";
+import {
+  ageRuleFor,
+  bankLine,
+  categoryAgeText,
+  categoryForAge,
+  categoryOptions,
+  defaultContent,
+  defaultFees,
+  feeConsentText,
+  instagramUrl,
+  rupiah,
+  type ResolvedContent,
+} from "@/lib/contest-modes";
 import { ImageInput } from "./image-input";
 import { showSuccess } from "@/lib/success-event";
 import {
@@ -11,9 +24,9 @@ import {
   Copy,
   CreditCard,
   LoaderCircle,
-  ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { FaInstagram } from "react-icons/fa";
 type Fields = Record<string, string | boolean>;
 type Region = { id: string; name: string };
 const groups = [
@@ -42,8 +55,31 @@ const groups = [
     "consent_fee",
   ],
 ];
-export function RegistrationForm({ manual = false }: { manual?: boolean }) {
+const steps: Array<[string, string]> = [
+  ["🧒", "Data Anak"],
+  ["👨‍👩‍👧", "Orang Tua"],
+  ["🏠", "Alamat"],
+  ["📸", "Foto"],
+  ["✅", "Konfirmasi"],
+];
+const classicContent: ResolvedContent = {
+  ...defaultContent.classic,
+  mode: "classic",
+  registration_fee: defaultFees.classic.registration,
+  claim_fee: defaultFees.classic.claim,
+  quota: null,
+};
+export function RegistrationForm({
+  manual = false,
+  content = classicContent,
+}: {
+  manual?: boolean;
+  content?: ResolvedContent;
+}) {
   const router = useRouter();
+  const national = content.mode === "national";
+  const instagram = content.instagram.replace(/^@/, "");
+  const fee = rupiah(content.registration_fee);
   const {
     register,
     control,
@@ -54,7 +90,9 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
   } = useForm<Fields>({
     defaultValues: {
       competition_type: "photogenic",
-      category: "paud",
+      category: national
+        ? categoryOptions(content, "photogenic")[0]?.key ?? "baby"
+        : "paud",
       age_unit: "years",
       registration_source: manual ? "instagram_dm" : "website",
     },
@@ -69,11 +107,13 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
   const [locations, setLocations] = useState<Region[][]>([[], [], [], []]);
   const [loading, setLoading] = useState(true);
   const competition = useWatch({ control, name: "competition_type" });
+  const category = String(useWatch({ control, name: "category" }) ?? "");
   const ageUnit =
     useWatch({ control, name: "age_unit" }) === "months"
       ? "months"
       : "years";
   const ageMaximum = ageUnit === "months" ? 216 : 18;
+  const options = categoryOptions(content, String(competition));
   async function loadRegions(index: number, parent = "") {
     setLoading(true);
     try {
@@ -130,8 +170,28 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
       </label>
     );
   }
+  /** National mode: the age must fit the chosen category. */
+  function validateCategoryAge(value: string | boolean) {
+    if (!national) return true;
+    const key = String(value);
+    const unit = getValues("age_unit") === "months" ? "months" : "years";
+    const age = Number(getValues("age"));
+    const rule = ageRuleFor(content, key, unit);
+    if (!rule.allowed) return rule.message;
+    if (age < rule.min || age > rule.max) return rule.message;
+    return true;
+  }
   async function next() {
     if (await trigger(groups[step])) {
+      if (national && step === 2) {
+        const suggested = categoryForAge(
+          content,
+          Number(getValues("age")),
+          getValues("age_unit") === "months" ? "months" : "years",
+        );
+        if (suggested && options.some((item) => item.key === suggested.key))
+          setValue("category", suggested.key);
+      }
       setStep(step + 1);
       setError("");
       requestAnimationFrame(() =>
@@ -184,6 +244,15 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
       topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
     );
   }
+  async function copyAccount() {
+    try {
+      await navigator.clipboard.writeText(content.bank_account);
+      setCopied(true);
+      showSuccess("Nomor rekening berhasil disalin.", "copy");
+    } catch {
+      setError("Salin nomor rekening secara manual.");
+    }
+  }
   return (
     <div className="registration-panel card stack" ref={topRef}>
       {busy && (
@@ -197,18 +266,18 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
         </div>
       )}
       <ol className="registration-progress" aria-label="Langkah pendaftaran">
-        {["Data Anak", "Orang Tua", "Alamat", "Foto", "Konfirmasi"].map(
-          (s, i) => (
-            <li
-              key={s}
-              className={step === i ? "active" : step > i ? "done" : ""}
-              aria-current={step === i ? "step" : undefined}
-            >
-              <span>{step > i ? <Check size={17} /> : i + 1}</span>
-              <b>{s}</b>
-            </li>
-          ),
-        )}
+        {steps.map(([emoji, s], i) => (
+          <li
+            key={s}
+            className={step === i ? "active" : step > i ? "done" : ""}
+            aria-current={step === i ? "step" : undefined}
+          >
+            <span>
+              {step > i ? <Check size={17} /> : <em aria-hidden="true">{emoji}</em>}
+            </span>
+            <b>{s}</b>
+          </li>
+        ))}
       </ol>
       <form
         className="stack"
@@ -225,7 +294,13 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
           </label>
         </div>
         <div hidden={step !== 0} className="stack">
-          <h2 className="text-2xl">Kenalan dengan bintang kecil ✨</h2>
+          <h2 className="reg-step-title">
+            <span aria-hidden="true">🧒</span>Kenalan dengan bintang kecil ✨
+          </h2>
+          <span className="wajib-mini">
+            💳 Biaya registrasi <b>{fee}</b> · wajib transfer &amp; kirim bukti
+            via DM @{instagram}
+          </span>
           <div className="grid2">
             {field("full_name", "Nama lengkap anak")}
             {field("public_name", "Nama publik / nama panggilan")}
@@ -261,18 +336,37 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
               </div>
               <span className="field-help">
                 Masukkan usia dalam {ageUnit === "months" ? "bulan" : "tahun"}.
+                {national ? " Kategori mengikuti usia:" : ""}
               </span>
+              {national && (
+                <span className="age-category-hint">
+                  {content.categories.map((item) => (
+                    <span key={item.key}>
+                      {item.emoji} {item.label} {categoryAgeText(item)}
+                    </span>
+                  ))}
+                </span>
+              )}
               {errors.age && (
                 <span className="field-error">{String(errors.age.message)}</span>
               )}
             </label>
-            {field("school_name", "Nama sekolah / belum sekolah")}
+            {national
+              ? field(
+                  "school_name",
+                  "Nama sekolah (opsional, kosongkan jika belum sekolah)",
+                  "text",
+                  false,
+                )
+              : field("school_name", "Nama sekolah / belum sekolah")}
             {field("class_label", "Kelas (opsional)", "text", false)}
             {field("dream_job", "Cita-cita anak")}
           </div>
         </div>
         <div hidden={step !== 1} className="stack">
-          <h2 className="text-2xl">Data orang tua / wali</h2>
+          <h2 className="reg-step-title">
+            <span aria-hidden="true">👨‍👩‍👧</span>Data orang tua / wali
+          </h2>
           <p className="muted">
             Data ini privat dan hanya digunakan untuk administrasi lomba.
           </p>
@@ -283,7 +377,9 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
           </div>
         </div>
         <div hidden={step !== 2} className="stack">
-          <h2 className="text-2xl">Alamat pengiriman</h2>
+          <h2 className="reg-step-title">
+            <span aria-hidden="true">🏠</span>Alamat pengiriman
+          </h2>
           <p className="muted">
             Alamat disimpan privat untuk kebutuhan administrasi dan pengiriman
             hadiah.
@@ -362,42 +458,113 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
           </button>
         </div>
         <div hidden={step !== 3} className="stack">
-          <h2 className="text-2xl">Pilih lomba & foto</h2>
+          <h2 className="reg-step-title">
+            <span aria-hidden="true">📸</span>Pilih lomba &amp; foto
+          </h2>
           <div className="grid2">
             <label className="field">
               Jenis lomba
               <select
                 {...register("competition_type", {
                   required: true,
-                  onChange: () => setValue("category", "paud"),
+                  onChange: (e) =>
+                    setValue(
+                      "category",
+                      national
+                        ? categoryOptions(content, e.target.value)[0]?.key ?? ""
+                        : "paud",
+                    ),
                 })}
               >
-                {Object.entries(competitions).map(([v, n]) => (
+                {(national
+                  ? content.contest_types.map((type) => [type.key, type.label])
+                  : Object.entries(competitions)
+                ).map(([v, n]) => (
                   <option value={v} key={v}>
                     {n}
                   </option>
                 ))}
               </select>
             </label>
-            <label className="field">
-              Kategori
-              <select {...register("category", { required: true })}>
-                {Object.entries(categories)
-                  .filter(
-                    ([v]) => competition !== "coloring" || v !== "preschool",
-                  )
-                  .map(([v, n]) => (
-                    <option value={v} key={v}>
-                      {n}
+            {national ? (
+              <div className="field">
+                Kategori
+                <div className="category-pick">
+                  {options.map((item) => (
+                    <label
+                      key={item.key}
+                      className={category === item.key ? "selected" : ""}
+                    >
+                      <input
+                        type="radio"
+                        value={item.key}
+                        {...register("category", {
+                          required: "Pilih kategori",
+                          validate: validateCategoryAge,
+                        })}
+                      />
+                      <span className="category-pick-emoji" aria-hidden="true">
+                        {item.emoji || "⭐"}
+                      </span>
+                      {item.label}
+                      <small>{categoryAgeText(item)}</small>
+                    </label>
+                  ))}
+                </div>
+                {errors.category && (
+                  <span className="field-error">
+                    {String(errors.category.message || "Pilih kategori")}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <label className="field">
+                Kategori
+                <select {...register("category", { required: true })}>
+                  {options.map((item) => (
+                    <option value={item.key} key={item.key}>
+                      {item.label}
                     </option>
                   ))}
-              </select>
-            </label>
+                </select>
+              </label>
+            )}
           </div>
           <ImageInput onChange={setPhoto} />
         </div>
         <div hidden={step !== 4} className="stack">
-          <h2 className="text-2xl">Konfirmasi pendaftaran</h2>
+          <h2 className="reg-step-title">
+            <span aria-hidden="true">✅</span>Konfirmasi pendaftaran
+          </h2>
+          <div className="wajib-alert" role="alert">
+            <span className="wajib-alert-badge">WAJIB</span>
+            <div>
+              <h3>
+                Transfer {fee} &amp; kirim buktinya ke DM
+              </h3>
+              <p>
+                {content.dm_alert} Transfer ke <b>{bankLine(content)}</b>, lalu
+                DM Instagram{" "}
+                <a href={instagramUrl(instagram)} target="_blank" rel="noreferrer">
+                  <b>@{instagram}</b>
+                </a>
+                .
+              </p>
+              <div className="actions">
+                <button type="button" className="btn secondary" onClick={copyAccount}>
+                  <Copy size={16} /> {copied ? "Rekening tersalin" : "Salin rekening"}
+                </button>
+                <a
+                  className="btn secondary"
+                  href={instagramUrl(instagram)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <FaInstagram /> Buka DM @{instagram}
+                </a>
+              </div>
+            </div>
+          </div>
           <div className="payment-highlight">
             <div className="payment-highlight-icon">
               <Image
@@ -409,48 +576,25 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
             </div>
             <div>
               <span>INFO PENTING</span>
-              <h3>Biaya registrasi Rp20.000</h3>
+              <h3>Biaya registrasi {fee}</h3>
               <p>
-                Transfer ke BSI a.n. <b>Riswan Ramadhan</b>
+                Transfer ke {content.bank_name} a.n. <b>{content.bank_holder}</b>
               </p>
-              <button
-                type="button"
-                className="account-copy"
-                onClick={async () => {
-                  await navigator.clipboard.writeText("7341301558");
-                  setCopied(true);
-                  showSuccess("Nomor rekening berhasil disalin.", "copy");
-                }}
-              >
-                <code>7341301558</code>
+              <button type="button" className="account-copy" onClick={copyAccount}>
+                <code>{content.bank_account}</code>
                 <Copy size={17} />
                 {copied ? "Tersalin" : "Salin rekening"}
               </button>
             </div>
           </div>
-          <div className="notice important-note">
-            <ShieldCheck />
-            <p>
-              Simpan bukti pendaftaran dan kirim bukti pembayaran melalui DM
-              Instagram{" "}
-              <a
-                href="https://instagram.com/idola.contest"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <b>@idola.contest</b>
-              </a>
-              .
-            </p>
-          </div>
           <p>
             <a
               className="text-purple underline"
-              href="https://instagram.com/idola.contest"
+              href={instagramUrl(instagram)}
               target="_blank"
               rel="noreferrer"
             >
-              Follow @idola.contest
+              Follow @{instagram}
             </a>{" "}
             untuk mengikuti pengumuman dan informasi lomba.
           </p>
@@ -467,7 +611,7 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
               "consent_terms",
               "Saya telah membaca serta menyetujui syarat & ketentuan dan kebijakan privasi.",
             ],
-            ["consent_fee", feeConsent],
+            ["consent_fee", feeConsentText(content)],
           ].map(([key, label]) => (
             <label className="check" key={key}>
               <input
@@ -532,10 +676,10 @@ export function RegistrationForm({ manual = false }: { manual?: boolean }) {
             <div className="confirm-icon">
               <CreditCard />
             </div>
-            <h2 id="payment-confirm-title">Sudah transfer Rp20.000?</h2>
+            <h2 id="payment-confirm-title">Sudah transfer {fee}?</h2>
             <p>
-              Pastikan pembayaran registrasi telah ditransfer ke BSI 7341301558
-              a.n. Riswan Ramadhan.
+              Pastikan pembayaran registrasi telah ditransfer ke{" "}
+              {bankLine(content)}, lalu kirim buktinya ke DM Instagram @{instagram}.
             </p>
             <div className="actions">
               <button

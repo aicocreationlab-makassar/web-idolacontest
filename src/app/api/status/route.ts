@@ -5,6 +5,7 @@ import { service } from "@/lib/supabase/server";
 import { failure, json, rateLimit } from "@/lib/http";
 import { calculateSubmissionDeadline } from "@/lib/business-rules";
 import { winnerImageUrl } from "@/lib/winners";
+import { resolveContent } from "@/lib/contest-modes";
 
 /**
  * Participant status by registration code. Returns only what the family needs
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
               submission_global_close_at: season.submission_global_close_at,
               announcement_at: season.announcement_at,
               shipping_at: season.shipping_at,
+              content: resolveContent(season),
             }
           : null,
         submission: null,
@@ -89,7 +91,7 @@ export async function POST(req: Request) {
       db.from("worksheets").select("id").eq("registration_id", r.id).limit(1),
       db
         .from("claim_invoices")
-        .select("invoice_number,amount,status,paid_at,created_at")
+        .select("invoice_number,amount,status,paid_at,created_at,confirmed_at")
         .eq("registration_id", r.id)
         .maybeSingle(),
       db
@@ -132,6 +134,7 @@ export async function POST(req: Request) {
             submission_global_close_at: e.data.submission_global_close_at,
             announcement_at: e.data.announcement_at,
             shipping_at: e.data.shipping_at,
+            content: resolveContent(e.data),
           }
         : null,
       submission: s.data,

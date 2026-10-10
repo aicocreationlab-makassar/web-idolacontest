@@ -1,5 +1,6 @@
 import { readForm } from "@/lib/request-body";
-import { registrationSchema } from "@/lib/validation";
+import { registrationSchemaFor } from "@/lib/validation";
+import { resolveContent } from "@/lib/contest-modes";
 import {
   generateLegacyRegistrationCode,
   generateRegistrationCode,
@@ -18,7 +19,8 @@ export async function POST(req: Request) {
     if (Number(req.headers.get("content-length")) > 3 * 1024 * 1024)
       throw new Error("File maksimum 2 MB.");
     const f = await readForm(req);
-    const parsed = registrationSchema.safeParse(
+    const season = await getActiveSeason();
+    const parsed = registrationSchemaFor(resolveContent(season)).safeParse(
       JSON.parse(String(f.get("data"))),
     );
     if (!parsed.success)
@@ -35,7 +37,6 @@ export async function POST(req: Request) {
     if (p.registration_source !== "website")
       actor = (await admin(["admin", "super_admin"])).user.id;
     await validateRegions(p);
-    const season = await getActiveSeason();
     if (!season) throw new Error("Pendaftaran belum dibuka.");
     const bytes = await imageBytes(f.get("photo"));
     path = await upload("participant-private", bytes);
