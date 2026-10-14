@@ -9,12 +9,11 @@ import {
   AdminControl,
   PrivateMedia,
   VerifyControl,
-  verifyState,
 } from "@/components/admin-controls";
 import { AdminRecord } from "@/components/admin-record";
 import { AdminNotifications } from "@/components/admin-notifications";
 import { ContestBadge } from "@/components/contest-badge";
-import { nextAdminStep } from "@/lib/admin-steps";
+import { nextAdminStep, verifyState } from "@/lib/admin-steps";
 import { backfillPhotoEntries } from "@/lib/photo-entries";
 import { formatDateTime } from "@/lib/season";
 import {
