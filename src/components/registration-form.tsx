@@ -18,6 +18,7 @@ import {
   type ResolvedContent,
 } from "@/lib/contest-modes";
 import { ImageInput } from "./image-input";
+import { ContestBadge } from "./contest-badge";
 import { showSuccess } from "@/lib/success-event";
 import {
   Check,
@@ -32,6 +33,7 @@ import { MascotAvatars } from "./ambassadors";
 type Fields = Record<string, string | boolean>;
 type Region = { id: string; name: string };
 const groups = [
+  ["competition_type"],
   [
     "full_name",
     "public_name",
@@ -49,7 +51,7 @@ const groups = [
     "district_code",
     "village_code",
   ],
-  ["competition_type", "category"],
+  ["category"],
   [
     "consent_parent_guardian",
     "consent_publication",
@@ -58,12 +60,20 @@ const groups = [
   ],
 ];
 const steps: Array<[string, string]> = [
+  ["trophy", "Pilih Lomba"],
   ["kid", "Data Anak"],
   ["family", "Orang Tua"],
   ["home", "Alamat"],
-  ["camera", "Foto"],
+  ["camera", "Kategori & Foto"],
   ["check", "Konfirmasi"],
 ];
+/** What the registration photo is used for, per contest. */
+const photoRole: Record<string, string> = {
+  photogenic:
+    "Foto yang diupload saat daftar langsung jadi karya yang dinilai juri. Tidak perlu upload karya lagi.",
+  coloring:
+    "Foto si kecil dipakai untuk posting finalis di Instagram. Karya mewarnai diupload nanti setelah pembayaran diverifikasi.",
+};
 const classicContent: ResolvedContent = {
   ...defaultContent.classic,
   mode: "classic",
@@ -74,12 +84,26 @@ const classicContent: ResolvedContent = {
 export function RegistrationForm({
   manual = false,
   content = classicContent,
+  initialCompetition,
 }: {
   manual?: boolean;
   content?: ResolvedContent;
+  initialCompetition?: string;
 }) {
   const router = useRouter();
   const national = content.mode === "national";
+  const contestTypes = content.contest_types.length
+    ? content.contest_types
+    : Object.entries(competitions).map(([key, label]) => ({
+        key: key as "photogenic" | "coloring",
+        label: `Lomba ${label}`,
+        tagline: "",
+      }));
+  // No default contest: parents must pick one on purpose (a URL from the
+  // contest page or a single-contest season preselects it).
+  const preselected =
+    contestTypes.find((type) => type.key === initialCompetition)?.key ??
+    (contestTypes.length === 1 ? contestTypes[0].key : "");
   const instagram = content.instagram.replace(/^@/, "");
   const fee = rupiah(content.registration_fee);
   const {
@@ -91,9 +115,9 @@ export function RegistrationForm({
     formState: { errors },
   } = useForm<Fields>({
     defaultValues: {
-      competition_type: "photogenic",
+      competition_type: preselected,
       category: national
-        ? categoryOptions(content, "photogenic")[0]?.key ?? "baby"
+        ? categoryOptions(content, preselected || "photogenic")[0]?.key ?? "baby"
         : "paud",
       age_unit: "years",
       registration_source: manual ? "instagram_dm" : "website",
@@ -116,6 +140,10 @@ export function RegistrationForm({
       : "years";
   const ageMaximum = ageUnit === "months" ? 216 : 18;
   const options = categoryOptions(content, String(competition));
+  const publicName = String(useWatch({ control, name: "public_name" }) ?? "");
+  const contest = contestTypes.find((type) => type.key === competition);
+  const categoryText =
+    options.find((item) => item.key === category)?.label ?? category;
   async function loadRegions(index: number, parent = "") {
     setLoading(true);
     try {
@@ -185,7 +213,7 @@ export function RegistrationForm({
   }
   async function next() {
     if (await trigger(groups[step])) {
-      if (national && step === 2) {
+      if (national && step === 3) {
         const suggested = categoryForAge(
           content,
           Number(getValues("age")),
@@ -233,7 +261,7 @@ export function RegistrationForm({
     }
   }
   async function confirmSubmission() {
-    if (!(await trigger(groups[4]))) return;
+    if (!(await trigger(groups[5]))) return;
     if (!photo) {
       setError("Pilih foto valid maksimum 2 MB.");
       return;
@@ -241,7 +269,11 @@ export function RegistrationForm({
     setConfirming(true);
   }
   function back() {
-    setStep((current) => Math.max(0, current - 1));
+    goTo(Math.max(0, step - 1));
+  }
+  function goTo(target: number) {
+    setStep(target);
+    setError("");
     requestAnimationFrame(() =>
       topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
     );
@@ -288,7 +320,7 @@ export function RegistrationForm({
         className="stack"
         onSubmit={(e) => {
           e.preventDefault();
-          if (step < 4) void next();
+          if (step < 5) void next();
           else void confirmSubmission();
         }}
       >
@@ -299,6 +331,62 @@ export function RegistrationForm({
           </label>
         </div>
         <div hidden={step !== 0} className="stack">
+          <h2 className="reg-step-title">
+            <ToyIcon name="trophy" size={44} />Pilih lomba si kecil
+          </h2>
+          <p className="contest-pick-lead">
+            Pilih <b>salah satu</b> lomba di bawah ini. Pastikan sudah benar,
+            karena jenis lomba menentukan fungsi foto dan cara mengirim karya.
+          </p>
+          <div className="contest-pick" role="radiogroup" aria-label="Jenis lomba">
+            {contestTypes.map((type) => (
+              <label
+                key={type.key}
+                className={`contest-choice ${type.key}${competition === type.key ? " selected" : ""}`}
+              >
+                <input
+                  type="radio"
+                  value={type.key}
+                  {...register("competition_type", {
+                    required: "Pilih lomba dulu ya, Mommy.",
+                    onChange: (e) =>
+                      setValue(
+                        "category",
+                        national
+                          ? categoryOptions(content, e.target.value)[0]?.key ?? ""
+                          : "paud",
+                      ),
+                  })}
+                />
+                <span className="contest-choice-check" aria-hidden="true">
+                  <Check />
+                </span>
+                <ToyIcon
+                  name={type.key === "coloring" ? "palette" : "camera"}
+                  size={64}
+                />
+                <b>{type.label}</b>
+                {type.tagline && <small>{type.tagline}</small>}
+                <span className="contest-choice-photo">{photoRole[type.key]}</span>
+              </label>
+            ))}
+          </div>
+          {errors.competition_type && (
+            <p className="notice error contest-pick-error" role="alert">
+              {String(errors.competition_type.message || "Pilih lomba dulu ya, Mommy.")}
+            </p>
+          )}
+        </div>
+        {step > 0 && contest && (
+          <div className={`contest-current ${contest.key}`}>
+            <span>Mendaftar</span>
+            <ContestBadge type={contest.key} label={contest.label} />
+            <button type="button" className="link-button" onClick={() => goTo(0)}>
+              Ganti lomba
+            </button>
+          </div>
+        )}
+        <div hidden={step !== 1} className="stack">
           <h2 className="reg-step-title">
             <ToyIcon name="kid" size={44} />Kenalan dengan bintang kecil
           </h2>
@@ -369,7 +457,7 @@ export function RegistrationForm({
             {field("dream_job", "Cita-cita anak")}
           </div>
         </div>
-        <div hidden={step !== 1} className="stack">
+        <div hidden={step !== 2} className="stack">
           <h2 className="reg-step-title">
             <ToyIcon name="family" size={44} />Data orang tua / wali
           </h2>
@@ -382,7 +470,7 @@ export function RegistrationForm({
             {field("instagram_username", "Username Instagram")}
           </div>
         </div>
-        <div hidden={step !== 2} className="stack">
+        <div hidden={step !== 3} className="stack">
           <h2 className="reg-step-title">
             <ToyIcon name="home" size={44} />Alamat pengiriman
           </h2>
@@ -463,35 +551,11 @@ export function RegistrationForm({
             Muat ulang daftar provinsi
           </button>
         </div>
-        <div hidden={step !== 3} className="stack">
+        <div hidden={step !== 4} className="stack">
           <h2 className="reg-step-title">
-            <ToyIcon name="camera" size={44} />Pilih lomba &amp; foto
+            <ToyIcon name="camera" size={44} />Kategori &amp; foto
           </h2>
           <div className="grid2">
-            <label className="field">
-              Jenis lomba
-              <select
-                {...register("competition_type", {
-                  required: true,
-                  onChange: (e) =>
-                    setValue(
-                      "category",
-                      national
-                        ? categoryOptions(content, e.target.value)[0]?.key ?? ""
-                        : "paud",
-                    ),
-                })}
-              >
-                {(national
-                  ? content.contest_types.map((type) => [type.key, type.label])
-                  : Object.entries(competitions)
-                ).map(([v, n]) => (
-                  <option value={v} key={v}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
             {national ? (
               <div className="field">
                 Kategori
@@ -534,12 +598,35 @@ export function RegistrationForm({
               </label>
             )}
           </div>
-          <ImageInput onChange={setPhoto} />
+          <p className={`photo-role-note ${competition === "coloring" ? "coloring" : "photogenic"}`}>
+            {photoRole[String(competition)] ?? photoRole.photogenic}
+          </p>
+          <ImageInput
+            label={
+              competition === "coloring"
+                ? "Upload Foto Si Kecil (untuk posting finalis)"
+                : "Upload Foto Lomba (ini yang dinilai juri)"
+            }
+            onChange={setPhoto}
+          />
         </div>
-        <div hidden={step !== 4} className="stack">
+        <div hidden={step !== 5} className="stack">
           <h2 className="reg-step-title">
             <ToyIcon name="check" size={44} />Konfirmasi pendaftaran
           </h2>
+          {contest && (
+            <div className={`contest-summary ${contest.key}`}>
+              <span>LOMBA YANG DIPILIH</span>
+              <ContestBadge large type={contest.key} label={contest.label} />
+              <p>
+                <b>{publicName || "Si kecil"}</b> · Kategori {categoryText}
+              </p>
+              <small>{photoRole[contest.key]}</small>
+              <button type="button" className="link-button" onClick={() => goTo(0)}>
+                Salah pilih? Ganti lomba
+              </button>
+            </div>
+          )}
           <div className="wajib-alert" role="alert">
             <span className="wajib-alert-badge">WAJIB</span>
             <div>
@@ -663,7 +750,7 @@ export function RegistrationForm({
           <button className="btn" disabled={busy}>
             {busy
               ? "Menyimpan…"
-              : step < 4
+              : step < 5
                 ? "Lanjutkan →"
                 : "Kirim pendaftaran →"}
           </button>
@@ -681,6 +768,12 @@ export function RegistrationForm({
               <CreditCard />
             </div>
             <h2 id="payment-confirm-title">Sudah transfer {fee}?</h2>
+            {contest && (
+              <p className="confirm-contest">
+                <ContestBadge type={contest.key} label={contest.label} />
+                <span>Kategori {categoryText}</span>
+              </p>
+            )}
             <p>
               Pastikan pembayaran registrasi telah ditransfer ke{" "}
               {bankLine(content)}, lalu kirim buktinya ke DM Instagram @{instagram}.

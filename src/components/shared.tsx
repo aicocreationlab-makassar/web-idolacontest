@@ -41,7 +41,7 @@ export function faqs(season?: Season | null, content?: ResolvedContent) {
         ],
     [
       "Kapan batas pengumpulan karya?",
-      `Maksimal 7 hari setelah mendaftar atau ${deadline}, mana yang lebih awal.`,
+      `Fotogenik tidak perlu upload karya lagi: foto pendaftaran langsung menjadi karya lomba. Karya mewarnai dikirim maksimal 7 hari setelah mendaftar atau ${deadline}, mana yang lebih awal.`,
     ],
     [
       "Apakah foto anak langsung tampil di galeri?",

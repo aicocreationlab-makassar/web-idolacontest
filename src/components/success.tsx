@@ -5,6 +5,7 @@ import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { Camera, Copy, Save } from "lucide-react";
 import { Fees } from "./shared";
 import { MascotAvatars } from "./ambassadors";
+import { ContestBadge } from "./contest-badge";
 import { showSuccess } from "@/lib/success-event";
 import {
   bankLine,
@@ -42,6 +43,7 @@ export function Success({
   let data: {
     code: string;
     public_name: string;
+    competition_type?: string;
     registered_at?: string;
   } | null = null;
   try {
@@ -79,9 +81,13 @@ export function Success({
           </p>
         </div>
       )}
+      {data.competition_type && (
+        <ContestBadge large type={data.competition_type} />
+      )}
       <p>
         Pendaftaran {data.public_name} telah tersimpan. Simpan kode ini secara
-        pribadi untuk mengakses status dan mengirim karya.
+        pribadi untuk mengakses status
+        {data.competition_type === "photogenic" ? "." : " dan mengirim karya."}
       </p>
       <div className="registration-code-box">
         <Save aria-hidden="true" />

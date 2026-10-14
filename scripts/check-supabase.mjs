@@ -39,6 +39,13 @@ console.log(
   `CONTEST_MODE_SCHEMA=${modes.error ? `MISSING_OR_ERROR:${modes.error.code} (apply 202610100001_contest_modes.sql)` : "OK"}`,
 );
 
+const photoEntries = await db
+  .from("submissions")
+  .select("source", { count: "exact", head: true });
+console.log(
+  `PHOTO_ENTRY_SCHEMA=${photoEntries.error ? `MISSING_OR_ERROR:${photoEntries.error.code} (apply 202610150001_photo_entries_payment_verification.sql)` : "OK"}`,
+);
+
 const rankings = await db
   .from("results")
   .select("rank_position,award_source", { count: "exact", head: true });
@@ -86,6 +93,21 @@ if (login.data.user) {
   });
   console.log(
     `REVIEW_RPC=${reviewRpc.error?.message.includes("Missing registration") ? "OK" : reviewRpc.error ? `ERROR:${reviewRpc.error.code}` : "UNEXPECTED"}`,
+  );
+  const verifyRpc = await auth.rpc("admin_verify_registration", {
+    p_id: randomUUID(),
+    p_decision: "approve",
+    p_note: "integration probe",
+  });
+  console.log(
+    `VERIFY_RPC=${verifyRpc.error?.message.includes("Missing registration") ? "OK" : verifyRpc.error ? `ERROR:${verifyRpc.error.code} (apply 202610150001_photo_entries_payment_verification.sql)` : "UNEXPECTED"}`,
+  );
+  const photoRpc = await auth.rpc("admin_create_photo_entry", {
+    p_registration: randomUUID(),
+    p_path: "integration-probe.webp",
+  });
+  console.log(
+    `PHOTO_ENTRY_RPC=${photoRpc.error?.message.includes("Missing registration") ? "OK" : photoRpc.error ? `ERROR:${photoRpc.error.code} (apply 202610150001_photo_entries_payment_verification.sql)` : "UNEXPECTED"}`,
   );
   const leaderboard = await auth.rpc("admin_leaderboard", { p_season: null });
   console.log(

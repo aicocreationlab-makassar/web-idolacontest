@@ -17,7 +17,7 @@ import {
   PanelLeftOpen,
   Paintbrush,
   ScrollText,
-  Sparkles,
+  Settings,
   Star,
   Trophy,
   UsersRound,
@@ -26,7 +26,7 @@ import {
 
 const allPages = [
   ["dashboard", "Ringkasan", BarChart3],
-  ["pendaftaran", "Pendaftaran Masuk", ClipboardCheck],
+  ["pendaftaran", "Verifikasi Pembayaran", ClipboardCheck],
   ["peserta", "Data Peserta", UsersRound],
   ["tambah-peserta", "Tambah Peserta", FilePlus2],
   ["karya", "Review Karya", Images],
@@ -34,7 +34,7 @@ const allPages = [
   ["hasil", "Juara & Hasil", Trophy],
   ["klaim-hadiah", "Klaim Hadiah", Medal],
   ["pengiriman", "Pengiriman", PackageCheck],
-  ["settings", "Season & Tema", Sparkles],
+  ["settings", "Pengaturan", Settings],
   ["audit", "Audit Log", ScrollText],
 ] as const;
 

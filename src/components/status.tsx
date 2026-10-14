@@ -11,6 +11,7 @@ import {
   type ResolvedContent,
 } from "@/lib/contest-modes";
 import { ImageInput } from "./image-input";
+import { ContestBadge } from "./contest-badge";
 import { Fees } from "./shared";
 import {
   Check,
@@ -129,6 +130,8 @@ function buildSteps(d: Status, c: ResolvedContent): Step[] {
   const shipped =
     d.shipment?.shipping_status === "shipped" || d.shipment?.shipping_status === "delivered";
   const delivered = d.shipment?.shipping_status === "delivered";
+  // Photogenic: the registration photo is the entry, nothing to upload.
+  const photogenic = d.competition_type === "photogenic";
   const steps: Step[] = [
     {
       key: "register",
@@ -150,7 +153,7 @@ function buildSteps(d: Status, c: ResolvedContent): Step[] {
     },
     {
       key: "work",
-      label: "Kirim karya",
+      label: photogenic ? "Karya lomba (foto pendaftaran)" : "Kirim karya",
       state:
         submission === "approved"
           ? "done"
@@ -159,8 +162,19 @@ function buildSteps(d: Status, c: ResolvedContent): Step[] {
             : paid && !rejected
               ? "current"
               : "todo",
-      detail:
-        submission === "approved"
+      detail: photogenic
+        ? submission === "approved"
+          ? d.submission?.publication_status === "approved"
+            ? "Foto lomba disetujui dan tampil di galeri."
+            : "Foto pendaftaran sudah menjadi karya lomba. Tidak perlu upload lagi."
+          : submission === "pending_review"
+            ? "Foto lomba sedang diperiksa admin."
+            : submission
+              ? `${friendlyStatus(submission)}. Kirim ulang foto lomba sebelum batas waktu.`
+              : paid && !rejected
+                ? "Foto pendaftaran sedang disiapkan menjadi karya lomba. Tidak perlu upload lagi."
+                : "Foto pendaftaran otomatis menjadi karya setelah pembayaran diverifikasi. Tidak perlu upload lagi."
+        : submission === "approved"
           ? d.submission?.publication_status === "approved"
             ? "Karya disetujui dan tampil di galeri."
             : "Karya disetujui admin."
@@ -358,9 +372,13 @@ export function Status() {
         <>
           <div className="card stack">
             <h2 className="text-2xl">Halo, {data.public_name}!</h2>
+            <ContestBadge
+              large
+              type={data.competition_type}
+              label={`Lomba ${competitions[data.competition_type]}`}
+            />
             <p>
-              {competitions[data.competition_type]} ·{" "}
-              {categoryLabel(data.category)}
+              Kategori {categoryLabel(data.category)}
               {data.season ? ` · ${data.season.name} · Tema ${data.season.theme_title}` : ""}
             </p>
             {data.age !== undefined && data.age !== null && (
@@ -516,6 +534,12 @@ export function Status() {
             !["pending_review", "approved"].includes(
               data.submission?.status || "",
             ) &&
+            // Photogenic entries come from the registration photo; only a
+            // rejected or revision-requested photo is sent again.
+            (data.competition_type !== "photogenic" ||
+              ["revision_required", "rejected"].includes(
+                data.submission?.status || "",
+              )) &&
             new Date(data.deadline) > new Date() && (
               <form
                 className="card stack"
@@ -550,8 +574,15 @@ export function Status() {
                   }
                 }}
               >
-                <h3>Kirim karya terbaikmu</h3>
-                <ImageInput label="Foto karya" onChange={setPhoto} />
+                <h3>
+                  {data.competition_type === "photogenic"
+                    ? "Kirim ulang foto lomba"
+                    : "Kirim karya terbaikmu"}
+                </h3>
+                <ImageInput
+                  label={data.competition_type === "photogenic" ? "Foto lomba" : "Foto karya"}
+                  onChange={setPhoto}
+                />
                 <button className="btn" disabled={busy}>
                   Kirim untuk direview
                 </button>

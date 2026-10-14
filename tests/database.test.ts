@@ -563,3 +563,166 @@ test("Migrations, RLS and full database lifecycle", async () => {
   );
   await db.close();
 });
+
+test("Photogenic entries come from the registration photo after one-step verification", async () => {
+  const db = new PGlite();
+  await db.exec(
+    `create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;grant usage on schema auth to authenticated,anon,service_role;grant execute on function auth.uid() to authenticated,anon,service_role;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create publication supabase_realtime;`,
+  );
+  for (const file of (await readdir("supabase/migrations"))
+    .filter((f) => f.endsWith(".sql"))
+    .sort())
+    await db.exec(await readFile(`supabase/migrations/${file}`, "utf8"));
+  const admin = "00000000-0000-4000-8000-000000000001";
+  await db.query(`insert into auth.users values($1)`, [admin]);
+  await db.query(
+    `insert into admin_profiles(user_id,display_name,role) values($1,'Test admin','admin')`,
+    [admin],
+  );
+  await db.exec(
+    `update seasons set registration_open_at=now()-interval '1 day',registration_close_at=now()+interval '1 day',submission_global_close_at=now()+interval '1 day',judging_at=now()+interval '2 days',announcement_at=now()+interval '3 days',shipping_at=now()+interval '4 days',quota=null;`,
+  );
+  const base = {
+    full_name: "Photo Child",
+    public_name: "Photo Star",
+    age: 7,
+    school_name: "Test School",
+    parent_name: "Parent",
+    whatsapp: "081234567890",
+    instagram_username: "test",
+    address_line: "Address",
+    province_code: "73",
+    province_name: "Sulawesi Selatan",
+    regency_code: "7371",
+    regency_name: "Makassar",
+    district_code: "7371010",
+    district_name: "Test District",
+    village_code: "7371010001",
+    village_name: "Test Village",
+    postal_code: "90111",
+    competition_type: "photogenic",
+    category: "tk",
+    dream_job: "Pilot",
+    class_label: "TK",
+    consent_parent_guardian: true,
+    consent_publication: true,
+    consent_terms: true,
+    consent_fee: true,
+  };
+  const register = async (payload: object) =>
+    (
+      await db.query<{ id: string }>(
+        `select create_registration($1::jsonb,$2,'photo.webp',1024) as id`,
+        [JSON.stringify(payload), generateRegistrationCode()],
+      )
+    ).rows[0].id;
+  const photoRid = await register(base);
+  const coloringRid = await register({
+    ...base,
+    public_name: "Color Star",
+    competition_type: "coloring",
+  });
+  const rejectRid = await register({ ...base, public_name: "Reject Star" });
+  const state = async (id: string) =>
+    (
+      await db.query<{
+        review_status: string;
+        payment_status: string;
+        registration_status: string;
+      }>(
+        "select review_status,payment_status,registration_status from registrations where id=$1",
+        [id],
+      )
+    ).rows[0];
+  await db.exec("set role anon");
+  await assert.rejects(() =>
+    db.query(`select admin_verify_registration($1,'approve')`, [photoRid]),
+  );
+  await db.exec("reset role");
+  await db.query(`select set_config('request.jwt.claim.sub',$1,false)`, [admin]);
+  await db.exec("set role authenticated");
+  // The entry needs a verified registration first.
+  await assert.rejects(() =>
+    db.query(`select admin_create_photo_entry($1,'entry.webp')`, [photoRid]),
+  );
+  await assert.rejects(() =>
+    db.query(`select admin_verify_registration($1,'maybe')`, [photoRid]),
+  );
+  // One click: approved + paid -> verified.
+  await db.query(`select admin_verify_registration($1,'approve','Bukti valid')`, [
+    photoRid,
+  ]);
+  assert.deepEqual(await state(photoRid), {
+    review_status: "approved",
+    payment_status: "paid",
+    registration_status: "verified",
+  });
+  assert.equal(
+    (
+      await db.query<{ status: string }>(
+        "select status from payments where registration_id=$1 and payment_type='registration'",
+        [photoRid],
+      )
+    ).rows[0].status,
+    "paid",
+  );
+  const created = await db.query<{ ok: boolean }>(
+    `select admin_create_photo_entry($1,'entry.webp') ok`,
+    [photoRid],
+  );
+  assert.equal(created.rows[0].ok, true);
+  const entry = (
+    await db.query<{
+      status: string;
+      source: string;
+      submission_type: string;
+      private_file_path: string;
+    }>(
+      "select status,source,submission_type,private_file_path from submissions where registration_id=$1",
+      [photoRid],
+    )
+  ).rows;
+  assert.deepEqual(entry, [
+    {
+      status: "approved",
+      source: "registration_photo",
+      submission_type: "photogenic",
+      private_file_path: "entry.webp",
+    },
+  ]);
+  // A second call is a no-op; the entry is in the judging queue right away.
+  assert.equal(
+    (
+      await db.query<{ ok: boolean }>(
+        `select admin_create_photo_entry($1,'again.webp') ok`,
+        [photoRid],
+      )
+    ).rows[0].ok,
+    false,
+  );
+  assert.equal(
+    (await db.query("select * from admin_judging_queue()")).rows.length,
+    1,
+  );
+  // Coloring participants still upload their artwork themselves.
+  await db.query(`select admin_verify_registration($1,'approve')`, [coloringRid]);
+  await assert.rejects(() =>
+    db.query(`select admin_create_photo_entry($1,'entry.webp')`, [coloringRid]),
+  );
+  // Reject cancels access and rejects a pending payment; pending resets both.
+  await db.query(`select admin_verify_registration($1,'reject','Bukti tidak ada')`, [
+    rejectRid,
+  ]);
+  assert.deepEqual(await state(rejectRid), {
+    review_status: "rejected",
+    payment_status: "rejected",
+    registration_status: "cancelled",
+  });
+  await db.query(`select admin_verify_registration($1,'pending')`, [rejectRid]);
+  assert.deepEqual(await state(rejectRid), {
+    review_status: "pending",
+    payment_status: "pending",
+    registration_status: "registered",
+  });
+  await db.close();
+});

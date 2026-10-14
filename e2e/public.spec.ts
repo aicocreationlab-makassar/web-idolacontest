@@ -122,8 +122,9 @@ test("Admin can login, open mobile navigation, and view incoming registrations",
   await expect(page).toHaveURL(/\/admin\/dashboard/);
   await expect(page.getByText("Selamat datang kembali!")).toBeVisible();
   await page.getByRole("button", { name: "Tutup pemberitahuan" }).click();
-  await expect(page.getByText("Pembaruan otomatis aktif")).toBeVisible();
-  await expect(page.getByText("Notifikasi PWA di HP")).toBeVisible();
+  await expect(page.locator(".admin-realtime")).toBeVisible();
+  // The notification card lives in Pengaturan, not above every page.
+  await expect(page.locator(".admin-push-card")).toHaveCount(0);
 
   if ((page.viewportSize()?.width ?? 0) <= 980) {
     await page.getByRole("button", { name: "Buka menu admin" }).click();
@@ -132,12 +133,14 @@ test("Admin can login, open mobile navigation, and view incoming registrations",
     await expect(page.locator("#admin-sidebar")).toHaveClass(/collapsed/);
     await page.getByRole("button", { name: "Perbesar sidebar" }).click();
   }
-  await page.getByRole("link", { name: "Pendaftaran Masuk" }).click();
+  await page.getByRole("link", { name: "Verifikasi Pembayaran" }).click();
   await expect(
-    page.getByRole("heading", { name: "Pendaftaran masuk" }),
+    page.getByRole("heading", { name: "Verifikasi pembayaran" }),
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Kembali" })).toBeVisible();
+  await expect(page.locator(".admin-filter-panel")).not.toHaveAttribute("open", "");
   await expect(
-    page.getByText(/Kosong|Periksa detail peserta/).first(),
+    page.getByText(/Semua pendaftar sudah diverifikasi|Pembayaran valid, terima/).first(),
   ).toBeVisible();
   expect(
     await page.evaluate(
@@ -185,18 +188,29 @@ test("Gallery opens with quiet collapsed filters", async ({ page }) => {
 test("Coloring never offers Preschool", async ({ page }) => {
   await page.goto("/daftar");
   await expect(page.locator('select[name="province_code"]')).toBeEnabled();
-  await page
-    .getByLabel("Jenis lomba")
-    .selectOption("coloring", { force: true });
+  await page.locator(".contest-choice.coloring").click();
   await expect(
-    page.getByLabel("Kategori").locator('option[value="preschool"]'),
+    page.locator('select[name="category"] option[value="preschool"]'),
   ).toHaveCount(0);
-  await page
-    .getByLabel("Jenis lomba")
-    .selectOption("photogenic", { force: true });
+  await page.locator(".contest-choice.photogenic").click();
   await expect(
-    page.getByLabel("Kategori").locator('option[value="preschool"]'),
-  ).toHaveCount(1);
+    page.locator('select[name="category"] option[value="preschool"]'),
+  ).toHaveCount((await page.locator('select[name="category"]').count()) ? 1 : 0);
+});
+test("The contest is chosen first, on purpose, and stays visible", async ({
+  page,
+}) => {
+  await page.goto("/daftar");
+  await expect(page.locator(".contest-choice.selected")).toHaveCount(0);
+  await page.getByRole("button", { name: /Lanjutkan/ }).click();
+  await expect(page.getByText("Pilih lomba dulu ya, Mommy.")).toBeVisible();
+  await page.locator(".contest-choice.coloring").click();
+  await page.getByRole("button", { name: /Lanjutkan/ }).click();
+  await expect(page.locator(".contest-current")).toContainText("Mewarnai");
+  await page.locator(".contest-current").getByRole("button", { name: "Ganti lomba" }).click();
+  await expect(page.getByRole("heading", { name: "Pilih lomba si kecil" })).toBeVisible();
+  await page.goto("/daftar?lomba=fotogenik");
+  await expect(page.locator(".contest-choice.photogenic input")).toBeChecked();
 });
 
 test("Large photo compresses and becomes the active upload preview", async ({
@@ -293,6 +307,51 @@ test("Paid coloring participant sees worksheet immediately with A4 instructions"
   ).toBeVisible();
   await expect(page.getByText(/60 detik/)).toHaveCount(0);
 });
+test("Photogenic participants are not asked to upload their photo again", async ({
+  page,
+}) => {
+  await page.route("**/api/status", async (route) => {
+    await route.fulfill({
+      json: {
+        public_name: "Bintang Foto",
+        competition_type: "photogenic",
+        category: "kids",
+        payment_status: "paid",
+        registration_status: "verified",
+        review_status: "approved",
+        registered_at: new Date().toISOString(),
+        deadline: new Date(Date.now() + 86400000).toISOString(),
+        worksheet_ready: false,
+        season: null,
+        submission: {
+          status: "approved",
+          publication_status: "hidden",
+          slug: "foto",
+          submitted_at: new Date().toISOString(),
+        },
+        result: null,
+        claim: null,
+        shipment: null,
+      },
+    });
+  });
+  await page.goto("/cek-status");
+  await page.evaluate(async () => {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(
+      registrations.map((registration) => registration.unregister()),
+    );
+  });
+  await page.reload();
+  await page.getByLabel("Kode registrasi").fill("IDC-BINTANG-1234");
+  await page.getByRole("button", { name: /Cek status/ }).click();
+  await expect(page.getByText("Karya lomba (foto pendaftaran)")).toBeVisible();
+  await expect(
+    page.getByText("Foto pendaftaran sudah menjadi karya lomba. Tidak perlu upload lagi."),
+  ).toBeVisible();
+  await expect(page.getByText("Kirim karya terbaikmu")).toHaveCount(0);
+  await expect(page.getByText("Kirim ulang foto lomba")).toHaveCount(0);
+});
 test("All public routes render without application errors", async ({
   page,
 }) => {
@@ -319,7 +378,7 @@ test("All public routes render without application errors", async ({
   }
 });
 
-test("Five-step registration confirms payment before sending", async ({
+test("Six-step registration confirms contest and payment before sending", async ({
   page,
 }) => {
   await page.route("**/api/regions/**", async (route) => {
@@ -338,6 +397,8 @@ test("Five-step registration confirms payment before sending", async ({
     });
   });
   await page.goto("/daftar");
+  await page.locator(".contest-choice.coloring").click();
+  await page.getByRole("button", { name: /Lanjutkan/ }).click();
   await page.getByLabel("Nama lengkap anak").fill("Anak Uji");
   await page.getByLabel("Nama publik / nama panggilan").fill("Bintang Uji");
   await page.locator('input[name="age"]').fill("7");
@@ -363,17 +424,19 @@ test("Five-step registration confirms payment before sending", async ({
     await field.selectOption("11");
   }
   await page.getByRole("button", { name: /Lanjutkan/ }).click();
-  await page.getByLabel("Jenis lomba").selectOption("coloring");
+  await expect(page.locator(".photo-role-note")).toContainText("posting finalis");
   await page.locator('input[type="file"]').setInputFiles({
     name: "foto.png",
     mimeType: "image/png",
     buffer: Buffer.from("foto-uji"),
   });
   await page.getByRole("button", { name: /Lanjutkan/ }).click();
+  await expect(page.locator(".contest-summary")).toContainText("Mewarnai");
   for (const checkbox of await page.locator('input[type="checkbox"]').all())
     await checkbox.check();
   await page.getByRole("button", { name: "Kirim pendaftaran →" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByRole("dialog")).toContainText("Mewarnai");
   await page.getByRole("button", { name: "Belum, kembali bayar" }).click();
   expect(submissions).toBe(0);
   await page.getByRole("button", { name: "Kirim pendaftaran →" }).click();
