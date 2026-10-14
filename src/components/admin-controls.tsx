@@ -12,6 +12,7 @@ import {
 import { awards, criteria, weights, weightedScore } from "@/lib/business-rules";
 import { ImageInput } from "./image-input";
 import { showSuccess } from "@/lib/success-event";
+import type { VerifyState } from "@/lib/admin-steps";
 
 type Control =
   | "payment"
@@ -350,22 +351,6 @@ export function AdminControl({
       )}
     </form>
   );
-}
-
-export type VerifyState = "pending" | "verified" | "rejected";
-
-/** Where a registration stands in payment verification. */
-export function verifyState(registration: {
-  registration_status?: string | null;
-  review_status?: string | null;
-}): VerifyState {
-  if (registration.registration_status === "verified") return "verified";
-  if (
-    registration.review_status === "rejected" ||
-    registration.registration_status === "cancelled"
-  )
-    return "rejected";
-  return "pending";
 }
 
 /**

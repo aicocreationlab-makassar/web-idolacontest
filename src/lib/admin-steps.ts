@@ -1,5 +1,24 @@
 import type { MessageContext } from "./messages";
 
+export type VerifyState = "pending" | "verified" | "rejected";
+
+/**
+ * Where a registration stands in payment verification. Lives outside the
+ * "use client" controls because server pages call it while rendering.
+ */
+export function verifyState(registration: {
+  registration_status?: string | null;
+  review_status?: string | null;
+}): VerifyState {
+  if (registration.registration_status === "verified") return "verified";
+  if (
+    registration.review_status === "rejected" ||
+    registration.registration_status === "cancelled"
+  )
+    return "rejected";
+  return "pending";
+}
+
 export type AdminStep = {
   label: string;
   /** action: an admin must act · wait: waiting on the parent or schedule · done · stop */

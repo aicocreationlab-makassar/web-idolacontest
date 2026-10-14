@@ -6,7 +6,6 @@ import {
   VerifyControl,
   WorksheetUpload,
   DeleteRegistration,
-  verifyState,
 } from "@/components/admin-controls";
 import { PageHeading } from "@/components/shared";
 import { ContestBadge } from "@/components/contest-badge";
@@ -16,7 +15,7 @@ import { formatParticipantAge } from "@/lib/participant";
 import { CopyMessage } from "@/components/copy-message";
 import { asList, firstOf } from "@/lib/embed";
 import { calculateSubmissionDeadline } from "@/lib/business-rules";
-import { nextAdminStep } from "@/lib/admin-steps";
+import { nextAdminStep, verifyState } from "@/lib/admin-steps";
 
 const labels: Record<string, string> = {
   ...allCategoryLabels,
