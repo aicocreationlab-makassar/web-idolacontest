@@ -1,10 +1,22 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { admin } from "@/lib/supabase/server";
-import { registrationQuery, type Filters } from "@/lib/admin-data";
+import { registrationQuery, seasonScope, type Filters } from "@/lib/admin-data";
 import { describeDatabaseError } from "@/lib/admin-errors";
-import { AdminFilters } from "@/components/admin-filters";
-import { AdminControl, PrivateMedia } from "@/components/admin-controls";
+import { AdminFilters, SeasonSelect, seasonLabel } from "@/components/admin-filters";
+import { AdminFilterPanel } from "@/components/admin-filter-panel";
+import {
+  AdminControl,
+  PrivateMedia,
+  VerifyControl,
+  verifyState,
+} from "@/components/admin-controls";
+import { AdminRecord } from "@/components/admin-record";
+import { AdminNotifications } from "@/components/admin-notifications";
+import { ContestBadge } from "@/components/contest-badge";
+import { nextAdminStep } from "@/lib/admin-steps";
+import { backfillPhotoEntries } from "@/lib/photo-entries";
+import { formatDateTime } from "@/lib/season";
 import {
   JudgingBoard,
   ResultsBoard,
@@ -81,7 +93,7 @@ function rowContext(r: ParticipantRow, season: Season | null): MessageContext {
 
 const dashboardMetrics: Array<[string, string]> = [
   ["total_registrasi", "Total peserta"],
-  ["review_pending", "Perlu diperiksa"],
+  ["review_pending", "Menunggu verifikasi"],
   ["pembayaran_paid", "Pembayaran lunas"],
   ["karya_pending", "Karya perlu diperiksa"],
   ["karya_dinilai", "Karya sudah dinilai"],
@@ -125,14 +137,14 @@ const friendly = (value: string) =>
 const titles: Record<string, string> = {
   dashboard: "Dashboard",
   peserta: "Peserta",
-  pendaftaran: "Pendaftaran masuk",
+  pendaftaran: "Verifikasi pembayaran",
   "tambah-peserta": "Tambah peserta",
   karya: "Review karya",
   penilaian: "Penilaian juri",
   hasil: "Juara & hasil",
   "klaim-hadiah": "Klaim hadiah",
   pengiriman: "Pengiriman",
-  settings: "Season & tema",
+  settings: "Pengaturan",
   audit: "Audit log",
 };
 export const metadata = {
@@ -144,28 +156,17 @@ function SeasonPicker({
   seasons,
   value,
   activeId,
+  defaultAll = false,
 }: {
   seasons: { id: string; name: string; is_active?: boolean }[];
   value?: string;
   activeId: string | null;
+  defaultAll?: boolean;
 }) {
   return (
-    <form className="card flex flex-wrap gap-4 mb-6 season-picker">
-      <label className="field">
-        Season
-        <select name="season" defaultValue={value ?? ""}>
-          <option value="">{activeId ? "Season aktif" : "Semua season"}</option>
-          {activeId && <option value="all">Semua season</option>}
-          {seasons.map((s) => (
-            <option value={s.id} key={s.id}>
-              {s.name}
-              {s.is_active ? " · aktif" : ""}
-            </option>
-          ))}
-        </select>
-      </label>
-      <button className="btn secondary self-end">Terapkan</button>
-    </form>
+    <AdminFilterPanel scope={seasonLabel(value, seasons, activeId, defaultAll)}>
+      <SeasonSelect seasons={seasons} value={value} activeId={activeId} defaultAll={defaultAll} />
+    </AdminFilterPanel>
   );
 }
 
@@ -265,21 +266,51 @@ export default async function Page({
     theme_title: s.theme_title || "Cita Citaku",
   }));
   const activeSeason = seasonRows.find((s) => s.is_active) ?? null;
-  const scopedSeason =
-    filters.season === "all" ? null : filters.season || activeSeason?.id || null;
+  // Every page shows the active season by default; Pengiriman shows all seasons
+  // because prizes of earlier seasons are still shipped after a new one starts.
+  const scopedSeason = seasonScope(
+    filters.season,
+    activeSeason?.id ?? null,
+    section === "pengiriman",
+  );
 
   if (section === "settings") {
     return (
       <>
         <PageHeading
           title={titles[section]}
-          description="Buat season baru, tentukan tema dan tampilan website, atur timeline, lalu aktifkan. Website publik langsung berganti tema saat season diaktifkan."
+          description="Notifikasi HP admin, lalu season, tema, dan timeline website."
         />
-        <SeasonManager
-          seasons={seasonRows}
-          canPurge={profile.role === "super_admin"}
-          canDelete={profile.role === "super_admin"}
-        />
+        <section className="stack mb-8">
+          <div className="admin-section-title">
+            <div>
+              <span className="eyebrow">Notifikasi</span>
+              <h2>Notifikasi realtime di HP</h2>
+              <p className="muted text-sm">
+                Aktifkan di setiap HP admin supaya pendaftaran, karya, dan konfirmasi
+                hadiah baru langsung masuk sebagai notifikasi.
+              </p>
+            </div>
+          </div>
+          <AdminNotifications />
+        </section>
+        <section className="stack">
+          <div className="admin-section-title">
+            <div>
+              <span className="eyebrow">Season &amp; tema</span>
+              <h2>Season, tema, dan timeline</h2>
+              <p className="muted text-sm">
+                Buat season baru, tentukan tema dan tampilan website, atur timeline, lalu
+                aktifkan. Website publik langsung berganti tema saat season diaktifkan.
+              </p>
+            </div>
+          </div>
+          <SeasonManager
+            seasons={seasonRows}
+            canPurge={profile.role === "super_admin"}
+            canDelete={profile.role === "super_admin"}
+          />
+        </section>
       </>
     );
   }
@@ -345,6 +376,8 @@ export default async function Page({
   }
 
   if (section === "penilaian") {
+    // Photogenic entries verified before entries were automatic join the queue here.
+    if (profile.role !== "judge") await backfillPhotoEntries(db, scopedSeason);
     const { data, error } = await db.rpc("admin_judging_queue", {
       p_season: profile.role === "judge" ? null : scopedSeason,
     });
@@ -423,8 +456,13 @@ export default async function Page({
                 : "Isi kurir, nomor resi, dan status. Peserta langsung melihat resi di Cek Status."
           }
         />
+        <SeasonPicker
+          seasons={seasonRows}
+          value={filters.season}
+          activeId={activeSeason?.id ?? null}
+          defaultAll={section === "pengiriman"}
+        />
         <div className="actions">
-          <SeasonPicker seasons={seasonRows} value={filters.season} activeId={activeSeason?.id ?? null} />
           <a className="btn secondary" href={`/api/admin/export?${query}&kind=${section}`}>
             Ekspor CSV
           </a>
@@ -465,6 +503,8 @@ export default async function Page({
   }
 
   if (section === "karya") {
+    // Photogenic participants' registration photos become their entries.
+    await backfillPhotoEntries(db, scopedSeason);
     let query = db
       .from("submissions")
       .select("*,registrations!inner(id,registration_code,competition_type,category,season_id,participants(public_name,full_name))", {
@@ -481,19 +521,11 @@ export default async function Page({
           title={titles[section]}
           description="Setujui karya terlebih dahulu, lalu publikasikan ke galeri secara terpisah. Karya yang disetujui otomatis masuk antrean penilaian juri."
         />
-        <form className="card flex flex-wrap gap-4 mb-6 season-picker">
-          <label className="field">
-            Season
-            <select name="season" defaultValue={filters.season ?? ""}>
-              <option value="">Season aktif</option>
-              <option value="all">Semua season</option>
-              {seasonRows.map((s) => (
-                <option value={s.id} key={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        <AdminFilterPanel
+          scope={seasonLabel(filters.season, seasonRows, activeSeason?.id ?? null)}
+          active={filters.review ? 1 : 0}
+        >
+          <SeasonSelect seasons={seasonRows} value={filters.season} activeId={activeSeason?.id ?? null} />
           <label className="field">
             Status karya
             <select name="review" defaultValue={filters.review ?? ""}>
@@ -504,8 +536,7 @@ export default async function Page({
               <option value="rejected">Ditolak</option>
             </select>
           </label>
-          <button className="btn secondary self-end">Terapkan</button>
-        </form>
+        </AdminFilterPanel>
         <div className="grid2">
           {data.map((s) => {
             const registration = s.registrations as {
@@ -516,23 +547,39 @@ export default async function Page({
               participants: { public_name: string; full_name: string } | null;
             };
             return (
-              <article className="card stack" key={s.id}>
+              <article className="card stack admin-karya-card" key={s.id}>
                 <div className="judging-head">
-                  <div>
+                  <div className="stack">
                     <h3>{registration.participants?.public_name || "Peserta"}</h3>
-                    <p className="muted text-sm">
-                      {friendly(registration.competition_type)} · {friendly(registration.category)} ·{" "}
-                      {registration.registration_code}
-                    </p>
+                    <div className="admin-record-tags">
+                      <ContestBadge
+                        type={registration.competition_type}
+                        label={friendly(registration.competition_type)}
+                      />
+                      <span className="admin-record-category">{friendly(registration.category)}</span>
+                      {s.source === "registration_photo" && (
+                        <span className="admin-status status-verified">Dari foto pendaftaran</span>
+                      )}
+                    </div>
                   </div>
                   <span className={`admin-status status-${s.status}`}>
                     {friendly(s.status)} · {friendly(s.publication_status)}
                   </span>
                 </div>
                 <PrivateMedia id={s.id} kind="submission" />
-                <Link className="text-purple underline" href={`/admin/peserta/${s.registration_id}`}>
-                  Detail peserta
-                </Link>
+                <details className="admin-record-details">
+                  <summary>Lihat detail</summary>
+                  <div className="admin-record-body">
+                    <p>
+                      {registration.participants?.full_name} · {registration.registration_code}
+                    </p>
+                    <p className="muted text-sm">Dikirim {formatDateTime(s.submitted_at)}</p>
+                    {s.review_note && <p className="text-sm">Catatan: {s.review_note}</p>}
+                    <Link className="text-purple font-bold underline" href={`/admin/peserta/${s.registration_id}`}>
+                      Buka detail peserta
+                    </Link>
+                  </div>
+                </details>
                 {s.publication_status === "approved" ? (
                   <AdminControl action="unpublish" id={s.id} />
                 ) : (
@@ -567,21 +614,7 @@ export default async function Page({
           title={`Selamat datang, ${profile.display_name || "pengelola"}.`}
           description="Pantau perjalanan peserta dari pendaftaran sampai hadiah tiba."
         />
-        <form className="card flex flex-wrap gap-4 mb-6 season-picker">
-          <label className="field">
-            Season
-            <select name="season" defaultValue={filters.season ?? ""}>
-              <option value="">Season aktif</option>
-              <option value="all">Semua season</option>
-              {seasonRows.map((s) => (
-                <option value={s.id} key={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="btn secondary self-end">Terapkan</button>
-        </form>
+        <SeasonPicker seasons={seasonRows} value={filters.season} activeId={activeSeason?.id ?? null} />
         <div className="grid3 admin-summary-grid">
           {dashboardMetrics.map(([key, label]) => (
             <Link
@@ -590,7 +623,7 @@ export default async function Page({
               href={withQuery(
                 {
                   total_registrasi: "/admin/peserta",
-                  review_pending: "/admin/pendaftaran?review=pending",
+                  review_pending: "/admin/pendaftaran",
                   pembayaran_paid: "/admin/peserta?payment=paid",
                   karya_pending: "/admin/karya?review=pending_review",
                   karya_dinilai: "/admin/penilaian",
@@ -630,29 +663,41 @@ export default async function Page({
     );
   }
 
-  const { data, error, count } = await registrationQuery(db, filters).range(
+  // Verifikasi Pembayaran lists registrations still waiting by default.
+  const verification = section === "pendaftaran";
+  const listFilters: Filters = {
+    ...filters,
+    season: scopedSeason ?? "all",
+    access: verification ? (filters.access ?? "registered") : filters.access,
+  };
+  const { data, error, count } = await registrationQuery(db, listFilters).range(
     offset,
     offset + 24,
   );
   if (error) return <LoadError message={describeDatabaseError(error, "Peserta tidak dapat dimuat.")} />;
   const query = new URLSearchParams(
-    Object.entries(filters).filter(([k, v]) => k !== "page" && !!v),
+    Object.entries(listFilters).filter(([k, v]) => k !== "page" && !!v) as [string, string][],
   );
   return (
     <>
       <PageHeading
         title={titles[section]}
         description={
-          section === "pendaftaran"
-            ? "Periksa identitas, foto, kategori, dan data lengkap peserta sebelum memilih approve atau reject."
-            : undefined
+          verification
+            ? "Cocokkan bukti transfer di DM Instagram dengan nama, kode, dan username peserta. Satu klik “Pembayaran valid, terima” langsung menyetujui pendaftaran dan menandai lunas. Foto peserta fotogenik otomatis menjadi karya lomba."
+            : "Ringkasan setiap peserta beserta langkah berikutnya. Buka “Lihat detail” untuk status lengkap dan pesan siap salin."
         }
       />
-      <AdminFilters filters={filters} seasons={seasonRows} />
+      <AdminFilters
+        filters={filters}
+        seasons={seasonRows}
+        activeId={activeSeason?.id ?? null}
+        defaultAccess={verification ? "registered" : ""}
+      />
       <div className="actions">
         <a
           className="btn secondary"
-          href={`/api/admin/export?${query}&kind=${section}`}
+          href={`/api/admin/export?${query}&kind=peserta`}
         >
           Ekspor CSV sesuai filter
         </a>
@@ -660,140 +705,116 @@ export default async function Page({
           Tambah peserta
         </Link>
       </div>
-      <div className="card overflow-x-auto admin-responsive-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Peserta</th>
-              <th>Lomba / kategori</th>
-              <th>Status</th>
-              <th>Operasi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((r) => (
-              <tr key={r.id}>
-                <td data-label="Peserta">
-                  <Link
-                    className="text-purple font-bold underline"
-                    href={`/admin/peserta/${r.id}`}
-                  >
-                    {r.participants.full_name}
+      <p className="admin-list-count">
+        <b>{count || 0}</b>{" "}
+        {verification && listFilters.access === "registered"
+          ? "peserta menunggu verifikasi pembayaran"
+          : "peserta"}
+      </p>
+      <div className="admin-record-list">
+        {data.map((r) => {
+          const rowSeason = seasonRows.find((s) => s.id === r.season_id) ?? activeSeason;
+          const context = rowContext(r as ParticipantRow, rowSeason);
+          const state = verifyState(r);
+          const href = `/admin/peserta/${r.id}`;
+          const instagram = String(r.participants.instagram_username || "").replace(/^@/, "");
+          return (
+            <AdminRecord
+              key={r.id}
+              name={r.participants.full_name}
+              href={href}
+              code={r.registration_code}
+              competition={r.competition_type}
+              category={friendly(r.category)}
+              step={nextAdminStep(context)}
+              meta={
+                <>
+                  {instagram ? `@${instagram} · ` : ""}daftar {formatDateTime(r.created_at)}
+                </>
+              }
+              action={
+                verification || state !== "verified" ? (
+                  <VerifyControl id={r.id} state={state} note={r.review_note} />
+                ) : (
+                  <Link className="btn secondary" href={href}>
+                    Buka detail lengkap
                   </Link>
-                  <p className="text-xs break-all">{r.registration_code}</p>
-                  <p>{r.participants.regency_name}</p>
-                </td>
-                <td data-label="Lomba / kategori">
-                  {friendly(r.competition_type)}
-                  <br />
-                  {friendly(r.category)}
-                  <br />
-                  {friendly(r.registration_source)}
-                </td>
-                <td data-label="Status">
-                  <span
-                    className={`admin-status status-${r.review_status || "pending"}`}
-                  >
-                    {r.review_status === "approved"
-                      ? "Disetujui"
-                      : r.review_status === "rejected"
-                        ? "Ditolak"
-                        : "Menunggu pemeriksaan"}
-                  </span>
-                  <span className={`admin-status status-${r.payment_status}`}>
-                    Bayar: {friendly(r.payment_status)}
-                  </span>
-                  <span
-                    className={`admin-status status-${r.registration_status}`}
-                  >
-                    Akses: {friendly(r.registration_status)}
-                  </span>
-                  {asList(r.results).map(
-                    (x: {
-                      id: string;
-                      award_code: string;
-                      is_published: boolean;
-                      final_score: number;
-                      rank_position: number | null;
-                    }) => (
-                      <p key={x.id}>
-                        {x.rank_position ? `#${x.rank_position} · ` : ""}
-                        {x.award_code} · {x.final_score} ·{" "}
-                        {x.is_published ? "Sudah diumumkan" : "Belum diumumkan"}
-                      </p>
-                    ),
-                  )}
-                  {asList(r.claim_invoices).map(
-                    (x: {
-                      id: string;
-                      status: string;
-                      invoice_number: string;
-                    }) => (
-                      <p key={x.id}>
-                        {x.invoice_number} · {friendly(x.status)}
-                      </p>
-                    ),
-                  )}
-                  {asList(r.shipments).map(
-                    (x: {
-                      id: string;
-                      shipping_status: string;
-                      tracking_number: string;
-                    }) => (
-                      <p key={x.id}>
-                        {friendly(x.shipping_status)} · {x.tracking_number}
-                      </p>
-                    ),
-                  )}
-                </td>
-                <td data-label="Operasi" className="min-w-64">
-                  {section === "pendaftaran" && (
-                    <div className="stack">
-                      <Link
-                        className="btn secondary"
-                        href={`/admin/peserta/${r.id}`}
-                      >
-                        Periksa detail peserta
-                      </Link>
-                      <AdminControl
-                        action="registration_review"
-                        id={r.id}
-                        initial={{
-                          status: r.review_status || "pending",
-                          note: r.review_note,
-                        }}
-                      />
-                      <CopyMessage compact context={rowContext(r as ParticipantRow, seasonRows.find((s) => s.id === r.season_id) ?? activeSeason)} />
-                    </div>
-                  )}
-                  {section === "peserta" && (
-                    <div className="stack">
-                      <Link
-                        className="text-purple font-bold underline"
-                        href={`/admin/peserta/${r.id}`}
-                      >
-                        Buka detail lengkap
-                      </Link>
-                      <AdminControl
-                        action="payment"
-                        id={r.id}
-                        initial={{ status: r.payment_status }}
-                      />
-                      <CopyMessage compact context={rowContext(r as ParticipantRow, seasonRows.find((s) => s.id === r.season_id) ?? activeSeason)} />
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!data.length && (
-          <p className="admin-empty">
-            Kosong — belum ada data{" "}
-            {section === "pendaftaran" ? "pendaftaran" : "peserta"} yang sesuai.
-          </p>
-        )}
+                )
+              }
+            >
+              <dl className="admin-record-facts">
+                <div>
+                  <dt>Nama publik</dt>
+                  <dd>{r.participants.public_name}</dd>
+                </div>
+                <div>
+                  <dt>Domisili</dt>
+                  <dd>
+                    {r.participants.regency_name}, {r.participants.province_name}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Sumber</dt>
+                  <dd>{friendly(r.registration_source)}</dd>
+                </div>
+                <div>
+                  <dt>Season</dt>
+                  <dd>{rowSeason?.name ?? "—"}</dd>
+                </div>
+              </dl>
+              <div className="admin-record-pills">
+                <span className={`admin-status status-${r.payment_status}`}>
+                  Bayar: {friendly(r.payment_status)}
+                </span>
+                <span className={`admin-status status-${r.registration_status}`}>
+                  Akses: {friendly(r.registration_status)}
+                </span>
+                {asList(r.results).map(
+                  (x: {
+                    id: string;
+                    award_code: string;
+                    is_published: boolean;
+                    final_score: number;
+                    rank_position: number | null;
+                  }) => (
+                    <span className="admin-status" key={x.id}>
+                      {x.rank_position ? `#${x.rank_position} · ` : ""}
+                      {x.award_code} · {x.final_score} ·{" "}
+                      {x.is_published ? "diumumkan" : "belum diumumkan"}
+                    </span>
+                  ),
+                )}
+                {asList(r.claim_invoices).map(
+                  (x: { id: string; status: string; invoice_number: string }) => (
+                    <span className={`admin-status status-${x.status}`} key={x.id}>
+                      {x.invoice_number} · {friendly(x.status)}
+                    </span>
+                  ),
+                )}
+                {asList(r.shipments).map(
+                  (x: { id: string; shipping_status: string; tracking_number: string }) => (
+                    <span className={`admin-status status-${x.shipping_status}`} key={x.id}>
+                      {friendly(x.shipping_status)}
+                      {x.tracking_number ? ` · ${x.tracking_number}` : ""}
+                    </span>
+                  ),
+                )}
+              </div>
+              <Link className="text-purple font-bold underline" href={href}>
+                Buka detail lengkap
+              </Link>
+              <CopyMessage compact context={context} />
+            </AdminRecord>
+          );
+        })}
       </div>
+      {!data.length && (
+        <p className="admin-empty card">
+          {verification && listFilters.access === "registered"
+            ? "Semua pendaftar sudah diverifikasi. Tidak ada yang menunggu."
+            : "Kosong — belum ada peserta yang sesuai filter."}
+        </p>
+      )}
       <Pagination page={page} count={count || 0} filters={filters} />
     </>
   );

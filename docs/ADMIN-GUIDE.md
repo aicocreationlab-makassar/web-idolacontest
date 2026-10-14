@@ -8,25 +8,31 @@
 
 Halaman `/admin/*` memakai manifest khusus (`/admin/manifest.webmanifest`, scope `/admin/`, start URL `/admin/dashboard`) dan service worker sendiri (`/admin-sw.js`). Memasang dari halaman admin selalu membuka ruang pengelola, bukan website publik.
 
-- **iPhone/iPad:** buka `/admin/dashboard` di Safari → Bagikan → *Tambah ke Layar Utama* → buka dari ikon **Idola Admin** → ketuk **Aktifkan notifikasi** pada kartu di atas dashboard → Izinkan.
+- **iPhone/iPad:** buka `/admin/dashboard` di Safari → Bagikan → *Tambah ke Layar Utama* → buka dari ikon **Idola Admin** → buka menu **Pengaturan** → ketuk **Aktifkan notifikasi** pada kartu *Notifikasi realtime di HP* → Izinkan.
 - **Android/Chrome:** kartu “Pasang Idola Admin” menampilkan tombol *Pasang sekarang*; notifikasi juga bisa diaktifkan tanpa memasang.
 - Satu akun boleh mengaktifkan notifikasi di beberapa perangkat. Pendaftar baru dan karya baru dikirim sebagai push notification secara langsung dari server saat data masuk.
 - Tidak perlu mengatur kunci VAPID: server membuat kuncinya sekali dan menyimpannya di tabel `app_config` (migration `202610090001`). Variabel `NEXT_PUBLIC_VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` hanya dipakai bila memang diisi.
 - Di mode aplikasi (PWA) bilah atas dan tombol menu otomatis turun di bawah status bar iPhone.
 
-Indikator di atas halaman menunjukkan koneksi realtime: **Realtime terhubung** (pembaruan instan + toast pendaftar baru) atau **Realtime terputus · memperbarui otomatis tiap 20 detik** (mode cadangan).
+Indikator kecil di bilah atas menunjukkan koneksi realtime: **Live** (pembaruan instan + toast pendaftar baru) atau **Tiap 20 dtk** (realtime terputus, mode cadangan; detailnya muncul saat kursor diarahkan). Setiap halaman selain dashboard punya tombol **Kembali** di bilah atas.
+
+Filter setiap halaman terlipat di bagian atas (ketuk **Filter** untuk membuka). Season default = season aktif, kecuali **Pengiriman** yang default menampilkan semua season agar hadiah season lama tetap terkirim.
 
 ## Dashboard
 
-Menampilkan total peserta, perlu diperiksa, pembayaran lunas, karya perlu diperiksa, karya sudah dinilai, juara diumumkan, klaim lunas, paket terkirim, serta sebaran per kategori/provinsi/sumber. Setiap kartu bisa diklik menuju halaman kerjanya. Filter season default = season aktif.
+Menampilkan total peserta, menunggu verifikasi, pembayaran lunas, karya perlu diperiksa, karya sudah dinilai, juara diumumkan, klaim lunas, paket terkirim, serta sebaran per kategori/provinsi/sumber. Setiap kartu bisa diklik menuju halaman kerjanya. Filter season default = season aktif.
 
 ## Salin pesan DM personal
 
-Di setiap baris Pendaftaran Masuk, Data Peserta, Juara & Hasil, Klaim Hadiah, Pengiriman, dan di halaman detail peserta ada panel **Pesan DM untuk Mommy {nama}**. Sistem memilih tahap yang sedang berlaku (kode registrasi terbit, pengingat/verifikasi pembayaran, worksheet siap, pengingat/penerimaan/revisi karya, karya tampil di galeri, pengumuman juara, invoice klaim, klaim lunas, resi, paket diterima, terima kasih) dan menyusun pesan hangat-profesional berisi kode registrasi, cara cek status, nominal/rekening, nomor invoice, kurir dan resi sesuai data peserta. Ketuk **Salin pesan** lalu tempel di DM Instagram. Tahap lain bisa dipilih dari menu.
+Di bagian **Lihat detail** setiap peserta pada Verifikasi Pembayaran, Data Peserta, Juara & Hasil, Klaim Hadiah, Pengiriman, dan di halaman detail peserta ada panel **Pesan DM untuk Mommy {nama}**. Sistem memilih tahap yang sedang berlaku (kode registrasi terbit, pengingat/verifikasi pembayaran, worksheet siap, pengingat/penerimaan/revisi karya, karya tampil di galeri, pengumuman juara, invoice klaim, klaim lunas, resi, paket diterima, terima kasih) dan menyusun pesan hangat-profesional berisi kode registrasi, cara cek status, nominal/rekening, nomor invoice, kurir dan resi sesuai data peserta. Ketuk **Salin pesan** lalu tempel di DM Instagram. Tahap lain bisa dipilih dari menu.
 
-## Pendaftaran masuk & peserta
+## Verifikasi pembayaran & peserta
 
-Data website masuk otomatis dengan source `website`, payment `pending`, foto privat. Buka **Periksa detail peserta** → approve/reject → verifikasi pembayaran → status peserta `verified` hanya bila review `approved` dan pembayaran `paid`.
+Data website masuk otomatis dengan source `website`, payment `pending`, foto privat. Menu **Verifikasi Pembayaran** default hanya menampilkan peserta yang menunggu verifikasi. Cocokkan bukti transfer di DM Instagram dengan nama, kode, dan username peserta, lalu ketuk **Pembayaran valid, terima**: satu klik itu menyetujui pendaftaran sekaligus menandai lunas (status `verified`). **Tolak** menutup akses kode; **Catatan & opsi lain** berisi catatan internal dan *Kembalikan ke menunggu*. Refund dan status pembayaran khusus ada di detail peserta → *Opsi pembayaran lain*.
+
+Setiap peserta tampil sebagai ringkasan: nama, kode, username IG, lomba (Mewarnai oranye / Fotogenik biru), kategori, dan **langkah berikutnya** (mis. *Perlu verifikasi pembayaran*, *Upload worksheet*, *Karya perlu direview*, *Siap dinilai juri*, *Siap kirim hadiah*). Data lengkap ada di **Lihat detail**.
+
+**Fotogenik tidak upload karya lagi.** Saat pembayaran peserta fotogenik diverifikasi, foto pendaftarannya otomatis disalin menjadi karya berstatus *disetujui* (label "Dari foto pendaftaran") dan langsung masuk Penilaian Juri. Peserta fotogenik yang terverifikasi sebelum fitur ini ada diproses otomatis saat menu Review Karya atau Penilaian Juri dibuka. Jika foto diminta revisi/ditolak, peserta bisa mengirim ulang foto lewat Cek Status. **Mewarnai** tetap: foto pendaftaran untuk posting finalis di IG, karya mewarnai diupload peserta lewat Cek Status.
 
 ## Worksheet mewarnai
 

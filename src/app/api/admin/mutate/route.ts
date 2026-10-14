@@ -10,6 +10,7 @@ import {
   removePublicObjects,
   winnerImagePaths,
 } from "@/lib/winners";
+import { ensurePhotoEntry } from "@/lib/photo-entries";
 
 const actions = [
   "payment",
@@ -25,6 +26,7 @@ const actions = [
   "claim_status",
   "shipment",
   "registration_review",
+  "verify",
 ] as const;
 
 const schema = z.object({
@@ -112,7 +114,13 @@ export async function POST(req: Request) {
     }
 
     const { error } =
-      input.action === "registration_review"
+      input.action === "verify"
+        ? await db.rpc("admin_verify_registration", {
+            p_id: input.id,
+            p_decision: input.data.decision,
+            p_note: input.data.note ?? null,
+          })
+        : input.action === "registration_review"
         ? await db.rpc("admin_review_registration", {
             p_id: input.id,
             p_status: input.data.status,
@@ -128,6 +136,26 @@ export async function POST(req: Request) {
     if (publishing) {
       if (input.data.published) await ensureWinnerImages(affected);
       else if (staleImages.length) await removePublicObjects(staleImages);
+    }
+
+    // A verified photogenic registration gets its registration photo as entry.
+    // A failed copy never undoes the verification; Review Karya retries it.
+    if (["verify", "payment", "registration_review"].includes(input.action)) {
+      try {
+        const created = await ensurePhotoEntry(db, input.id);
+        if (created)
+          return json({
+            ok: true,
+            message:
+              "Pembayaran terverifikasi. Foto pendaftaran otomatis menjadi karya lomba fotogenik.",
+          });
+      } catch {
+        return json({
+          ok: true,
+          warning:
+            "Verifikasi tersimpan, tetapi foto belum berhasil dijadikan karya. Buka Review Karya untuk mencoba lagi.",
+        });
+      }
     }
     return json({ ok: true });
   } catch (e) {

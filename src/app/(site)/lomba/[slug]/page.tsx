@@ -94,17 +94,28 @@ export default async function Page({
               mengubah komposisi utama secara berlebihan.
             </p>
           )}
-          <p>
-            Karya dikirim maksimal 7 hari setelah registrasi atau{" "}
-            {season
-              ? formatDateTime(season.submission_global_close_at)
-              : "batas global season"}
-            , mana yang lebih awal. Gambar JPG, PNG, atau WebP maksimum 2 MB.
-          </p>
+          {coloring ? (
+            <p>
+              Foto si kecil yang diunggah saat pendaftaran dipakai untuk
+              posting finalis di Instagram. Karya mewarnai dikirim lewat Cek
+              Status maksimal 7 hari setelah registrasi atau{" "}
+              {season
+                ? formatDateTime(season.submission_global_close_at)
+                : "batas global season"}
+              , mana yang lebih awal. Gambar JPG, PNG, atau WebP maksimum 2 MB.
+            </p>
+          ) : (
+            <p>
+              <b>Tidak perlu upload karya lagi.</b> Foto yang diunggah saat
+              pendaftaran langsung menjadi karya lomba fotogenik dan dinilai
+              juri setelah pembayaran diverifikasi. Pilih foto terbaik si kecil
+              (JPG, PNG, atau WebP maksimum 2 MB) sebelum mendaftar.
+            </p>
+          )}
           <p>
             Unggahan bersifat privat sampai disetujui dan dipublikasikan admin.
           </p>
-          <Link className="btn" href="/daftar">
+          <Link className="btn" href={`/daftar?lomba=${slug}`}>
             Daftar Sekarang ↗
           </Link>
         </div>

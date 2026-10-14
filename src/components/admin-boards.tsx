@@ -5,6 +5,8 @@ import { formatDate, formatDateTime, type Season } from "@/lib/season";
 import { awardsFor, bankLine, resolveContent, rupiah } from "@/lib/contest-modes";
 import { AdminControl, PrivateMedia } from "./admin-controls";
 import { CopyMessage } from "./copy-message";
+import { AdminRecord } from "./admin-record";
+import { nextAdminStep } from "@/lib/admin-steps";
 import type { MessageContext } from "@/lib/messages";
 
 type BoardSeason = Pick<Season, "id" | "name" | "theme_title" | "shipping_at" | "announcement_at"> &
@@ -39,6 +41,7 @@ export function boardContext(row: BoardRow, season?: BoardSeason | null): Messag
     announcement_at: season?.announcement_at,
     shipping_at: season?.shipping_at,
     payment_status: "paid",
+    review_status: "approved",
     submission_status: "approved",
     award_code: row.award_code,
     rank_position: row.rank_position,
@@ -429,111 +432,93 @@ export function ClaimsBoard({
           <h2 className="mt-3 text-purple">{paid}</h2>
         </div>
       </div>
-      <div className="card overflow-x-auto admin-responsive-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Juara</th>
-              <th>Penghargaan</th>
-              <th>Invoice</th>
-              <th>Operasi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {winners.map((row) => (
-              <tr key={row.registration_id}>
-                <td data-label="Juara">
-                  <Link className="text-purple font-bold underline" href={`/admin/peserta/${row.registration_id}`}>
-                    {row.full_name}
-                  </Link>
-                  <p className="text-xs">{row.public_name} · {row.regency_name}</p>
-                  <p className="text-xs break-all">{row.registration_code}</p>
-                  <p className="text-xs muted">WA {row.whatsapp}</p>
+      <div className="admin-record-list">
+        {winners.map((row) => {
+          const context = boardContext(row, seasonFor(row, seasons, season));
+          return (
+            <AdminRecord
+              key={row.registration_id}
+              name={row.full_name}
+              href={`/admin/peserta/${row.registration_id}`}
+              code={row.registration_code}
+              competition={row.competition_type}
+              category={categoryLabel(row.category)}
+              step={nextAdminStep(context)}
+              meta={`${row.public_name}${row.regency_name ? ` · ${row.regency_name}` : ""}`}
+              badges={
+                <>
+                  <span className="admin-status status-approved">
+                    <Medal size={14} aria-hidden="true" /> {row.award_code}
+                  </span>
                   {mixed && (
                     <span className="admin-status">{seasonNameFor(row, seasons) || "Season lain"}</span>
                   )}
-                </td>
-                <td data-label="Penghargaan">
-                  <Medal size={16} aria-hidden="true" /> <b>{row.award_code}</b>
-                  <p className="text-xs muted">
-                    {competitions[row.competition_type]} · {categoryLabel(row.category)}
+                </>
+              }
+              action={
+                !row.invoice_number ? (
+                  <AdminControl action="invoice" id={row.registration_id} compact />
+                ) : row.claim_status === "issued" ? (
+                  <AdminControl
+                    action="claim_paid"
+                    id={row.registration_id}
+                    compact
+                    label={row.claim_amount === 0 ? "Tandai terkonfirmasi (tanpa biaya)" : undefined}
+                    successMessage={row.claim_amount === 0 ? "Hadiah ditandai terkonfirmasi." : undefined}
+                  />
+                ) : row.claim_status === "paid" ? (
+                  <Link className="btn secondary" href={`/admin/pengiriman?season=${row.season_id}`}>
+                    <Truck size={16} /> Atur pengiriman
+                  </Link>
+                ) : undefined
+              }
+            >
+              {row.invoice_number ? (
+                <div className="stack">
+                  <p className="text-sm break-all">
+                    <Receipt size={14} aria-hidden="true" /> {row.invoice_number}
                   </p>
-                </td>
-                <td data-label="Invoice">
-                  {row.invoice_number ? (
-                    <>
-                      <p className="text-xs break-all">
-                        <Receipt size={14} aria-hidden="true" /> {row.invoice_number}
-                      </p>
-                      <span className={`admin-status status-${row.claim_status}`}>
-                        {row.claim_amount === 0
-                          ? row.claim_status === "paid"
-                            ? "Terkonfirmasi (gratis)"
-                            : row.claim_status === "issued"
-                              ? "Menunggu konfirmasi juara"
-                              : claimLabel[row.claim_status || ""] || row.claim_status
-                          : claimLabel[row.claim_status || ""] || row.claim_status}
-                      </span>
-                      {row.claim_paid_at && (
-                        <p className="text-xs muted">
-                          {row.claim_amount === 0 ? "Dikonfirmasi" : "Lunas"} {formatDate(row.claim_paid_at)}
-                        </p>
-                      )}
-                      {row.claim_confirmation?.bank_account && (
-                        <p className="text-xs">
-                          Rekening hadiah: <b>{row.claim_confirmation.bank_name} {row.claim_confirmation.bank_account}</b>{" "}
-                          a.n. {row.claim_confirmation.bank_holder}
-                          {row.claim_confirmation.note ? ` · ${row.claim_confirmation.note}` : ""}
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <span className="muted">Belum ada invoice</span>
+                  <span className={`admin-status status-${row.claim_status}`}>
+                    {row.claim_amount === 0
+                      ? row.claim_status === "paid"
+                        ? "Terkonfirmasi (gratis)"
+                        : row.claim_status === "issued"
+                          ? "Menunggu konfirmasi juara"
+                          : claimLabel[row.claim_status || ""] || row.claim_status
+                      : claimLabel[row.claim_status || ""] || row.claim_status}
+                  </span>
+                  {row.claim_paid_at && (
+                    <p className="text-xs muted">
+                      {row.claim_amount === 0 ? "Dikonfirmasi" : "Lunas"} {formatDate(row.claim_paid_at)}
+                    </p>
                   )}
-                </td>
-                <td data-label="Operasi" className="min-w-64">
-                  <div className="stack">
-                    {!row.invoice_number ? (
-                      <AdminControl action="invoice" id={row.registration_id} compact />
-                    ) : row.claim_status === "issued" ? (
-                      <>
-                        <AdminControl
-                          action="claim_paid"
-                          id={row.registration_id}
-                          compact
-                          label={row.claim_amount === 0 ? "Tandai terkonfirmasi (tanpa biaya)" : undefined}
-                          successMessage={row.claim_amount === 0 ? "Hadiah ditandai terkonfirmasi." : undefined}
-                        />
-                        <details className="admin-ops">
-                          <summary>Ubah status lain</summary>
-                          <AdminControl
-                            action="claim_status"
-                            id={row.registration_id}
-                            compact
-                            initial={{ status: row.claim_status }}
-                          />
-                        </details>
-                      </>
-                    ) : (
-                      <AdminControl
-                        action="claim_status"
-                        id={row.registration_id}
-                        compact
-                        initial={{ status: row.claim_status }}
-                      />
-                    )}
-                    {row.claim_status === "paid" && (
-                      <Link className="btn secondary" href={`/admin/pengiriman?season=${row.season_id}`}>
-                        <Truck size={16} /> Atur pengiriman
-                      </Link>
-                    )}
-                    <CopyMessage compact context={boardContext(row, seasonFor(row, seasons, season))} />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  {row.claim_confirmation?.bank_account && (
+                    <p className="text-sm">
+                      Rekening hadiah: <b>{row.claim_confirmation.bank_name} {row.claim_confirmation.bank_account}</b>{" "}
+                      a.n. {row.claim_confirmation.bank_holder}
+                      {row.claim_confirmation.note ? ` · ${row.claim_confirmation.note}` : ""}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="muted">Belum ada invoice.</p>
+              )}
+              <p className="text-sm muted">WA {row.whatsapp}</p>
+              {row.invoice_number && (
+                <details className="admin-ops">
+                  <summary>Ubah status klaim</summary>
+                  <AdminControl
+                    action="claim_status"
+                    id={row.registration_id}
+                    compact
+                    initial={{ status: row.claim_status }}
+                  />
+                </details>
+              )}
+              <CopyMessage compact context={context} />
+            </AdminRecord>
+          );
+        })}
       </div>
     </div>
   );
@@ -577,78 +562,64 @@ export function ShippingBoard({
           <h2 className="mt-3 text-purple">{pendingClaims}</h2>
         </div>
       </div>
-      <div className="card overflow-x-auto admin-responsive-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Juara</th>
-              <th>Penghargaan</th>
-              <th>Pengiriman</th>
-              <th>Operasi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ready.map((row) => (
-              <tr key={row.registration_id}>
-                <td data-label="Juara">
-                  <Link className="text-purple font-bold underline" href={`/admin/peserta/${row.registration_id}`}>
-                    {row.full_name}
-                  </Link>
-                  <p className="text-xs">
-                    {row.regency_name}, {row.province_name}
-                  </p>
-                  <p className="text-xs break-all">{row.registration_code}</p>
-                  <p className="text-xs muted">
-                    <Users size={12} aria-hidden="true" /> WA {row.whatsapp} · alamat lengkap di detail peserta
-                  </p>
-                  {mixed && (
-                    <span className="admin-status">{seasonNameFor(row, seasons) || "Season lain"}</span>
-                  )}
-                </td>
-                <td data-label="Penghargaan">
-                  <b>{row.award_code}</b>
-                  <p className="text-xs muted">
-                    {competitions[row.competition_type]} · {categoryLabel(row.category)}
-                  </p>
-                  {row.claim_confirmation?.bank_account && (
-                    <p className="text-xs">
-                      Transfer hadiah: <b>{row.claim_confirmation.bank_name} {row.claim_confirmation.bank_account}</b>{" "}
-                      a.n. {row.claim_confirmation.bank_holder}
-                    </p>
-                  )}
-                </td>
-                <td data-label="Pengiriman">
+      <div className="admin-record-list">
+        {ready.map((row) => {
+          const context = boardContext(row, seasonFor(row, seasons, season));
+          return (
+            <AdminRecord
+              key={row.registration_id}
+              name={row.full_name}
+              href={`/admin/peserta/${row.registration_id}`}
+              code={row.registration_code}
+              competition={row.competition_type}
+              category={categoryLabel(row.category)}
+              step={nextAdminStep(context)}
+              meta={[row.regency_name, row.province_name].filter(Boolean).join(", ")}
+              badges={
+                <>
+                  <span className="admin-status status-approved">
+                    <Medal size={14} aria-hidden="true" /> {row.award_code}
+                  </span>
                   <span className={`admin-status status-${row.shipping_status || "waiting"}`}>
                     {shippingLabel[row.shipping_status || ""] || "Belum diatur"}
                   </span>
-                  {row.courier && (
-                    <p className="text-xs">
-                      {row.courier} · {row.tracking_number || "resi belum ada"}
-                    </p>
+                  {mixed && (
+                    <span className="admin-status">{seasonNameFor(row, seasons) || "Season lain"}</span>
                   )}
-                  {row.shipped_at && (
-                    <p className="text-xs muted">Dikirim {formatDate(row.shipped_at)}</p>
-                  )}
-                </td>
-                <td data-label="Operasi" className="min-w-64">
-                  <div className="stack">
-                    <AdminControl
-                      action="shipment"
-                      id={row.registration_id}
-                      compact
-                      initial={{
-                        courier: row.courier,
-                        tracking_number: row.tracking_number,
-                        shipping_status: row.shipping_status || "prepared",
-                      }}
-                    />
-                    <CopyMessage compact context={boardContext(row, seasonFor(row, seasons, season))} />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </>
+              }
+              action={
+                <AdminControl
+                  action="shipment"
+                  id={row.registration_id}
+                  compact
+                  initial={{
+                    courier: row.courier,
+                    tracking_number: row.tracking_number,
+                    shipping_status: row.shipping_status || "prepared",
+                  }}
+                />
+              }
+            >
+              {row.courier && (
+                <p className="text-sm">
+                  {row.courier} · {row.tracking_number || "resi belum ada"}
+                  {row.shipped_at ? ` · dikirim ${formatDate(row.shipped_at)}` : ""}
+                </p>
+              )}
+              {row.claim_confirmation?.bank_account && (
+                <p className="text-sm">
+                  Transfer hadiah: <b>{row.claim_confirmation.bank_name} {row.claim_confirmation.bank_account}</b>{" "}
+                  a.n. {row.claim_confirmation.bank_holder}
+                </p>
+              )}
+              <p className="text-sm muted">
+                <Users size={12} aria-hidden="true" /> WA {row.whatsapp} · alamat lengkap di detail peserta
+              </p>
+              <CopyMessage compact context={context} />
+            </AdminRecord>
+          );
+        })}
       </div>
     </div>
   );

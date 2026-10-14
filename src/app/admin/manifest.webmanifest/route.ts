@@ -30,7 +30,7 @@ export function GET() {
         },
       ],
       shortcuts: [
-        { name: "Pendaftaran masuk", url: "/admin/pendaftaran?source=pwa" },
+        { name: "Verifikasi pembayaran", url: "/admin/pendaftaran?source=pwa" },
         { name: "Penilaian", url: "/admin/penilaian?source=pwa" },
         { name: "Hasil & juara", url: "/admin/hasil?source=pwa" },
       ],

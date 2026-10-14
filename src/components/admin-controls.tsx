@@ -2,7 +2,13 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  BadgeCheck,
+  CheckCircle2,
+  RotateCcw,
+  XCircle,
+} from "lucide-react";
 import { awards, criteria, weights, weightedScore } from "@/lib/business-rules";
 import { ImageInput } from "./image-input";
 import { showSuccess } from "@/lib/success-event";
@@ -20,7 +26,8 @@ type Control =
   | "claim_paid"
   | "claim_status"
   | "shipment"
-  | "registration_review";
+  | "registration_review"
+  | "verify";
 
 export async function mutate(
   action: Control,
@@ -114,6 +121,7 @@ export function AdminControl({
                 publish: "Karya dipublikasikan ke galeri.",
                 unpublish: "Publikasi karya ditarik.",
                 registration_review: "Keputusan pendaftaran tersimpan.",
+                verify: "Verifikasi pembayaran tersimpan.",
               }[action],
             action === "publish" ? "camera" : "admin",
           );
@@ -329,6 +337,7 @@ export function AdminControl({
               award: "Simpan penghargaan",
               shipment: "Simpan pengiriman",
               registration_review: "Simpan keputusan pendaftaran",
+              verify: "Simpan verifikasi",
             }[action]}
       </button>
       {message && (
@@ -340,6 +349,145 @@ export function AdminControl({
         </p>
       )}
     </form>
+  );
+}
+
+export type VerifyState = "pending" | "verified" | "rejected";
+
+/** Where a registration stands in payment verification. */
+export function verifyState(registration: {
+  registration_status?: string | null;
+  review_status?: string | null;
+}): VerifyState {
+  if (registration.registration_status === "verified") return "verified";
+  if (
+    registration.review_status === "rejected" ||
+    registration.registration_status === "cancelled"
+  )
+    return "rejected";
+  return "pending";
+}
+
+/**
+ * One-step payment verification: a valid payment approves the registration and
+ * marks the registration fee paid at once.
+ */
+export function VerifyControl({
+  id,
+  state,
+  note,
+}: {
+  id: string;
+  state: VerifyState;
+  note?: string | null;
+}) {
+  const router = useRouter();
+  const [busy, setBusy] = useState("");
+  const [message, setMessage] = useState("");
+  const [failed, setFailed] = useState(false);
+  const [text, setText] = useState(note ?? "");
+  async function decide(decision: "approve" | "reject" | "pending") {
+    setBusy(decision);
+    setMessage("");
+    setFailed(false);
+    try {
+      const result = await mutate("verify", id, { decision, note: text });
+      if (result.warning) {
+        setFailed(true);
+        setMessage(result.warning);
+      }
+      showSuccess(
+        result.message ||
+          {
+            approve: "Pembayaran valid. Peserta resmi terverifikasi.",
+            reject: "Pendaftaran ditolak.",
+            pending: "Peserta dikembalikan ke menunggu verifikasi.",
+          }[decision],
+        "admin",
+      );
+      router.refresh();
+    } catch (error) {
+      setFailed(true);
+      setMessage((error as Error).message);
+    } finally {
+      setBusy("");
+    }
+  }
+  return (
+    <div className="verify-control">
+      {state === "verified" ? (
+        <p className="verify-done">
+          <BadgeCheck aria-hidden="true" /> Pembayaran terverifikasi
+        </p>
+      ) : (
+        <div className="verify-actions">
+          <button
+            type="button"
+            className="btn verify-approve"
+            disabled={!!busy}
+            onClick={() => decide("approve")}
+          >
+            <BadgeCheck aria-hidden="true" />
+            {busy === "approve" ? "Menyimpan…" : "Pembayaran valid, terima"}
+          </button>
+          {state === "pending" && (
+            <button
+              type="button"
+              className="btn secondary verify-reject"
+              disabled={!!busy}
+              onClick={() => decide("reject")}
+            >
+              <XCircle aria-hidden="true" />
+              {busy === "reject" ? "Menyimpan…" : "Tolak"}
+            </button>
+          )}
+        </div>
+      )}
+      <details className="verify-more">
+        <summary>Catatan &amp; opsi lain</summary>
+        <label className="field">
+          Catatan internal
+          <textarea
+            value={text}
+            maxLength={500}
+            rows={2}
+            placeholder="Contoh: bukti transfer via DM 15/10"
+            onChange={(e) => setText(e.target.value)}
+          />
+        </label>
+        <div className="actions">
+          {state === "verified" && (
+            <button
+              type="button"
+              className="btn secondary verify-reject"
+              disabled={!!busy}
+              onClick={() => decide("reject")}
+            >
+              <XCircle aria-hidden="true" /> Tolak pendaftaran
+            </button>
+          )}
+          {state !== "pending" && (
+            <button
+              type="button"
+              className="btn secondary"
+              disabled={!!busy}
+              onClick={() => decide("pending")}
+            >
+              <RotateCcw aria-hidden="true" /> Kembalikan ke menunggu
+            </button>
+          )}
+        </div>
+      </details>
+      {message && (
+        <p
+          className={`notice text-sm ${failed ? "error" : "success"}`}
+          role={failed ? "alert" : "status"}
+        >
+          {failed ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}{" "}
+          {message}
+        </p>
+      )}
+    </div>
   );
 }
 

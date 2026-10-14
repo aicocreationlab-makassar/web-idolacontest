@@ -5,7 +5,15 @@ import { canAcceptRegistration } from "@/lib/business-rules";
 import { resolveContent, rupiah } from "@/lib/contest-modes";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Daftar lomba" };
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ lomba?: string }>;
+}) {
+  const { lomba } = await searchParams;
+  // /lomba/mewarnai and /lomba/fotogenik link here with the contest preselected.
+  const initialCompetition =
+    lomba === "mewarnai" ? "coloring" : lomba === "fotogenik" ? "photogenic" : undefined;
   const season = await getActiveSeason();
   const content = resolveContent(season);
   return (
@@ -34,7 +42,9 @@ export default async function Page() {
         canAcceptRegistration(
           season.registration_open_at,
           season.registration_close_at,
-        )) && <RegistrationForm content={content} />}
+        )) && (
+        <RegistrationForm content={content} initialCompetition={initialCompetition} />
+      )}
     </div>
   );
 }

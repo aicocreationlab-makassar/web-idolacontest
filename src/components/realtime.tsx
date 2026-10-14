@@ -193,21 +193,32 @@ export function Realtime() {
 
   return (
     <>
-      <p className={`admin-realtime ${connection}`} role="status">
+      {/* Compact indicator in the top bar; the full text stays in the tooltip. */}
+      <p
+        className={`admin-realtime ${connection}`}
+        role="status"
+        title={
+          connection === "live"
+            ? "Realtime terhubung"
+            : connection === "polling"
+              ? "Realtime terputus · menyambung ulang, data diperbarui otomatis tiap 20 detik"
+              : "Menghubungkan realtime…"
+        }
+      >
         {connection === "live" ? (
-          <>
-            <Wifi aria-hidden="true" /> Realtime terhubung
-          </>
+          <Wifi aria-hidden="true" />
         ) : connection === "polling" ? (
-          <>
-            <WifiOff aria-hidden="true" /> Realtime terputus · menyambung ulang,
-            data diperbarui otomatis tiap 20 detik
-          </>
+          <WifiOff aria-hidden="true" />
         ) : (
-          <>
-            <RefreshCw aria-hidden="true" /> Menghubungkan realtime…
-          </>
+          <RefreshCw aria-hidden="true" />
         )}
+        <b>
+          {connection === "live"
+            ? "Live"
+            : connection === "polling"
+              ? "Tiap 20 dtk"
+              : "Menyambung"}
+        </b>
       </p>
       {toasts.length > 0 && (
         <div className="admin-toasts" aria-live="polite">

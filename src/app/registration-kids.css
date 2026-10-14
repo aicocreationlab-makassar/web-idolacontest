@@ -165,3 +165,194 @@
     width: 100%;
   }
 }
+
+/* Contest choice: the first step, so nobody skips it or registers for the wrong contest. */
+.contest-pick-lead {
+  margin: 0;
+  color: #3c5675;
+  font-weight: 700;
+}
+.contest-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+.contest-choice {
+  --contest: #2f7de1;
+  --contest-soft: #eaf3ff;
+  --contest-shadow: #b9d6fb;
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 22px 16px 18px;
+  border-radius: 26px;
+  border: 3px solid #e1edf7;
+  background: #fff;
+  box-shadow: 0 5px 0 #e1edf7;
+  text-align: center;
+  color: #173a71;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, background 0.15s;
+}
+.contest-choice.coloring {
+  --contest: #f0631f;
+  --contest-soft: #fff1e6;
+  --contest-shadow: #ffc9a3;
+}
+.contest-choice:hover {
+  transform: translateY(-2px);
+  border-color: var(--contest-shadow);
+}
+.contest-choice:has(input:focus-visible) {
+  outline: 3px solid var(--contest);
+  outline-offset: 3px;
+}
+.contest-choice.selected {
+  border-color: var(--contest);
+  background: var(--contest-soft);
+  box-shadow: 0 5px 0 var(--contest-shadow);
+}
+.contest-choice input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.contest-choice b {
+  font-family: "Fredoka Variable", sans-serif;
+  font-size: 22px;
+  color: var(--contest);
+}
+.contest-choice small {
+  color: #4f6782;
+  font-weight: 700;
+}
+.contest-choice-photo {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: #f6faff;
+  border: 2px dashed #d5e5f3;
+  color: #24466f;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.contest-choice.selected .contest-choice-photo {
+  background: #fff;
+  border-color: var(--contest-shadow);
+}
+.contest-choice-check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid #d5e5f3;
+  background: #fff;
+  color: transparent;
+}
+.contest-choice-check svg {
+  width: 18px;
+  height: 18px;
+}
+.contest-choice.selected .contest-choice-check {
+  border-color: var(--contest);
+  background: var(--contest);
+  color: #fff;
+}
+.contest-current {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  border-radius: 20px;
+  background: #eaf3ff;
+  border: 2px solid #b9d6fb;
+  color: #173a71;
+  font-weight: 800;
+}
+.contest-current.coloring {
+  background: #fff1e6;
+  border-color: #ffc9a3;
+}
+.contest-current > span:first-child {
+  font-size: 13px;
+  color: #4f6782;
+}
+.contest-current .link-button {
+  margin-left: auto;
+  font-size: 13px;
+}
+.photo-role-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #eaf3ff;
+  border-left: 6px solid #2f7de1;
+  color: #173a71;
+  font-weight: 800;
+}
+.photo-role-note.coloring {
+  background: #fff1e6;
+  border-left-color: #f0631f;
+}
+.contest-summary {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 24px;
+  background: #eaf3ff;
+  border: 3px solid #2f7de1;
+  text-align: center;
+  color: #173a71;
+}
+.contest-summary.coloring {
+  background: #fff1e6;
+  border-color: #f0631f;
+}
+.contest-summary > span:first-child {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #4f6782;
+}
+.contest-summary p {
+  margin: 0;
+}
+.contest-summary small {
+  max-width: 46ch;
+  color: #3c5675;
+  font-weight: 700;
+}
+.confirm-contest {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+@media (max-width: 760px) {
+  .contest-choice {
+    padding: 18px 14px 16px;
+  }
+  .contest-current .link-button {
+    margin-left: 0;
+  }
+}
+.notice.contest-pick-error {
+  background: #fff0f4;
+  border-color: #f5b5c8;
+  color: #a62550;
+  font-weight: 800;
+}

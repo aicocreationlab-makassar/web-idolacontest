@@ -407,7 +407,10 @@ export function RegistrationSteps({ fee = 20000 }: { fee?: number }) {
         {[
           ["Daftar", "Follow @idola.contest, lalu isi data si kecil."],
           ["Bayar registrasi", `Transfer ${rupiah(fee)} dan konfirmasi ke admin.`],
-          ["Kirim karya", "Gunakan kode registrasi untuk mengirim karya."],
+          [
+            "Kirim karya",
+            "Fotogenik: foto pendaftaran langsung jadi karya. Mewarnai: kirim karya lewat Cek Status.",
+          ],
           ["Jadi finalis", "Karya direview, dipublikasikan, lalu dinilai."],
         ].map(([title, text], i) => (
           <article className="step-card" key={title}>

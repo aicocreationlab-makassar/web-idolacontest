@@ -94,6 +94,7 @@ export async function POST(req: Request) {
       {
         code,
         public_name: p.public_name,
+        competition_type: p.competition_type,
         registered_at: saved.data?.created_at || new Date().toISOString(),
       },
       201,

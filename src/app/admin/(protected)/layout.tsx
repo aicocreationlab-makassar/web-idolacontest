@@ -5,7 +5,7 @@ import { getActiveSeason } from "@/lib/data";
 import { themeFor, seasonPhase } from "@/lib/season";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { Realtime } from "@/components/realtime";
-import { AdminNotifications } from "@/components/admin-notifications";
+import { AdminBackButton } from "@/components/admin-back-button";
 
 export const dynamic = "force-dynamic";
 
@@ -40,28 +40,32 @@ export default async function Layout({
       <AdminSidebar role={role} name={name} />
       <div className="admin-workspace">
         <header className="admin-topbar">
-          <div>
-            <span>Idola Contest</span>
-            <b>Ruang Pengelola</b>
+          <div className="admin-topbar-start">
+            <AdminBackButton />
+            <div>
+              <span>Idola Contest</span>
+              <b>Ruang Pengelola</b>
+            </div>
           </div>
-          <Link
+          <div className="admin-topbar-end">
+            <Realtime />
+            <Link
             className="admin-season-chip"
             href="/admin/settings"
             style={{
               background: `linear-gradient(120deg, ${theme.primary}, ${theme.primaryLight})`,
             }}
-            title="Buka pengaturan season"
+            title="Buka pengaturan"
           >
             <span aria-hidden="true">{theme.motifs[0]}</span>
             <span>
               <b>{season ? `${season.name} · ${season.theme_title}` : "Tanpa season aktif"}</b>
               <small>{phaseLabel[seasonPhase(season)]}</small>
             </span>
-          </Link>
+            </Link>
+          </div>
         </header>
         <div className="admin-page">
-          {role !== "judge" && <AdminNotifications />}
-          <Realtime />
           {children}
         </div>
       </div>
